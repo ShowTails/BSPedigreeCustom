@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>8 Generation Rabbit Pedigree</title>
+  <title>ShowTails 8 Generation Pedigree Explorer</title>
 
   <style>
     html, body {
@@ -12,7 +12,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: white;
+      background: #ffffff;
       font-family: Arial, sans-serif;
     }
 
@@ -30,36 +30,55 @@
       display: block;
       background: white;
       touch-action: none;
-      -ms-touch-action: none;
       user-select: none;
       -webkit-user-select: none;
     }
 
     .line {
-      stroke: #333;
+      stroke: #555;
       stroke-width: 1;
       fill: none;
       vector-effect: non-scaling-stroke;
     }
 
+    .line.hidden {
+      display: none;
+    }
+
     .box {
       stroke: #000;
-      stroke-width: 1.25;
+      stroke-width: 1.2;
       rx: 10;
       ry: 10;
       cursor: pointer;
     }
 
-    .male {
-      fill: #cce5ff;
+    .male { fill: #cce5ff; }
+    .female { fill: #f8d7da; }
+    .unknown { fill: #ffffff; }
+
+    .empty-box {
+      fill: #f7f7f7 !important;
+      stroke: #bdbdbd !important;
+      stroke-dasharray: 4 3;
     }
 
-    .female {
-      fill: #f8d7da;
+    .dim-empty .node.empty .box {
+      opacity: 0.35;
     }
 
-    .unknown {
-      fill: #fff;
+    .duplicate .box {
+      stroke: #ff8c00 !important;
+      stroke-width: 2.4 !important;
+    }
+
+    .collapsed > .box {
+      stroke: #2f6fed !important;
+      stroke-width: 2 !important;
+    }
+
+    .hidden-node {
+      display: none;
     }
 
     .box-name {
@@ -75,14 +94,145 @@
       pointer-events: none;
     }
 
+    .box-badge {
+      font-size: 10px;
+      font-weight: bold;
+      fill: #ff8c00;
+      pointer-events: none;
+    }
+
+    .collapse-btn {
+      fill: #ffffff;
+      stroke: #2f6fed;
+      stroke-width: 1.2;
+      cursor: pointer;
+    }
+
+    .collapse-symbol {
+      font-size: 12px;
+      font-weight: bold;
+      fill: #2f6fed;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    #controls-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 285px;
+      max-height: calc(100vh - 20px);
+      overflow: auto;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      z-index: 10;
+      padding: 12px 12px 10px 12px;
+      color: #234a57;
+    }
+
+    #controls-panel h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    #controls-panel h3 {
+      margin: 12px 0 6px 0;
+      font-size: 14px;
+      color: #234a57;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      border: 1px solid #b9c4ca;
+      background: #fff;
+      color: #234a57;
+      border-radius: 7px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn.active {
+      background: #234a57;
+      color: #fff;
+      border-color: #234a57;
+    }
+
+    .btn.small {
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 13px;
+      color: #234a57;
+    }
+
+    .toggle input {
+      transform: scale(1.1);
+      cursor: pointer;
+    }
+
+    #summary-card, #duplicates-card {
+      border: 1px solid #d8d8d8;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fcfcfc;
+      margin-top: 8px;
+    }
+
+    #summary-card .summary-line,
+    #duplicates-card .summary-line {
+      font-size: 12px;
+      margin: 4px 0;
+      color: #234a57;
+    }
+
+    #risk-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid #c8d3d9;
+      background: #eef4f6;
+      color: #234a57;
+    }
+
+    #duplicate-list {
+      margin: 6px 0 0 18px;
+      padding: 0;
+      font-size: 12px;
+      color: #234a57;
+    }
+
+    #duplicate-list li {
+      margin: 3px 0;
+    }
+
     #reset-view-btn {
       position: absolute;
       top: 10px;
       right: 10px;
-      z-index: 5;
+      z-index: 10;
       padding: 8px 14px;
       border: none;
-      border-radius: 6px;
+      border-radius: 7px;
       background: #4a4a4a;
       color: white;
       cursor: pointer;
@@ -91,13 +241,13 @@
 
     #status-badge {
       position: absolute;
+      bottom: 10px;
       left: 10px;
-      top: 10px;
-      z-index: 5;
-      background: rgba(255,255,255,0.92);
+      z-index: 10;
+      background: rgba(255,255,255,0.96);
       border: 1px solid #d8d8d8;
-      border-radius: 6px;
-      padding: 8px 10px;
+      border-radius: 8px;
+      padding: 7px 10px;
       font-size: 12px;
       color: #234a57;
     }
@@ -105,8 +255,69 @@
 </head>
 <body>
   <div id="pedigree-container">
-    <div id="status-badge">Loading 8 generation pedigree…</div>
+    <div id="controls-panel">
+      <h2>Pedigree Explorer</h2>
+
+      <h3>Visible Generations</h3>
+      <div class="control-row">
+        <button class="btn gen-btn" data-gen="4">4 Gen</button>
+        <button class="btn gen-btn" data-gen="6">6 Gen</button>
+        <button class="btn gen-btn active" data-gen="8">8 Gen</button>
+      </div>
+
+      <h3>View Side</h3>
+      <div class="control-row">
+        <button class="btn side-btn active" data-side="all">All</button>
+        <button class="btn side-btn" data-side="s">Sire Side</button>
+        <button class="btn side-btn" data-side="d">Dam Side</button>
+      </div>
+
+      <h3>Tools</h3>
+      <div class="toggle">
+        <label for="toggle-duplicates">Highlight duplicate ancestors</label>
+        <input id="toggle-duplicates" type="checkbox" checked />
+      </div>
+      <div class="toggle">
+        <label for="toggle-summary">Show closeness summary</label>
+        <input id="toggle-summary" type="checkbox" checked />
+      </div>
+      <div class="toggle">
+        <label for="toggle-dim-empty">Dim empty boxes</label>
+        <input id="toggle-dim-empty" type="checkbox" checked />
+      </div>
+      <div class="toggle">
+        <label for="toggle-hide-empty">Hide empty boxes past selected generation rules</label>
+        <input id="toggle-hide-empty" type="checkbox" />
+      </div>
+      <div class="toggle">
+        <label for="toggle-badges">Show duplicate count badges</label>
+        <input id="toggle-badges" type="checkbox" checked />
+      </div>
+
+      <h3>Branch Actions</h3>
+      <div class="control-row">
+        <button class="btn small" id="expand-all-btn">Expand All Branches</button>
+        <button class="btn small" id="collapse-sire-btn">Collapse Sire Branch</button>
+        <button class="btn small" id="collapse-dam-btn">Collapse Dam Branch</button>
+      </div>
+
+      <div id="summary-card">
+        <div class="summary-line"><strong>Relationship Summary</strong></div>
+        <div class="summary-line" id="summary-duplicates">Repeated ancestors: 0</div>
+        <div class="summary-line" id="summary-closest">Closest repeated generation: None</div>
+        <div class="summary-line" id="summary-visible">Visible boxes: 0</div>
+        <div id="risk-badge">Closeness: None</div>
+      </div>
+
+      <div id="duplicates-card">
+        <div class="summary-line"><strong>Repeated Ancestors</strong></div>
+        <div class="summary-line" id="duplicates-help">No repeated ancestors detected.</div>
+        <ul id="duplicate-list"></ul>
+      </div>
+    </div>
+
     <button id="reset-view-btn">Reset View</button>
+    <div id="status-badge">Loading pedigree…</div>
 
     <svg id="pedigree-svg" viewBox="0 0 5000 9000" preserveAspectRatio="xMidYMid meet">
       <g id="lines-layer"></g>
@@ -124,6 +335,13 @@
 
     function escapeText(value) {
       return String(value ?? "");
+    }
+
+    function normalizeValue(value) {
+      return String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, " ");
     }
 
     function createSvgEl(tag, attrs = {}) {
@@ -172,7 +390,6 @@
       }
 
       const prefix = path;
-
       const nonRootMap = {
         rabbitry: prefix + "rabbitry",
         name: getNameParam(path),
@@ -210,23 +427,54 @@
       };
     }
 
+    function buildRabbitKey(data) {
+      const name = normalizeValue(data.name);
+      const ear = normalizeValue(data.ear);
+      if (!name && !ear) return "";
+      return `${name}||${ear}`;
+    }
+
     (function () {
-      const MAX_GENERATIONS = 8;       // subject included
-      const BOX_WIDTH = 285;
+      const MAX_GENERATIONS = 8;
+      const BOX_WIDTH = 290;
       const BOX_HEIGHT = 158;
-      const H_SPACING = 360;
+      const H_SPACING = 370;
       const LEFT_MARGIN = 40;
       const TOP_MARGIN = 30;
       const ROW_STEP = 185;
 
       const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
-      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 60;
+      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
       const canvasHeight = TOP_MARGIN + (totalLeaves * ROW_STEP) + 80;
+
+      const state = {
+        visibleGenerations: 8,
+        visibleSide: "all",
+        highlightDuplicates: true,
+        showSummary: true,
+        dimEmpty: true,
+        hideEmpty: false,
+        showBadges: true,
+        collapsedBranches: new Set(),
+        nodesByPath: new Map(),
+        linesByPath: new Map(),
+        duplicateGroups: new Map(),
+        rendered: false
+      };
 
       const svg = document.getElementById("pedigree-svg");
       const linesLayer = document.getElementById("lines-layer");
       const nodesLayer = document.getElementById("nodes-layer");
       const statusBadge = document.getElementById("status-badge");
+
+      const summaryCard = document.getElementById("summary-card");
+      const duplicatesCard = document.getElementById("duplicates-card");
+      const summaryDuplicates = document.getElementById("summary-duplicates");
+      const summaryClosest = document.getElementById("summary-closest");
+      const summaryVisible = document.getElementById("summary-visible");
+      const riskBadge = document.getElementById("risk-badge");
+      const duplicatesHelp = document.getElementById("duplicates-help");
+      const duplicateList = document.getElementById("duplicate-list");
 
       svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
 
@@ -251,38 +499,48 @@
         return TOP_MARGIN + centerIndex * ROW_STEP;
       }
 
-      function drawLine(parentX, parentY, childX, childY) {
+      function drawLine(path, parentPath, parentX, parentY, childX, childY) {
         const line = createSvgEl("line", {
           x1: parentX,
           y1: parentY,
           x2: childX,
           y2: childY,
-          class: "line"
+          class: "line",
+          "data-path": path,
+          "data-parent": parentPath
         });
         linesLayer.appendChild(line);
+        state.linesByPath.set(path, line);
       }
 
       function appendText(group, x, y, className, value) {
-        const t = createSvgEl("text", {
-          x,
-          y,
-          class: className
-        });
+        const t = createSvgEl("text", { x, y, class: className });
         t.textContent = value || "";
         group.appendChild(t);
+        return t;
+      }
+
+      function isEmptyRabbit(data) {
+        return ![
+          data.rabbitry, data.name, data.color, data.ear, data.weight,
+          data.sex, data.legs, data.reg, data.gc, data.custom,
+          data.win1, data.win2, data.win3
+        ].some(Boolean);
       }
 
       function drawNode(path, generation) {
         const x = LEFT_MARGIN + generation * H_SPACING;
         const yCenter = getCenterYForPath(path);
         const y = yCenter - (BOX_HEIGHT / 2);
-
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
+        const empty = isEmptyRabbit(data);
+        const rabbitKey = buildRabbitKey(data);
 
         const group = createSvgEl("g", {
           "data-path": path,
-          "data-generation": String(generation + 1)
+          "data-generation": String(generation + 1),
+          class: `node ${empty ? "empty" : ""}`
         });
 
         const rect = createSvgEl("rect", {
@@ -290,48 +548,86 @@
           y,
           width: BOX_WIDTH,
           height: BOX_HEIGHT,
-          class: `box ${sexClass}`,
+          class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
           "data-slot": path
         });
 
         group.appendChild(rect);
+
+        const badgeText = createSvgEl("text", {
+          x: x + BOX_WIDTH - 8,
+          y: y + 16,
+          class: "box-badge",
+          "text-anchor": "end"
+        });
+        badgeText.textContent = "";
+        group.appendChild(badgeText);
 
         const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
         appendText(group, x + 8, y + 18, "box-name", title || "—");
 
         appendText(group, x + 8, y + 35, "box-text", `Color: ${data.color || ""}`);
         appendText(group, x + 8, y + 50, "box-text", `Ear#: ${data.ear || ""}`);
-        appendText(group, x + 150, y + 50, "box-text", `Weight: ${data.weight || ""}`);
+        appendText(group, x + 155, y + 50, "box-text", `Weight: ${data.weight || ""}`);
 
         appendText(group, x + 8, y + 65, "box-text", `Sex: ${data.sex || ""}`);
-        appendText(group, x + 150, y + 65, "box-text", `Legs: ${data.legs || ""}`);
+        appendText(group, x + 155, y + 65, "box-text", `Legs: ${data.legs || ""}`);
 
         appendText(group, x + 8, y + 80, "box-text", `Reg#: ${data.reg || ""}`);
-        appendText(group, x + 150, y + 80, "box-text", `GC#: ${data.gc || ""}`);
+        appendText(group, x + 155, y + 80, "box-text", `GC#: ${data.gc || ""}`);
 
         appendText(group, x + 8, y + 95, "box-text", `Custom: ${data.custom || ""}`);
         appendText(group, x + 8, y + 112, "box-text", data.win1 ? `Win1: ${data.win1}` : "");
         appendText(group, x + 8, y + 129, "box-text", data.win2 ? `Win2: ${data.win2}` : "");
         appendText(group, x + 8, y + 146, "box-text", data.win3 ? `Win3: ${data.win3}` : "");
 
+        if (generation + 1 < MAX_GENERATIONS) {
+          const btnCircle = createSvgEl("circle", {
+            cx: x + BOX_WIDTH - 15,
+            cy: y + BOX_HEIGHT - 15,
+            r: 10,
+            class: "collapse-btn",
+            "data-collapse-path": path
+          });
+          const btnSymbol = createSvgEl("text", {
+            x: x + BOX_WIDTH - 15,
+            y: y + BOX_HEIGHT - 15,
+            class: "collapse-symbol",
+            "data-collapse-symbol": path
+          });
+          btnSymbol.textContent = "−";
+          group.appendChild(btnCircle);
+          group.appendChild(btnSymbol);
+        }
+
         nodesLayer.appendChild(group);
+
+        state.nodesByPath.set(path, {
+          path,
+          generation: generation + 1,
+          group,
+          rect,
+          badgeText,
+          data,
+          rabbitKey,
+          empty
+        });
 
         if (generation > 0) {
           const parentPath = path.slice(0, -1);
           const parentX = LEFT_MARGIN + ((generation - 1) * H_SPACING) + BOX_WIDTH;
           const parentY = getCenterYForPath(parentPath);
-          drawLine(parentX, parentY, x, yCenter);
+          drawLine(path, parentPath, parentX, parentY, x, yCenter);
         }
       }
 
       function renderPedigree() {
         const totalNodes = Math.pow(2, MAX_GENERATIONS) - 1;
         const queue = [{ path: "", generation: 0 }];
-
         updateStatus(`Rendering ${totalNodes.toLocaleString()} boxes…`);
 
         function processChunk() {
-          const chunkSize = 30;
+          const chunkSize = 28;
           let count = 0;
 
           while (queue.length && count < chunkSize) {
@@ -342,7 +638,6 @@
               queue.push({ path: path + "s", generation: generation + 1 });
               queue.push({ path: path + "d", generation: generation + 1 });
             }
-
             count++;
           }
 
@@ -352,13 +647,218 @@
           if (queue.length) {
             requestAnimationFrame(processChunk);
           } else {
-            updateStatus(`Ready • ${totalNodes.toLocaleString()} boxes • 8 generations`);
+            state.rendered = true;
+            computeDuplicates();
+            applyState();
             initPanZoom();
-            wireClicks();
+            wireInteractions();
+            updateStatus(`Ready • ${totalNodes.toLocaleString()} boxes • 8 generations`);
           }
         }
 
         processChunk();
+      }
+
+      function computeDuplicates() {
+        state.duplicateGroups.clear();
+
+        for (const node of state.nodesByPath.values()) {
+          if (!node.rabbitKey) continue;
+          if (!state.duplicateGroups.has(node.rabbitKey)) {
+            state.duplicateGroups.set(node.rabbitKey, []);
+          }
+          state.duplicateGroups.get(node.rabbitKey).push(node);
+        }
+      }
+
+      function isPathCollapsedByAncestor(path) {
+        for (const collapsedPath of state.collapsedBranches) {
+          if (collapsedPath && path.startsWith(collapsedPath) && path.length > collapsedPath.length) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function isNodeVisible(path, node) {
+        if (node.generation > state.visibleGenerations) return false;
+
+        if (state.visibleSide === "s" && path && !path.startsWith("s")) return false;
+        if (state.visibleSide === "d" && path && !path.startsWith("d")) return false;
+
+        if (isPathCollapsedByAncestor(path)) return false;
+
+        if (state.hideEmpty && node.empty && node.generation > 1) return false;
+
+        return true;
+      }
+
+      function updateCollapseSymbols() {
+        for (const [path, node] of state.nodesByPath.entries()) {
+          const symbol = node.group.querySelector('[data-collapse-symbol]');
+          if (!symbol) continue;
+          symbol.textContent = state.collapsedBranches.has(path) ? "+" : "−";
+          if (state.collapsedBranches.has(path)) {
+            node.group.classList.add("collapsed");
+          } else {
+            node.group.classList.remove("collapsed");
+          }
+        }
+      }
+
+      function getVisibleNodes() {
+        const visible = [];
+        for (const [path, node] of state.nodesByPath.entries()) {
+          if (isNodeVisible(path, node)) visible.push(node);
+        }
+        return visible;
+      }
+
+      function updateDuplicateStyles(visibleNodes) {
+        for (const node of state.nodesByPath.values()) {
+          node.group.classList.remove("duplicate");
+          node.badgeText.textContent = "";
+        }
+
+        if (!state.highlightDuplicates) return;
+
+        const visibleSet = new Set(visibleNodes.map(n => n.path));
+
+        for (const group of state.duplicateGroups.values()) {
+          const visibleGroup = group.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            for (const node of visibleGroup) {
+              node.group.classList.add("duplicate");
+              if (state.showBadges) {
+                node.badgeText.textContent = `×${visibleGroup.length}`;
+              }
+            }
+          }
+        }
+      }
+
+      function calculateCloseness(visibleNodes) {
+        const visibleSet = new Set(visibleNodes.map(n => n.path));
+        let repeatedAncestors = 0;
+        let closestGeneration = null;
+        const duplicateItems = [];
+
+        for (const group of state.duplicateGroups.values()) {
+          const visibleGroup = group.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            repeatedAncestors++;
+            const nearest = Math.min(...visibleGroup.map(node => node.generation));
+            if (closestGeneration === null || nearest < closestGeneration) {
+              closestGeneration = nearest;
+            }
+
+            const first = visibleGroup[0];
+            const labelName = first.data.name || "Unnamed";
+            const labelEar = first.data.ear || "No Ear#";
+            duplicateItems.push({
+              label: `${labelName} (${labelEar})`,
+              count: visibleGroup.length,
+              closest: nearest
+            });
+          }
+        }
+
+        duplicateItems.sort((a, b) => a.closest - b.closest || b.count - a.count || a.label.localeCompare(b.label));
+
+        let risk = "None";
+        if (closestGeneration === null) {
+          risk = "None";
+        } else if (closestGeneration <= 3) {
+          risk = "Very High";
+        } else if (closestGeneration === 4) {
+          risk = "High";
+        } else if (closestGeneration === 5) {
+          risk = "Moderate";
+        } else {
+          risk = "Low";
+        }
+
+        return {
+          repeatedAncestors,
+          closestGeneration,
+          risk,
+          duplicateItems
+        };
+      }
+
+      function updateSummary(visibleNodes) {
+        const result = calculateCloseness(visibleNodes);
+
+        summaryDuplicates.textContent = `Repeated ancestors: ${result.repeatedAncestors}`;
+        summaryClosest.textContent = `Closest repeated generation: ${result.closestGeneration || "None"}`;
+        summaryVisible.textContent = `Visible boxes: ${visibleNodes.length}`;
+        riskBadge.textContent = `Closeness: ${result.risk}`;
+
+        const riskStyles = {
+          "None":  { bg: "#eef4f6", color: "#234a57", border: "#c8d3d9" },
+          "Low":   { bg: "#eef7ee", color: "#245b2a", border: "#bfd8c2" },
+          "Moderate": { bg: "#fff8e8", color: "#8a5b00", border: "#ead39b" },
+          "High":  { bg: "#fff0e8", color: "#a34d00", border: "#e4b490" },
+          "Very High": { bg: "#fdeaea", color: "#9b1c1c", border: "#e4aaaa" }
+        };
+
+        const style = riskStyles[result.risk] || riskStyles["None"];
+        riskBadge.style.background = style.bg;
+        riskBadge.style.color = style.color;
+        riskBadge.style.borderColor = style.border;
+
+        duplicateList.innerHTML = "";
+        if (result.duplicateItems.length === 0) {
+          duplicatesHelp.textContent = "No repeated ancestors detected.";
+        } else {
+          duplicatesHelp.textContent = `${result.duplicateItems.length} repeated ancestor group(s) detected.`;
+          for (const item of result.duplicateItems.slice(0, 15)) {
+            const li = document.createElement("li");
+            li.textContent = `${item.label} • ×${item.count} • nearest gen ${item.closest}`;
+            duplicateList.appendChild(li);
+          }
+        }
+
+        summaryCard.style.display = state.showSummary ? "block" : "none";
+        duplicatesCard.style.display = state.showSummary ? "block" : "block";
+      }
+
+      function updateVisibility() {
+        let visibleCount = 0;
+
+        for (const [path, node] of state.nodesByPath.entries()) {
+          const visible = isNodeVisible(path, node);
+          node.group.classList.toggle("hidden-node", !visible);
+          if (visible) visibleCount++;
+        }
+
+        for (const [path, line] of state.linesByPath.entries()) {
+          const childNode = state.nodesByPath.get(path);
+          const parentPath = path.slice(0, -1);
+          const parentNode = state.nodesByPath.get(parentPath);
+          const showLine = !!childNode && !!parentNode &&
+            isNodeVisible(path, childNode) &&
+            isNodeVisible(parentPath, parentNode);
+
+          line.classList.toggle("hidden", !showLine);
+        }
+
+        return visibleCount;
+      }
+
+      function applyState() {
+        if (!state.rendered) return;
+
+        document.body.classList.toggle("dim-empty", state.dimEmpty);
+        updateCollapseSymbols();
+
+        const visibleCount = updateVisibility();
+        const visibleNodes = getVisibleNodes();
+
+        updateDuplicateStyles(visibleNodes);
+        updateSummary(visibleNodes);
+
+        updateStatus(`Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"}`);
       }
 
       let panZoom = null;
@@ -384,25 +884,103 @@
         window.panZoomInstance = panZoom;
       }
 
-      function wireClicks() {
-        nodesLayer.addEventListener("click", (e) => {
-          const rect = e.target.closest(".box");
-          if (!rect) return;
+      function toggleCollapse(path) {
+        if (state.collapsedBranches.has(path)) {
+          state.collapsedBranches.delete(path);
+        } else {
+          state.collapsedBranches.add(path);
+        }
+        applyState();
+      }
 
-          const slot = rect.getAttribute("data-slot") || "";
-          rect.setAttribute("stroke", "#00aaff");
-          setTimeout(() => rect.setAttribute("stroke", "#000"), 250);
+      function wireInteractions() {
+        nodesLayer.addEventListener("click", (e) => {
+          const collapsePath = e.target.getAttribute("data-collapse-path");
+          if (collapsePath !== null) {
+            e.stopPropagation();
+            toggleCollapse(collapsePath);
+            return;
+          }
+
+          const box = e.target.closest(".box");
+          if (!box) return;
+
+          const slot = box.getAttribute("data-slot") || "";
+          box.setAttribute("stroke", "#00aaff");
+          setTimeout(() => {
+            box.setAttribute("stroke", "");
+          }, 250);
 
           window.parent.postMessage({ pedigreeEdit: slot }, "*");
         });
-      }
 
-      document.getElementById("reset-view-btn").addEventListener("click", () => {
-        if (!panZoom) return;
-        panZoom.resetZoom();
-        panZoom.center();
-        panZoom.fit();
-      });
+        document.querySelectorAll(".gen-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".gen-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            state.visibleGenerations = Number(btn.dataset.gen);
+            applyState();
+          });
+        });
+
+        document.querySelectorAll(".side-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".side-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            state.visibleSide = btn.dataset.side;
+            applyState();
+          });
+        });
+
+        document.getElementById("toggle-duplicates").addEventListener("change", (e) => {
+          state.highlightDuplicates = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-summary").addEventListener("change", (e) => {
+          state.showSummary = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-dim-empty").addEventListener("change", (e) => {
+          state.dimEmpty = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-hide-empty").addEventListener("change", (e) => {
+          state.hideEmpty = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-badges").addEventListener("change", (e) => {
+          state.showBadges = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("expand-all-btn").addEventListener("click", () => {
+          state.collapsedBranches.clear();
+          applyState();
+        });
+
+        document.getElementById("collapse-sire-btn").addEventListener("click", () => {
+          state.collapsedBranches.add("s");
+          state.collapsedBranches.delete("d");
+          applyState();
+        });
+
+        document.getElementById("collapse-dam-btn").addEventListener("click", () => {
+          state.collapsedBranches.add("d");
+          state.collapsedBranches.delete("s");
+          applyState();
+        });
+
+        document.getElementById("reset-view-btn").addEventListener("click", () => {
+          if (!panZoom) return;
+          panZoom.resetZoom();
+          panZoom.center();
+          panZoom.fit();
+        });
+      }
 
       renderPedigree();
     })();
