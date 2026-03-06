@@ -55,16 +55,14 @@
 
     .male { fill: #cce5ff; }
     .female { fill: #f8d7da; }
-    .unknown { fill: #ffffff; }
 
     .empty-box {
-      fill: #f7f7f7 !important;
       stroke: #bdbdbd !important;
       stroke-dasharray: 4 3;
     }
 
     .dim-empty .node.empty .box {
-      opacity: 0.35;
+      opacity: 0.45;
     }
 
     .duplicate .box {
@@ -117,6 +115,21 @@
       pointer-events: none;
     }
 
+    #toggle-panel-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 11;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 7px;
+      background: #234a57;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
     #controls-panel {
       position: absolute;
       top: 10px;
@@ -128,14 +141,44 @@
       border: 1px solid #d8d8d8;
       border-radius: 10px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 10;
+      z-index: 12;
       padding: 12px 12px 10px 12px;
       color: #234a57;
+      transition: transform 0.22s ease, opacity 0.22s ease;
+      transform: translateX(0);
+      opacity: 1;
     }
 
-    #controls-panel h2 {
-      margin: 0 0 10px 0;
+    #controls-panel.hidden {
+      transform: translateX(-110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #panel-header h2 {
+      margin: 0;
       font-size: 18px;
+    }
+
+    #close-panel-btn {
+      border: 1px solid #b9c4ca;
+      background: #fff;
+      color: #234a57;
+      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      flex: 0 0 auto;
     }
 
     #controls-panel h3 {
@@ -255,8 +298,13 @@
 </head>
 <body>
   <div id="pedigree-container">
-    <div id="controls-panel">
-      <h2>Pedigree Explorer</h2>
+    <button id="toggle-panel-btn">Tools</button>
+
+    <div id="controls-panel" class="hidden">
+      <div id="panel-header">
+        <h2>Pedigree Explorer</h2>
+        <button id="close-panel-btn" type="button">✕</button>
+      </div>
 
       <h3>Visible Generations</h3>
       <div class="control-row">
@@ -358,7 +406,8 @@
         if (s.startsWith("m") || s === "buck" || s === "sire") return "male";
         if (s.startsWith("f") || s === "doe" || s === "dam") return "female";
       }
-      if (!path) return "unknown";
+
+      if (path === "") return "male";
       return path.endsWith("s") ? "male" : "female";
     }
 
@@ -576,7 +625,7 @@
         appendText(group, x + 8, y + 80, "box-text", `Reg#: ${data.reg || ""}`);
         appendText(group, x + 155, y + 80, "box-text", `GC#: ${data.gc || ""}`);
 
-        appendText(group, x + 8, y + 95, "box-text", `Custom: ${data.custom || ""}`);
+        appendText(group, x + 8, y + 95, "box-text", data.custom || "");
         appendText(group, x + 8, y + 112, "box-text", data.win1 ? `Win1: ${data.win1}` : "");
         appendText(group, x + 8, y + 129, "box-text", data.win2 ? `Win2: ${data.win2}` : "");
         appendText(group, x + 8, y + 146, "box-text", data.win3 ? `Win3: ${data.win3}` : "");
@@ -795,10 +844,10 @@
         riskBadge.textContent = `Closeness: ${result.risk}`;
 
         const riskStyles = {
-          "None":  { bg: "#eef4f6", color: "#234a57", border: "#c8d3d9" },
-          "Low":   { bg: "#eef7ee", color: "#245b2a", border: "#bfd8c2" },
+          "None": { bg: "#eef4f6", color: "#234a57", border: "#c8d3d9" },
+          "Low": { bg: "#eef7ee", color: "#245b2a", border: "#bfd8c2" },
           "Moderate": { bg: "#fff8e8", color: "#8a5b00", border: "#ead39b" },
-          "High":  { bg: "#fff0e8", color: "#a34d00", border: "#e4b490" },
+          "High": { bg: "#fff0e8", color: "#a34d00", border: "#e4b490" },
           "Very High": { bg: "#fdeaea", color: "#9b1c1c", border: "#e4aaaa" }
         };
 
@@ -819,8 +868,9 @@
           }
         }
 
-        summaryCard.style.display = state.showSummary ? "block" : "none";
-        duplicatesCard.style.display = state.showSummary ? "block" : "block";
+        const summaryDisplay = state.showSummary ? "block" : "none";
+        summaryCard.style.display = summaryDisplay;
+        duplicatesCard.style.display = summaryDisplay;
       }
 
       function updateVisibility() {
@@ -894,6 +944,18 @@
       }
 
       function wireInteractions() {
+        const controlsPanel = document.getElementById("controls-panel");
+        const togglePanelBtn = document.getElementById("toggle-panel-btn");
+        const closePanelBtn = document.getElementById("close-panel-btn");
+
+        togglePanelBtn.addEventListener("click", () => {
+          controlsPanel.classList.remove("hidden");
+        });
+
+        closePanelBtn.addEventListener("click", () => {
+          controlsPanel.classList.add("hidden");
+        });
+
         nodesLayer.addEventListener("click", (e) => {
           const collapsePath = e.target.getAttribute("data-collapse-path");
           if (collapsePath !== null) {
