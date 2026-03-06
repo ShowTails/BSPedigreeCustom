@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>8 Generation Rabbit Pedigree</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: white;
+      font-family: Arial, sans-serif;
+    }
+
+    #pedigree-container {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: white;
+      position: relative;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: white;
+      touch-action: none;
+      -ms-touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .line {
+      stroke: #333;
+      stroke-width: 1;
+      fill: none;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .box {
+      stroke: #000;
+      stroke-width: 1.25;
+      rx: 10;
+      ry: 10;
+      cursor: pointer;
+    }
+
+    .male {
+      fill: #cce5ff;
+    }
+
+    .female {
+      fill: #f8d7da;
+    }
+
+    .unknown {
+      fill: #fff;
+    }
+
+    .box-name {
+      font-size: 13px;
+      font-weight: bold;
+      fill: #000;
+      pointer-events: none;
+    }
+
+    .box-text {
+      font-size: 11px;
+      fill: #000;
+      pointer-events: none;
+    }
+
+    #reset-view-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 5;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background: #4a4a4a;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #status-badge {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 5;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid #d8d8d8;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #234a57;
+    }
+  </style>
+</head>
+<body>
+  <div id="pedigree-container">
+    <div id="status-badge">Loading 8 generation pedigree…</div>
+    <button id="reset-view-btn">Reset View</button>
+
+    <svg id="pedigree-svg" viewBox="0 0 5000 9000" preserveAspectRatio="xMidYMid meet">
+      <g id="lines-layer"></g>
+      <g id="nodes-layer"></g>
+    </svg>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+  <script>
+    function getParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name) || "";
+    }
+
+    function escapeText(value) {
+      return String(value ?? "");
+    }
+
+    function createSvgEl(tag, attrs = {}) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const [key, value] of Object.entries(attrs)) {
+        el.setAttribute(key, value);
+      }
+      return el;
+    }
+
+    function inferSexClass(path, explicitSex) {
+      if (explicitSex) {
+        const s = explicitSex.toLowerCase();
+        if (s.startsWith("m") || s === "buck" || s === "sire") return "male";
+        if (s.startsWith("f") || s === "doe" || s === "dam") return "female";
+      }
+      if (!path) return "unknown";
+      return path.endsWith("s") ? "male" : "female";
+    }
+
+    function getNameParam(path) {
+      if (path === "") return "name";
+      const parentPath = path.slice(0, -1);
+      const role = path.endsWith("s") ? "sire" : "dam";
+      return parentPath + role;
+    }
+
+    function getFieldValue(path, field) {
+      if (path === "") {
+        const rootMap = {
+          rabbitry: "crabbitry",
+          name: "name",
+          color: "color",
+          ear: "ear number",
+          weight: "weight",
+          sex: "sex",
+          legs: "legs",
+          reg: "reg",
+          gc: "gc",
+          custom: "custom",
+          win1: "win1",
+          win2: "win2",
+          win3: "win3"
+        };
+        return getParam(rootMap[field] || "");
+      }
+
+      const prefix = path;
+
+      const nonRootMap = {
+        rabbitry: prefix + "rabbitry",
+        name: getNameParam(path),
+        color: prefix + "color",
+        ear: prefix + "ear",
+        weight: prefix + "weight",
+        sex: prefix + "sex",
+        legs: prefix + "legs",
+        reg: prefix + "reg",
+        gc: prefix + "gc",
+        custom: prefix + "custom",
+        win1: prefix + "win1",
+        win2: prefix + "win2",
+        win3: prefix + "win3"
+      };
+
+      return getParam(nonRootMap[field] || "");
+    }
+
+    function getRabbitData(path) {
+      return {
+        rabbitry: escapeText(getFieldValue(path, "rabbitry")),
+        name: escapeText(getFieldValue(path, "name")),
+        color: escapeText(getFieldValue(path, "color")),
+        ear: escapeText(getFieldValue(path, "ear")),
+        weight: escapeText(getFieldValue(path, "weight")),
+        sex: escapeText(getFieldValue(path, "sex")),
+        legs: escapeText(getFieldValue(path, "legs")),
+        reg: escapeText(getFieldValue(path, "reg")),
+        gc: escapeText(getFieldValue(path, "gc")),
+        custom: escapeText(getFieldValue(path, "custom")),
+        win1: escapeText(getFieldValue(path, "win1")),
+        win2: escapeText(getFieldValue(path, "win2")),
+        win3: escapeText(getFieldValue(path, "win3"))
+      };
+    }
+
+    (function () {
+      const MAX_GENERATIONS = 8;       // subject included
+      const BOX_WIDTH = 285;
+      const BOX_HEIGHT = 158;
+      const H_SPACING = 360;
+      const LEFT_MARGIN = 40;
+      const TOP_MARGIN = 30;
+      const ROW_STEP = 185;
+
+      const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
+      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 60;
+      const canvasHeight = TOP_MARGIN + (totalLeaves * ROW_STEP) + 80;
+
+      const svg = document.getElementById("pedigree-svg");
+      const linesLayer = document.getElementById("lines-layer");
+      const nodesLayer = document.getElementById("nodes-layer");
+      const statusBadge = document.getElementById("status-badge");
+
+      svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+
+      function updateStatus(text) {
+        statusBadge.textContent = text;
+      }
+
+      function getCenterYForPath(path) {
+        let start = 0;
+        let end = totalLeaves - 1;
+
+        for (const char of path) {
+          const mid = Math.floor((start + end) / 2);
+          if (char === "s") {
+            end = mid;
+          } else {
+            start = mid + 1;
+          }
+        }
+
+        const centerIndex = (start + end) / 2;
+        return TOP_MARGIN + centerIndex * ROW_STEP;
+      }
+
+      function drawLine(parentX, parentY, childX, childY) {
+        const line = createSvgEl("line", {
+          x1: parentX,
+          y1: parentY,
+          x2: childX,
+          y2: childY,
+          class: "line"
+        });
+        linesLayer.appendChild(line);
+      }
+
+      function appendText(group, x, y, className, value) {
+        const t = createSvgEl("text", {
+          x,
+          y,
+          class: className
+        });
+        t.textContent = value || "";
+        group.appendChild(t);
+      }
+
+      function drawNode(path, generation) {
+        const x = LEFT_MARGIN + generation * H_SPACING;
+        const yCenter = getCenterYForPath(path);
+        const y = yCenter - (BOX_HEIGHT / 2);
+
+        const data = getRabbitData(path);
+        const sexClass = inferSexClass(path, data.sex);
+
+        const group = createSvgEl("g", {
+          "data-path": path,
+          "data-generation": String(generation + 1)
+        });
+
+        const rect = createSvgEl("rect", {
+          x,
+          y,
+          width: BOX_WIDTH,
+          height: BOX_HEIGHT,
+          class: `box ${sexClass}`,
+          "data-slot": path
+        });
+
+        group.appendChild(rect);
+
+        const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
+        appendText(group, x + 8, y + 18, "box-name", title || "—");
+
+        appendText(group, x + 8, y + 35, "box-text", `Color: ${data.color || ""}`);
+        appendText(group, x + 8, y + 50, "box-text", `Ear#: ${data.ear || ""}`);
+        appendText(group, x + 150, y + 50, "box-text", `Weight: ${data.weight || ""}`);
+
+        appendText(group, x + 8, y + 65, "box-text", `Sex: ${data.sex || ""}`);
+        appendText(group, x + 150, y + 65, "box-text", `Legs: ${data.legs || ""}`);
+
+        appendText(group, x + 8, y + 80, "box-text", `Reg#: ${data.reg || ""}`);
+        appendText(group, x + 150, y + 80, "box-text", `GC#: ${data.gc || ""}`);
+
+        appendText(group, x + 8, y + 95, "box-text", `Custom: ${data.custom || ""}`);
+        appendText(group, x + 8, y + 112, "box-text", data.win1 ? `Win1: ${data.win1}` : "");
+        appendText(group, x + 8, y + 129, "box-text", data.win2 ? `Win2: ${data.win2}` : "");
+        appendText(group, x + 8, y + 146, "box-text", data.win3 ? `Win3: ${data.win3}` : "");
+
+        nodesLayer.appendChild(group);
+
+        if (generation > 0) {
+          const parentPath = path.slice(0, -1);
+          const parentX = LEFT_MARGIN + ((generation - 1) * H_SPACING) + BOX_WIDTH;
+          const parentY = getCenterYForPath(parentPath);
+          drawLine(parentX, parentY, x, yCenter);
+        }
+      }
+
+      function renderPedigree() {
+        const totalNodes = Math.pow(2, MAX_GENERATIONS) - 1;
+        const queue = [{ path: "", generation: 0 }];
+
+        updateStatus(`Rendering ${totalNodes.toLocaleString()} boxes…`);
+
+        function processChunk() {
+          const chunkSize = 30;
+          let count = 0;
+
+          while (queue.length && count < chunkSize) {
+            const { path, generation } = queue.shift();
+            drawNode(path, generation);
+
+            if (generation + 1 < MAX_GENERATIONS) {
+              queue.push({ path: path + "s", generation: generation + 1 });
+              queue.push({ path: path + "d", generation: generation + 1 });
+            }
+
+            count++;
+          }
+
+          const rendered = nodesLayer.childNodes.length;
+          updateStatus(`Rendered ${rendered.toLocaleString()} / ${totalNodes.toLocaleString()} boxes`);
+
+          if (queue.length) {
+            requestAnimationFrame(processChunk);
+          } else {
+            updateStatus(`Ready • ${totalNodes.toLocaleString()} boxes • 8 generations`);
+            initPanZoom();
+            wireClicks();
+          }
+        }
+
+        processChunk();
+      }
+
+      let panZoom = null;
+
+      function initPanZoom() {
+        if (typeof window.svgPanZoom !== "function") {
+          console.error("svg-pan-zoom failed to load");
+          return;
+        }
+
+        panZoom = svgPanZoom(svg, {
+          panEnabled: true,
+          zoomEnabled: true,
+          mouseWheelZoomEnabled: true,
+          controlIconsEnabled: false,
+          fit: true,
+          center: true,
+          minZoom: 0.04,
+          maxZoom: 20,
+          dblClickZoomEnabled: true
+        });
+
+        window.panZoomInstance = panZoom;
+      }
+
+      function wireClicks() {
+        nodesLayer.addEventListener("click", (e) => {
+          const rect = e.target.closest(".box");
+          if (!rect) return;
+
+          const slot = rect.getAttribute("data-slot") || "";
+          rect.setAttribute("stroke", "#00aaff");
+          setTimeout(() => rect.setAttribute("stroke", "#000"), 250);
+
+          window.parent.postMessage({ pedigreeEdit: slot }, "*");
+        });
+      }
+
+      document.getElementById("reset-view-btn").addEventListener("click", () => {
+        if (!panZoom) return;
+        panZoom.resetZoom();
+        panZoom.center();
+        panZoom.fit();
+      });
+
+      renderPedigree();
+    })();
+  </script>
+</body>
+</html>
