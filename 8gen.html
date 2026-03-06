@@ -80,14 +80,14 @@
     }
 
     .box-name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       fill: #000;
       pointer-events: none;
     }
 
     .box-text {
-      font-size: 11px;
+      font-size: 10px;
       fill: #000;
       pointer-events: none;
     }
@@ -367,7 +367,7 @@
     <button id="reset-view-btn">Reset View</button>
     <div id="status-badge">Loading pedigree…</div>
 
-    <svg id="pedigree-svg" viewBox="0 0 3200 3000" preserveAspectRatio="xMidYMid meet">
+    <svg id="pedigree-svg" viewBox="0 0 3400 15000" preserveAspectRatio="xMidYMid meet">
       <g id="lines-layer"></g>
       <g id="nodes-layer"></g>
     </svg>
@@ -406,7 +406,6 @@
         if (s.startsWith("m") || s === "buck" || s === "sire") return "male";
         if (s.startsWith("f") || s === "doe" || s === "dam") return "female";
       }
-
       if (path === "") return "male";
       return path.endsWith("s") ? "male" : "female";
     }
@@ -492,15 +491,11 @@
         .filter(Boolean);
     }
 
-    function appendMultilineText(group, x, y, className, value, lineHeight = 13) {
+    function appendMultilineText(group, x, y, className, value, lineHeight = 12) {
       const lines = splitPedigreeLines(value);
       if (!lines.length) return null;
 
-      const textEl = createSvgEl("text", {
-        x,
-        y,
-        class: className
-      });
+      const textEl = createSvgEl("text", { x, y, class: className });
 
       lines.forEach((line, index) => {
         const tspan = createSvgEl("tspan", {
@@ -517,15 +512,16 @@
 
     (function () {
       const MAX_GENERATIONS = 8;
-      const BOX_WIDTH = 290;
-      const BOX_HEIGHT = 200;
-      const H_SPACING = 315;
+      const BOX_WIDTH = 285;
+      const BOX_HEIGHT = 168;
+      const H_SPACING = 320;
       const LEFT_MARGIN = 40;
-      const ROOT_Y = 1500;
-      const BASE_GAP = 34;
-      const GAP_SCALE = 1.33;
-      const CANVAS_HEIGHT = 3000;
-      const CANVAS_WIDTH = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
+      const TOP_MARGIN = 30;
+      const LEAF_STEP = 190;
+
+      const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
+      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
+      const canvasHeight = TOP_MARGIN + (totalLeaves * LEAF_STEP) + 80;
 
       const state = {
         visibleGenerations: 8,
@@ -556,28 +552,27 @@
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
 
-      svg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
+      svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
 
       function updateStatus(text) {
         statusBadge.textContent = text;
       }
 
       function getCenterYForPath(path) {
-        let y = ROOT_Y;
+        let start = 0;
+        let end = totalLeaves - 1;
 
-        for (let i = 0; i < path.length; i++) {
-          const char = path[i];
-          const remainingDepth = MAX_GENERATIONS - (i + 1);
-          const gap = BASE_GAP * Math.pow(GAP_SCALE, remainingDepth);
-
+        for (const char of path) {
+          const mid = Math.floor((start + end) / 2);
           if (char === "s") {
-            y -= gap;
+            end = mid;
           } else {
-            y += gap;
+            start = mid + 1;
           }
         }
 
-        return y;
+        const centerIndex = (start + end) / 2;
+        return TOP_MARGIN + centerIndex * LEAF_STEP;
       }
 
       function drawLine(path, parentPath, parentX, parentY, childX, childY) {
@@ -613,6 +608,7 @@
         const x = LEFT_MARGIN + generation * H_SPACING;
         const yCenter = getCenterYForPath(path);
         const y = yCenter - (BOX_HEIGHT / 2);
+
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
         const empty = isEmptyRabbit(data);
@@ -647,20 +643,20 @@
         const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
         appendText(group, x + 8, y + 18, "box-name", title || "—");
 
-        appendText(group, x + 8, y + 35, "box-text", `Color: ${data.color || ""}`);
-        appendText(group, x + 8, y + 50, "box-text", `Ear#: ${data.ear || ""}`);
-        appendText(group, x + 155, y + 50, "box-text", `Weight: ${data.weight || ""}`);
+        appendText(group, x + 8, y + 34, "box-text", `Color: ${data.color || ""}`);
+        appendText(group, x + 8, y + 48, "box-text", `Ear#: ${data.ear || ""}`);
+        appendText(group, x + 150, y + 48, "box-text", `Weight: ${data.weight || ""}`);
 
-        appendText(group, x + 8, y + 65, "box-text", `Sex: ${data.sex || ""}`);
-        appendText(group, x + 155, y + 65, "box-text", `Legs: ${data.legs || ""}`);
+        appendText(group, x + 8, y + 62, "box-text", `Sex: ${data.sex || ""}`);
+        appendText(group, x + 150, y + 62, "box-text", `Legs: ${data.legs || ""}`);
 
-        appendText(group, x + 8, y + 80, "box-text", `Reg#: ${data.reg || ""}`);
-        appendText(group, x + 155, y + 80, "box-text", `GC#: ${data.gc || ""}`);
+        appendText(group, x + 8, y + 76, "box-text", `Reg#: ${data.reg || ""}`);
+        appendText(group, x + 150, y + 76, "box-text", `GC#: ${data.gc || ""}`);
 
-        appendText(group, x + 8, y + 95, "box-text", data.custom || "");
-        appendMultilineText(group, x + 8, y + 112, "box-text", data.win1 || "", 13);
-        appendMultilineText(group, x + 8, y + 138, "box-text", data.win2 || "", 13);
-        appendMultilineText(group, x + 8, y + 164, "box-text", data.win3 || "", 13);
+        appendText(group, x + 8, y + 90, "box-text", data.custom || "");
+        appendMultilineText(group, x + 8, y + 106, "box-text", data.win1 || "", 12);
+        appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", 12);
+        appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", 12);
 
         if (generation + 1 < MAX_GENERATIONS) {
           const btnCircle = createSvgEl("circle", {
@@ -719,6 +715,7 @@
               queue.push({ path: path + "s", generation: generation + 1 });
               queue.push({ path: path + "d", generation: generation + 1 });
             }
+
             count++;
           }
 
@@ -940,11 +937,7 @@
         updateDuplicateStyles(visibleNodes);
         updateSummary(visibleNodes);
 
-        updateStatus(
-          `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
-            state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"
-          }`
-        );
+        updateStatus(`Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"}`);
       }
 
       let panZoom = null;
