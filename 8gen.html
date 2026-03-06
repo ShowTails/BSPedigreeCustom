@@ -367,7 +367,7 @@
     <button id="reset-view-btn">Reset View</button>
     <div id="status-badge">Loading pedigree…</div>
 
-    <svg id="pedigree-svg" viewBox="0 0 5000 9000" preserveAspectRatio="xMidYMid meet">
+    <svg id="pedigree-svg" viewBox="0 0 3200 3000" preserveAspectRatio="xMidYMid meet">
       <g id="lines-layer"></g>
       <g id="nodes-layer"></g>
     </svg>
@@ -483,18 +483,49 @@
       return `${name}||${ear}`;
     }
 
+    function splitPedigreeLines(value) {
+      return String(value || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean);
+    }
+
+    function appendMultilineText(group, x, y, className, value, lineHeight = 13) {
+      const lines = splitPedigreeLines(value);
+      if (!lines.length) return null;
+
+      const textEl = createSvgEl("text", {
+        x,
+        y,
+        class: className
+      });
+
+      lines.forEach((line, index) => {
+        const tspan = createSvgEl("tspan", {
+          x,
+          dy: index === 0 ? 0 : lineHeight
+        });
+        tspan.textContent = line;
+        textEl.appendChild(tspan);
+      });
+
+      group.appendChild(textEl);
+      return textEl;
+    }
+
     (function () {
       const MAX_GENERATIONS = 8;
       const BOX_WIDTH = 290;
-      const BOX_HEIGHT = 158;
-      const H_SPACING = 370;
+      const BOX_HEIGHT = 200;
+      const H_SPACING = 315;
       const LEFT_MARGIN = 40;
-      const TOP_MARGIN = 30;
-      const ROW_STEP = 185;
-
-      const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
-      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
-      const canvasHeight = TOP_MARGIN + (totalLeaves * ROW_STEP) + 80;
+      const ROOT_Y = 1500;
+      const BASE_GAP = 34;
+      const GAP_SCALE = 1.33;
+      const CANVAS_HEIGHT = 3000;
+      const CANVAS_WIDTH = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
 
       const state = {
         visibleGenerations: 8,
@@ -525,27 +556,28 @@
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
 
-      svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+      svg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
 
       function updateStatus(text) {
         statusBadge.textContent = text;
       }
 
       function getCenterYForPath(path) {
-        let start = 0;
-        let end = totalLeaves - 1;
+        let y = ROOT_Y;
 
-        for (const char of path) {
-          const mid = Math.floor((start + end) / 2);
+        for (let i = 0; i < path.length; i++) {
+          const char = path[i];
+          const remainingDepth = MAX_GENERATIONS - (i + 1);
+          const gap = BASE_GAP * Math.pow(GAP_SCALE, remainingDepth);
+
           if (char === "s") {
-            end = mid;
+            y -= gap;
           } else {
-            start = mid + 1;
+            y += gap;
           }
         }
 
-        const centerIndex = (start + end) / 2;
-        return TOP_MARGIN + centerIndex * ROW_STEP;
+        return y;
       }
 
       function drawLine(path, parentPath, parentX, parentY, childX, childY) {
@@ -626,9 +658,9 @@
         appendText(group, x + 155, y + 80, "box-text", `GC#: ${data.gc || ""}`);
 
         appendText(group, x + 8, y + 95, "box-text", data.custom || "");
-        appendText(group, x + 8, y + 112, "box-text", data.win1 ? `Win1: ${data.win1}` : "");
-        appendText(group, x + 8, y + 129, "box-text", data.win2 ? `Win2: ${data.win2}` : "");
-        appendText(group, x + 8, y + 146, "box-text", data.win3 ? `Win3: ${data.win3}` : "");
+        appendMultilineText(group, x + 8, y + 112, "box-text", data.win1 || "", 13);
+        appendMultilineText(group, x + 8, y + 138, "box-text", data.win2 || "", 13);
+        appendMultilineText(group, x + 8, y + 164, "box-text", data.win3 || "", 13);
 
         if (generation + 1 < MAX_GENERATIONS) {
           const btnCircle = createSvgEl("circle", {
@@ -908,7 +940,11 @@
         updateDuplicateStyles(visibleNodes);
         updateSummary(visibleNodes);
 
-        updateStatus(`Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"}`);
+        updateStatus(
+          `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
+            state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"
+          }`
+        );
       }
 
       let panZoom = null;
