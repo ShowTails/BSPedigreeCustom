@@ -66,11 +66,6 @@
       opacity: 0.45;
     }
 
-    .duplicate .box {
-      stroke: #ff8c00 !important;
-      stroke-width: 2.4 !important;
-    }
-
     .collapsed > .box {
       stroke: #2f6fed !important;
       stroke-width: 2 !important;
@@ -163,14 +158,12 @@
     }
 
     .box-name {
-      font-size: 12px;
       font-weight: bold;
       fill: #000;
       pointer-events: none;
     }
 
     .box-text {
-      font-size: 10px;
       fill: #000;
       pointer-events: none;
     }
@@ -178,7 +171,7 @@
     .box-badge {
       font-size: 10px;
       font-weight: bold;
-      fill: #ff8c00;
+      fill: #234a57;
       pointer-events: none;
     }
 
@@ -548,10 +541,6 @@
 
       <h3>Tools</h3>
       <div class="toggle">
-        <label for="toggle-duplicates">Highlight duplicate ancestors</label>
-        <input id="toggle-duplicates" type="checkbox" checked />
-      </div>
-      <div class="toggle">
         <label for="toggle-summary">Show closeness summary</label>
         <input id="toggle-summary" type="checkbox" checked />
       </div>
@@ -564,7 +553,7 @@
         <input id="toggle-hide-empty" type="checkbox" />
       </div>
       <div class="toggle">
-        <label for="toggle-badges">Show duplicate count badges</label>
+        <label for="toggle-badges">Show repeated count badges</label>
         <input id="toggle-badges" type="checkbox" checked />
       </div>
 
@@ -740,11 +729,11 @@
         .filter(Boolean);
     }
 
-    function appendMultilineText(group, x, y, className, value, lineHeight = 12) {
+    function appendMultilineText(group, x, y, className, value, lineHeight = 12, extraAttrs = {}) {
       const lines = splitPedigreeLines(value);
       if (!lines.length) return null;
 
-      const textEl = createSvgEl("text", { x, y, class: className });
+      const textEl = createSvgEl("text", Object.assign({ x, y, class: className }, extraAttrs));
 
       lines.forEach((line, index) => {
         const tspan = createSvgEl("tspan", {
@@ -822,51 +811,50 @@
 
     (function () {
       const MAX_GENERATIONS = 8;
-      const BOX_WIDTH = 285;
-      const BOX_HEIGHT = 168;
+      const BASE_BOX_WIDTH = 285;
+      const BASE_BOX_HEIGHT = 168;
+
+      const CENTER_X = 4300;
+      const CENTER_Y = 2400;
+      const CANVAS_WIDTH = 8600;
+      const CANVAS_HEIGHT = 4800;
 
       const generationOffsets = {
         1: 0,
-        2: 360,
-        3: 760,
-        4: 1210,
-        5: 1710,
-        6: 2260,
-        7: 2860,
-        8: 3510
+        2: 520,
+        3: 1060,
+        4: 1600,
+        5: 2140,
+        6: 2680,
+        7: 3220,
+        8: 3760
       };
 
       const generationHalfSpans = {
         1: 0,
         2: 0,
-        3: 210,
-        4: 420,
-        5: 660,
-        6: 930,
-        7: 1220,
-        8: 1520
+        3: 300,
+        4: 700,
+        5: 1120,
+        6: 1540,
+        7: 1900,
+        8: 2200
       };
 
       const generationScale = {
-        1: 1,
-        2: 1,
-        3: 0.90,
-        4: 0.80,
-        5: 0.72,
-        6: 0.64,
-        7: 0.58,
-        8: 0.52
+        1: 1.00,
+        2: 0.98,
+        3: 0.93,
+        4: 0.87,
+        5: 0.80,
+        6: 0.73,
+        7: 0.66,
+        8: 0.60
       };
-
-      const CENTER_X = 4200;
-      const CENTER_Y = 2200;
-      const CANVAS_WIDTH = 8400;
-      const CANVAS_HEIGHT = 4400;
 
       const state = {
         visibleGenerations: 8,
         visibleSide: "all",
-        highlightDuplicates: true,
         showSummary: true,
         dimEmpty: true,
         hideEmpty: false,
@@ -924,22 +912,26 @@
         return path[0] === "s" ? "s" : "d";
       }
 
+      function getOrderWithinSide(path) {
+        const branchBits = path.slice(1);
+        if (!branchBits) return 0;
+        return parseInt(branchBits.replace(/s/g, "0").replace(/d/g, "1"), 2);
+      }
+
       function getNodePosition(path) {
         const generation = path.length + 1;
 
         if (generation === 1) {
           return {
-            x: CENTER_X - (BOX_WIDTH / 2),
-            yCenter: CENTER_Y,
-            y: CENTER_Y - (BOX_HEIGHT / 2)
+            xCenter: CENTER_X,
+            yCenter: CENTER_Y
           };
         }
 
         const side = getSide(path);
         const depthOnSide = generation - 1;
         const countOnSide = Math.pow(2, Math.max(0, depthOnSide - 1));
-        const branchBits = path.slice(1);
-        const order = branchBits ? parseInt(branchBits.replace(/s/g, "0").replace(/d/g, "1"), 2) : 0;
+        const order = getOrderWithinSide(path);
         const halfSpan = generationHalfSpans[generation] || 0;
 
         let normalized = 0;
@@ -947,43 +939,42 @@
           normalized = (order / (countOnSide - 1)) * 2 - 1;
         }
 
-        let yCenter = CENTER_Y + (normalized * halfSpan);
-
-        if (generation === 2) {
-          yCenter = CENTER_Y;
-        }
-
+        const yCenter = CENTER_Y + (normalized * halfSpan);
         const offset = generationOffsets[generation] || 0;
-        let xCenter = CENTER_X;
-        if (side === "s") xCenter = CENTER_X - offset;
-        if (side === "d") xCenter = CENTER_X + offset;
+        const xCenter = side === "s" ? CENTER_X - offset : CENTER_X + offset;
 
-        return {
-          x: xCenter - (BOX_WIDTH / 2),
-          yCenter,
-          y: yCenter - (BOX_HEIGHT / 2)
-        };
+        return { xCenter, yCenter };
       }
 
-      function getConnectorAnchor(node, direction) {
-        if (direction === "left") {
-          return { x: node.x - 10, y: node.yCenter };
-        }
-        return { x: node.x + BOX_WIDTH + 10, y: node.yCenter };
+      function getBoxMetrics(generation) {
+        const scale = generationScale[generation] || 0.60;
+        return {
+          width: BASE_BOX_WIDTH * scale,
+          height: BASE_BOX_HEIGHT * scale,
+          nameSize: Math.max(8, 12 * scale),
+          textSize: Math.max(7, 10 * scale),
+          lineHeight: Math.max(9, 12 * scale)
+        };
       }
 
       function drawPedigreeLine(path, parentNode, childNode) {
         const childSide = getSide(path);
-        const parentOutX = childSide === "s" ? parentNode.x : parentNode.x + BOX_WIDTH;
-        const childInX = childSide === "s" ? childNode.x + BOX_WIDTH : childNode.x;
 
-        const bend = Math.abs(childInX - parentOutX) * 0.35;
-        const c1x = childSide === "s" ? parentOutX - bend : parentOutX + bend;
-        const c2x = childSide === "s" ? childInX + bend : childInX - bend;
+        const parentAnchorX = childSide === "s"
+          ? parentNode.x - 4
+          : parentNode.x + parentNode.width + 4;
+
+        const childAnchorX = childSide === "s"
+          ? childNode.x + childNode.width + 4
+          : childNode.x - 4;
+
+        const midX = (parentAnchorX + childAnchorX) / 2;
 
         const line = createSvgEl("path", {
-          d: `M ${parentOutX} ${parentNode.yCenter}
-              C ${c1x} ${parentNode.yCenter}, ${c2x} ${childNode.yCenter}, ${childInX} ${childNode.yCenter}`,
+          d: `M ${parentAnchorX} ${parentNode.yCenter}
+              L ${midX} ${parentNode.yCenter}
+              L ${midX} ${childNode.yCenter}
+              L ${childAnchorX} ${childNode.yCenter}`,
           class: "line",
           "data-path": path,
           "data-parent": path.slice(0, -1)
@@ -1008,24 +999,13 @@
         ].some(Boolean);
       }
 
-      function getBoxMetrics(generation) {
-        const scale = generationScale[generation] || 0.52;
-        return {
-          width: BOX_WIDTH * scale,
-          height: BOX_HEIGHT * scale,
-          nameSize: Math.max(8, 12 * scale),
-          textSize: Math.max(7, 10 * scale),
-          lineHeight: Math.max(9, 12 * scale)
-        };
-      }
-
       function drawNode(path, generationIndex) {
         const generation = generationIndex + 1;
-        const position = getNodePosition(path);
+        const pos = getNodePosition(path);
         const metrics = getBoxMetrics(generation);
-        const x = position.x + ((BOX_WIDTH - metrics.width) / 2);
-        const y = position.y + ((BOX_HEIGHT - metrics.height) / 2);
-        const yCenter = position.yCenter;
+
+        const x = pos.xCenter - (metrics.width / 2);
+        const y = pos.yCenter - (metrics.height / 2);
 
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
@@ -1064,7 +1044,7 @@
 
         const badgeText = createSvgEl("text", {
           x: x + metrics.width - 8,
-          y: y + Math.max(14, 16 * (metrics.height / BOX_HEIGHT)),
+          y: y + Math.max(14, 16 * (metrics.height / BASE_BOX_HEIGHT)),
           class: "box-badge",
           "text-anchor": "end"
         });
@@ -1088,9 +1068,9 @@
           appendText(group, x + (metrics.width * 0.52), y + 76, "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
 
           appendText(group, x + 8, y + 90, "box-text", data.custom || "", { "font-size": metrics.textSize });
-          appendMultilineText(group, x + 8, y + 106, "box-text", data.win1 || "", metrics.lineHeight);
-          appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", metrics.lineHeight);
-          appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", metrics.lineHeight);
+          appendMultilineText(group, x + 8, y + 106, "box-text", data.win1 || "", metrics.lineHeight, { "font-size": metrics.textSize });
+          appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", metrics.lineHeight, { "font-size": metrics.textSize });
+          appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", metrics.lineHeight, { "font-size": metrics.textSize });
         } else if (generation <= 7) {
           appendText(group, x + 8, y + 34, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
           appendText(group, x + 8, y + 48, "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
@@ -1133,7 +1113,7 @@
           empty,
           x,
           y,
-          yCenter,
+          yCenter: pos.yCenter,
           width: metrics.width,
           height: metrics.height
         };
@@ -1327,25 +1307,21 @@
         return visible;
       }
 
-      function updateDuplicateStyles(visibleNodes) {
+      function updateRepeatedBadges(visibleNodes) {
         for (const node of state.nodesByPath.values()) {
-          node.group.classList.remove("duplicate");
           node.badgeText.textContent = "";
         }
 
-        if (!state.highlightDuplicates) return;
+        if (!state.showBadges) return;
 
         const visibleSet = new Set(visibleNodes.map(n => n.path));
 
         for (const group of state.duplicateGroups.values()) {
           const visibleGroup = group.filter(node => visibleSet.has(node.path));
           if (visibleGroup.length > 1) {
-            for (const node of visibleGroup) {
-              node.group.classList.add("duplicate");
-              if (state.showBadges) {
-                node.badgeText.textContent = `×${visibleGroup.length}`;
-              }
-            }
+            visibleGroup.forEach(node => {
+              node.badgeText.textContent = `×${visibleGroup.length}`;
+            });
           }
         }
       }
@@ -1388,33 +1364,38 @@
         }
       }
 
+      function getConnectorAnchor(node, side) {
+        if (side === "left") return { x: node.x - 10, y: node.yCenter };
+        return { x: node.x + node.width + 10, y: node.yCenter };
+      }
+
       function drawConnectorBus(nodes, cssClass, laneOffset, sidePreference) {
         if (!nodes || nodes.length < 2) return;
 
         const sorted = nodes.slice().sort((a, b) => a.yCenter - b.yCenter);
+
         const anchors = sorted.map(node => {
           if (sidePreference === "left") return getConnectorAnchor(node, "left");
           if (sidePreference === "right") return getConnectorAnchor(node, "right");
-
-          const side = getSide(node.path);
-          return side === "s" ? getConnectorAnchor(node, "left") : getConnectorAnchor(node, "right");
+          return getSide(node.path) === "s"
+            ? getConnectorAnchor(node, "left")
+            : getConnectorAnchor(node, "right");
         });
 
         let busX;
-        if (sidePreference === "left") {
+        let resolvedSide = sidePreference;
+
+        if (resolvedSide === "left") {
           busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
-        } else if (sidePreference === "right") {
+        } else if (resolvedSide === "right") {
           busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
         } else {
           const sireCount = sorted.filter(n => getSide(n.path) === "s").length;
           const damCount = sorted.length - sireCount;
-          if (sireCount >= damCount) {
-            busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
-            sidePreference = "left";
-          } else {
-            busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
-            sidePreference = "right";
-          }
+          resolvedSide = sireCount >= damCount ? "left" : "right";
+          busX = resolvedSide === "left"
+            ? Math.min(...anchors.map(a => a.x)) - laneOffset
+            : Math.max(...anchors.map(a => a.x)) + laneOffset;
         }
 
         const vertical = createSvgEl("path", {
@@ -1425,7 +1406,7 @@
 
         anchors.forEach(anchor => {
           const arm = createSvgEl("path", {
-            d: sidePreference === "left"
+            d: resolvedSide === "left"
               ? `M ${anchor.x} ${anchor.y} L ${busX + 10} ${anchor.y} L ${busX} ${anchor.y}`
               : `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
             class: cssClass
@@ -1771,7 +1752,7 @@
         const visibleCount = updateVisibility();
         const visibleNodes = getVisibleNodes();
 
-        updateDuplicateStyles(visibleNodes);
+        updateRepeatedBadges(visibleNodes);
         updateSpecialHighlights(visibleNodes);
         updateHighlightConnectors(visibleNodes);
         updateSummary(visibleNodes);
@@ -1900,11 +1881,6 @@
             state.visibleSide = btn.dataset.side;
             applyState();
           });
-        });
-
-        document.getElementById("toggle-duplicates").addEventListener("change", (e) => {
-          state.highlightDuplicates = e.target.checked;
-          applyState();
         });
 
         document.getElementById("toggle-summary").addEventListener("change", (e) => {
