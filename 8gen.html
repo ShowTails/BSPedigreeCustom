@@ -79,6 +79,40 @@
       display: none;
     }
 
+    .flash-duplicate .box {
+      stroke: #d81f1f !important;
+      stroke-width: 3.4 !important;
+      animation: flashDuplicateStroke 1s ease-in-out infinite;
+    }
+
+    .flash-breeder .box {
+      stroke: #d4aa00 !important;
+      stroke-width: 3.2 !important;
+      animation: flashBreederStroke 1s ease-in-out infinite;
+    }
+
+    @keyframes flashDuplicateStroke {
+      0%, 100% {
+        stroke: #ff2d2d;
+        stroke-opacity: 1;
+      }
+      50% {
+        stroke: #8b0000;
+        stroke-opacity: 0.35;
+      }
+    }
+
+    @keyframes flashBreederStroke {
+      0%, 100% {
+        stroke: #ffd400;
+        stroke-opacity: 1;
+      }
+      50% {
+        stroke: #a17f00;
+        stroke-opacity: 0.35;
+      }
+    }
+
     .box-name {
       font-size: 12px;
       font-weight: bold;
@@ -134,7 +168,7 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      width: 285px;
+      width: 320px;
       max-height: calc(100vh - 20px);
       overflow: auto;
       background: rgba(255,255,255,0.97);
@@ -230,7 +264,10 @@
       cursor: pointer;
     }
 
-    #summary-card, #duplicates-card {
+    #summary-card,
+    #duplicates-card,
+    #repeated-rabbits-card,
+    #breeder-card {
       border: 1px solid #d8d8d8;
       border-radius: 8px;
       padding: 8px;
@@ -239,7 +276,9 @@
     }
 
     #summary-card .summary-line,
-    #duplicates-card .summary-line {
+    #duplicates-card .summary-line,
+    #repeated-rabbits-card .summary-line,
+    #breeder-card .summary-line {
       font-size: 12px;
       margin: 4px 0;
       color: #234a57;
@@ -266,6 +305,51 @@
 
     #duplicate-list li {
       margin: 3px 0;
+    }
+
+    .dynamic-toggle-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dynamic-toggle-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 8px;
+      border: 1px solid #e2e7ea;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .dynamic-toggle-item .label-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .dynamic-toggle-item .main-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #234a57;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .dynamic-toggle-item .sub-label {
+      font-size: 11px;
+      color: #5b6f78;
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+
+    .dynamic-toggle-item input {
+      margin-top: 2px;
+      transform: scale(1.05);
+      cursor: pointer;
+      flex: 0 0 auto;
     }
 
     #reset-view-btn {
@@ -361,6 +445,18 @@
         <div class="summary-line"><strong>Repeated Ancestors</strong></div>
         <div class="summary-line" id="duplicates-help">No repeated ancestors detected.</div>
         <ul id="duplicate-list"></ul>
+      </div>
+
+      <div id="repeated-rabbits-card">
+        <div class="summary-line"><strong>Repeated Rabbit Finder</strong></div>
+        <div class="summary-line" id="repeated-rabbits-help">No repeated rabbits detected.</div>
+        <div id="repeated-rabbits-toggles" class="dynamic-toggle-list"></div>
+      </div>
+
+      <div id="breeder-card">
+        <div class="summary-line"><strong>Same Breeder Finder</strong></div>
+        <div class="summary-line" id="breeder-help">No breeder matches detected.</div>
+        <div id="breeder-toggles" class="dynamic-toggle-list"></div>
       </div>
     </div>
 
@@ -510,6 +606,78 @@
       return textEl;
     }
 
+    function normalizeBreederText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/&/g, " and ")
+        .replace(/['’]s\b/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function tokenizeName(value) {
+      return normalizeBreederText(value)
+        .split(" ")
+        .map(token => token.trim())
+        .filter(Boolean);
+    }
+
+    function displayPrefixFromName(name) {
+      const rawTokens = String(name || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ")
+        .filter(Boolean);
+
+      if (!rawTokens.length) return "";
+      return rawTokens.slice(0, Math.min(2, rawTokens.length)).join(" ");
+    }
+
+    function getBreederMeta(data) {
+      const aliases = new Set();
+      const rabbitryNorm = normalizeBreederText(data.rabbitry);
+      const rabbitryDisplay = String(data.rabbitry || "").trim();
+
+      const titleWords = new Set([
+        "grch", "gch", "gc", "ch", "grand", "champion", "sr", "jr"
+      ]);
+
+      let nameTokens = tokenizeName(data.name);
+      while (nameTokens.length && titleWords.has(nameTokens[0])) {
+        nameTokens.shift();
+      }
+
+      if (rabbitryNorm) {
+        aliases.add(rabbitryNorm);
+      }
+
+      if (nameTokens.length >= 3) {
+        aliases.add(nameTokens.slice(0, 3).join(" "));
+      }
+      if (nameTokens.length >= 2) {
+        aliases.add(nameTokens.slice(0, 2).join(" "));
+      }
+      if (!rabbitryNorm && nameTokens.length >= 1) {
+        aliases.add(nameTokens[0]);
+      }
+
+      const display = rabbitryDisplay || displayPrefixFromName(data.name) || "Unknown Breeder";
+
+      return {
+        aliases: Array.from(aliases).filter(Boolean),
+        display
+      };
+    }
+
+    function titleCaseWords(value) {
+      return String(value || "")
+        .split(" ")
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    }
+
     (function () {
       const MAX_GENERATIONS = 8;
       const BOX_WIDTH = 285;
@@ -535,6 +703,9 @@
         nodesByPath: new Map(),
         linesByPath: new Map(),
         duplicateGroups: new Map(),
+        breederGroups: new Map(),
+        duplicateSelections: new Map(),
+        breederSelections: new Map(),
         rendered: false
       };
 
@@ -545,12 +716,21 @@
 
       const summaryCard = document.getElementById("summary-card");
       const duplicatesCard = document.getElementById("duplicates-card");
+      const repeatedRabbitsCard = document.getElementById("repeated-rabbits-card");
+      const breederCard = document.getElementById("breeder-card");
+
       const summaryDuplicates = document.getElementById("summary-duplicates");
       const summaryClosest = document.getElementById("summary-closest");
       const summaryVisible = document.getElementById("summary-visible");
       const riskBadge = document.getElementById("risk-badge");
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
+
+      const repeatedRabbitsHelp = document.getElementById("repeated-rabbits-help");
+      const repeatedRabbitsToggles = document.getElementById("repeated-rabbits-toggles");
+
+      const breederHelp = document.getElementById("breeder-help");
+      const breederToggles = document.getElementById("breeder-toggles");
 
       svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
 
@@ -613,6 +793,7 @@
         const sexClass = inferSexClass(path, data.sex);
         const empty = isEmptyRabbit(data);
         const rabbitKey = buildRabbitKey(data);
+        const breederMeta = getBreederMeta(data);
 
         const group = createSvgEl("g", {
           "data-path": path,
@@ -687,6 +868,7 @@
           badgeText,
           data,
           rabbitKey,
+          breederMeta,
           empty
         });
 
@@ -726,7 +908,9 @@
             requestAnimationFrame(processChunk);
           } else {
             state.rendered = true;
-            computeDuplicates();
+            computeDuplicateGroups();
+            computeBreederGroups();
+            renderDynamicToggleLists();
             applyState();
             initPanZoom();
             wireInteractions();
@@ -737,7 +921,7 @@
         processChunk();
       }
 
-      function computeDuplicates() {
+      function computeDuplicateGroups() {
         state.duplicateGroups.clear();
 
         for (const node of state.nodesByPath.values()) {
@@ -746,6 +930,95 @@
             state.duplicateGroups.set(node.rabbitKey, []);
           }
           state.duplicateGroups.get(node.rabbitKey).push(node);
+        }
+
+        for (const [key, nodes] of Array.from(state.duplicateGroups.entries())) {
+          if (nodes.length < 2) {
+            state.duplicateGroups.delete(key);
+            state.duplicateSelections.delete(key);
+          } else if (!state.duplicateSelections.has(key)) {
+            state.duplicateSelections.set(key, false);
+          }
+        }
+      }
+
+      function computeBreederGroups() {
+        state.breederGroups.clear();
+
+        const groups = [];
+
+        for (const node of state.nodesByPath.values()) {
+          if (node.empty) continue;
+
+          const aliases = new Set((node.breederMeta && node.breederMeta.aliases) || []);
+          if (!aliases.size) continue;
+
+          let foundGroup = null;
+
+          for (const group of groups) {
+            let intersects = false;
+            for (const alias of aliases) {
+              if (group.aliases.has(alias)) {
+                intersects = true;
+                break;
+              }
+            }
+            if (intersects) {
+              foundGroup = group;
+              break;
+            }
+          }
+
+          if (!foundGroup) {
+            foundGroup = {
+              id: null,
+              aliases: new Set(),
+              nodes: [],
+              displays: new Map()
+            };
+            groups.push(foundGroup);
+          }
+
+          for (const alias of aliases) {
+            foundGroup.aliases.add(alias);
+          }
+
+          foundGroup.nodes.push(node);
+
+          const display = (node.breederMeta && node.breederMeta.display) || "Unknown Breeder";
+          foundGroup.displays.set(display, (foundGroup.displays.get(display) || 0) + 1);
+        }
+
+        groups.forEach(group => {
+          if (group.nodes.length < 2) return;
+
+          const aliasList = Array.from(group.aliases).filter(Boolean).sort((a, b) => b.length - a.length || a.localeCompare(b));
+          const preferredAlias = aliasList[0] || "unknown breeder";
+
+          const displayList = Array.from(group.displays.entries())
+            .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]));
+          const preferredDisplay = displayList.length
+            ? displayList[0][0]
+            : titleCaseWords(preferredAlias);
+
+          const id = preferredAlias;
+
+          state.breederGroups.set(id, {
+            id,
+            label: preferredDisplay,
+            aliases: aliasList,
+            nodes: group.nodes
+          });
+
+          if (!state.breederSelections.has(id)) {
+            state.breederSelections.set(id, false);
+          }
+        });
+
+        for (const key of Array.from(state.breederSelections.keys())) {
+          if (!state.breederGroups.has(key)) {
+            state.breederSelections.delete(key);
+          }
         }
       }
 
@@ -815,6 +1088,40 @@
         }
       }
 
+      function updateSpecialHighlights(visibleNodes) {
+        const visibleSet = new Set(visibleNodes.map(node => node.path));
+
+        for (const node of state.nodesByPath.values()) {
+          node.group.classList.remove("flash-duplicate");
+          node.group.classList.remove("flash-breeder");
+        }
+
+        for (const [rabbitKey, enabled] of state.duplicateSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.duplicateGroups.get(rabbitKey) || [];
+          const visibleGroup = group.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            visibleGroup.forEach(node => {
+              node.group.classList.add("flash-duplicate");
+            });
+          }
+        }
+
+        for (const [breederId, enabled] of state.breederSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.breederGroups.get(breederId);
+          if (!group) continue;
+          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            visibleGroup.forEach(node => {
+              if (!node.group.classList.contains("flash-duplicate")) {
+                node.group.classList.add("flash-breeder");
+              }
+            });
+          }
+        }
+      }
+
       function calculateCloseness(visibleNodes) {
         const visibleSet = new Set(visibleNodes.map(n => n.path));
         let repeatedAncestors = 0;
@@ -834,6 +1141,7 @@
             const labelName = first.data.name || "Unnamed";
             const labelEar = first.data.ear || "No Ear#";
             duplicateItems.push({
+              key: first.rabbitKey,
               label: `${labelName} (${labelEar})`,
               count: visibleGroup.length,
               closest: nearest
@@ -864,6 +1172,106 @@
         };
       }
 
+      function renderDynamicToggleLists() {
+        const duplicateEntries = Array.from(state.duplicateGroups.entries())
+          .map(([key, nodes]) => {
+            const nearest = Math.min(...nodes.map(node => node.generation));
+            const first = nodes[0];
+            return {
+              key,
+              label: first.data.name || "Unnamed",
+              ear: first.data.ear || "No Ear#",
+              count: nodes.length,
+              nearest
+            };
+          })
+          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
+
+        repeatedRabbitsToggles.innerHTML = "";
+
+        if (!duplicateEntries.length) {
+          repeatedRabbitsHelp.textContent = "No repeated rabbits detected.";
+        } else {
+          repeatedRabbitsHelp.textContent = "Turn on a rabbit below to flash every matching occurrence in red.";
+          duplicateEntries.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "dynamic-toggle-item";
+
+            const labelWrap = document.createElement("div");
+            labelWrap.className = "label-wrap";
+
+            const main = document.createElement("div");
+            main.className = "main-label";
+            main.textContent = item.label;
+
+            const sub = document.createElement("div");
+            sub.className = "sub-label";
+            sub.textContent = `Ear#: ${item.ear} • appears ${item.count} times • nearest gen ${item.nearest}`;
+
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.checked = !!state.duplicateSelections.get(item.key);
+            input.dataset.duplicateKey = item.key;
+
+            labelWrap.appendChild(main);
+            labelWrap.appendChild(sub);
+            row.appendChild(labelWrap);
+            row.appendChild(input);
+
+            repeatedRabbitsToggles.appendChild(row);
+          });
+        }
+
+        const breederEntries = Array.from(state.breederGroups.values())
+          .map(group => {
+            const nearest = Math.min(...group.nodes.map(node => node.generation));
+            const distinctRabbits = new Set(group.nodes.map(node => node.rabbitKey || node.path)).size;
+            return {
+              id: group.id,
+              label: group.label,
+              count: group.nodes.length,
+              nearest,
+              distinctRabbits
+            };
+          })
+          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
+
+        breederToggles.innerHTML = "";
+
+        if (!breederEntries.length) {
+          breederHelp.textContent = "No breeder matches detected.";
+        } else {
+          breederHelp.textContent = "Turn on a breeder below to flash matching rabbits in yellow.";
+          breederEntries.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "dynamic-toggle-item";
+
+            const labelWrap = document.createElement("div");
+            labelWrap.className = "label-wrap";
+
+            const main = document.createElement("div");
+            main.className = "main-label";
+            main.textContent = item.label;
+
+            const sub = document.createElement("div");
+            sub.className = "sub-label";
+            sub.textContent = `${item.count} box(es) matched • ${item.distinctRabbits} rabbit(s) • nearest gen ${item.nearest}`;
+
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.checked = !!state.breederSelections.get(item.id);
+            input.dataset.breederKey = item.id;
+
+            labelWrap.appendChild(main);
+            labelWrap.appendChild(sub);
+            row.appendChild(labelWrap);
+            row.appendChild(input);
+
+            breederToggles.appendChild(row);
+          });
+        }
+      }
+
       function updateSummary(visibleNodes) {
         const result = calculateCloseness(visibleNodes);
 
@@ -890,7 +1298,7 @@
           duplicatesHelp.textContent = "No repeated ancestors detected.";
         } else {
           duplicatesHelp.textContent = `${result.duplicateItems.length} repeated ancestor group(s) detected.`;
-          for (const item of result.duplicateItems.slice(0, 15)) {
+          for (const item of result.duplicateItems.slice(0, 20)) {
             const li = document.createElement("li");
             li.textContent = `${item.label} • ×${item.count} • nearest gen ${item.closest}`;
             duplicateList.appendChild(li);
@@ -900,6 +1308,8 @@
         const summaryDisplay = state.showSummary ? "block" : "none";
         summaryCard.style.display = summaryDisplay;
         duplicatesCard.style.display = summaryDisplay;
+        repeatedRabbitsCard.style.display = summaryDisplay;
+        breederCard.style.display = summaryDisplay;
       }
 
       function updateVisibility() {
@@ -935,9 +1345,14 @@
         const visibleNodes = getVisibleNodes();
 
         updateDuplicateStyles(visibleNodes);
+        updateSpecialHighlights(visibleNodes);
         updateSummary(visibleNodes);
 
-        updateStatus(`Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"}`);
+        updateStatus(
+          `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
+            state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"
+          }`
+        );
       }
 
       let panZoom = null;
@@ -946,6 +1361,12 @@
         if (typeof window.svgPanZoom !== "function") {
           console.error("svg-pan-zoom failed to load");
           return;
+        }
+
+        if (panZoom) {
+          try {
+            panZoom.destroy();
+          } catch (e) {}
         }
 
         panZoom = svgPanZoom(svg, {
@@ -1070,6 +1491,20 @@
           panZoom.resetZoom();
           panZoom.center();
           panZoom.fit();
+        });
+
+        repeatedRabbitsToggles.addEventListener("change", (e) => {
+          const key = e.target && e.target.dataset ? e.target.dataset.duplicateKey : "";
+          if (!key) return;
+          state.duplicateSelections.set(key, !!e.target.checked);
+          applyState();
+        });
+
+        breederToggles.addEventListener("change", (e) => {
+          const key = e.target && e.target.dataset ? e.target.dataset.breederKey : "";
+          if (!key) return;
+          state.breederSelections.set(key, !!e.target.checked);
+          applyState();
         });
       }
 
