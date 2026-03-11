@@ -111,43 +111,23 @@
     }
 
     @keyframes flashDuplicateStroke {
-      0%, 100% {
-        stroke: #ff2d2d;
-        stroke-opacity: 1;
-      }
-      50% {
-        stroke: #860000;
-        stroke-opacity: 0.5;
-      }
+      0%, 100% { stroke: #ff2d2d; stroke-opacity: 1; }
+      50% { stroke: #860000; stroke-opacity: 0.5; }
     }
 
     @keyframes flashBreederStroke {
-      0%, 100% {
-        stroke: #ffd400;
-        stroke-opacity: 1;
-      }
-      50% {
-        stroke: #8f7600;
-        stroke-opacity: 0.5;
-      }
+      0%, 100% { stroke: #ffd400; stroke-opacity: 1; }
+      50% { stroke: #8f7600; stroke-opacity: 0.5; }
     }
 
     @keyframes pulseDuplicateFill {
-      0%, 100% {
-        fill-opacity: 0.40;
-      }
-      50% {
-        fill-opacity: 0.10;
-      }
+      0%, 100% { fill-opacity: 0.40; }
+      50% { fill-opacity: 0.10; }
     }
 
     @keyframes pulseBreederFill {
-      0%, 100% {
-        fill-opacity: 0.38;
-      }
-      50% {
-        fill-opacity: 0.08;
-      }
+      0%, 100% { fill-opacity: 0.38; }
+      50% { fill-opacity: 0.08; }
     }
 
     .duplicate-connector {
@@ -173,25 +153,13 @@
     }
 
     @keyframes flashDuplicateConnector {
-      0%, 100% {
-        stroke: #ff2d2d;
-        stroke-opacity: 1;
-      }
-      50% {
-        stroke: #7f0000;
-        stroke-opacity: 0.32;
-      }
+      0%, 100% { stroke: #ff2d2d; stroke-opacity: 1; }
+      50% { stroke: #7f0000; stroke-opacity: 0.32; }
     }
 
     @keyframes flashBreederConnector {
-      0%, 100% {
-        stroke: #ffd400;
-        stroke-opacity: 1;
-      }
-      50% {
-        stroke: #8f7600;
-        stroke-opacity: 0.32;
-      }
+      0%, 100% { stroke: #ffd400; stroke-opacity: 1; }
+      50% { stroke: #8f7600; stroke-opacity: 0.32; }
     }
 
     .box-name {
@@ -235,7 +203,7 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      z-index: 11;
+      z-index: 20;
       padding: 8px 14px;
       border: none;
       border-radius: 7px;
@@ -257,7 +225,7 @@
       border: 1px solid #d8d8d8;
       border-radius: 10px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 12;
+      z-index: 21;
       padding: 12px 12px 10px 12px;
       color: #234a57;
       transition: transform 0.22s ease, opacity 0.22s ease;
@@ -269,64 +237,6 @@
       transform: translateX(-110%);
       opacity: 0;
       pointer-events: none;
-    }
-
-    #mini-map-card {
-      position: absolute;
-      top: 10px;
-      left: 346px;
-      width: 180px;
-      height: 230px;
-      background: rgba(255,255,255,0.97);
-      border: 1px solid #d8d8d8;
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 11;
-      padding: 8px;
-      box-sizing: border-box;
-      transition: left 0.22s ease, opacity 0.22s ease;
-      opacity: 1;
-    }
-
-    #mini-map-title {
-      font-size: 12px;
-      font-weight: bold;
-      color: #234a57;
-      margin-bottom: 6px;
-    }
-
-    #mini-map-svg {
-      width: 100%;
-      height: calc(100% - 20px);
-      display: block;
-      background: #fbfcfd;
-      border-radius: 8px;
-      border: 1px solid #e0e7ea;
-      cursor: pointer;
-    }
-
-    .mini-node {
-      fill: #bcc9cf;
-      stroke: none;
-    }
-
-    .mini-node.duplicate-selected {
-      fill: #ff2d2d;
-    }
-
-    .mini-node.breeder-selected {
-      fill: #e3b900;
-    }
-
-    .mini-node.duplicate-selected.breeder-selected {
-      fill: #ff2d2d;
-    }
-
-    .mini-viewport {
-      fill: rgba(47, 111, 237, 0.08);
-      stroke: #2f6fed;
-      stroke-width: 40;
-      vector-effect: non-scaling-stroke;
     }
 
     #panel-header {
@@ -492,11 +402,102 @@
       flex: 0 0 auto;
     }
 
+    #mini-map-card {
+      position: absolute;
+      top: 10px;
+      left: 346px;
+      width: 210px;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      z-index: 19;
+      padding: 8px;
+      box-sizing: border-box;
+      transition: left 0.22s ease, width 0.22s ease;
+    }
+
+    #mini-map-card.minimized {
+      width: 136px;
+    }
+
+    #mini-map-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    #mini-map-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #234a57;
+    }
+
+    #mini-map-toggle-btn {
+      border: 1px solid #b9c4ca;
+      background: #fff;
+      color: #234a57;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    #mini-map-body {
+      height: 240px;
+      transition: height 0.22s ease, opacity 0.22s ease;
+    }
+
+    #mini-map-card.minimized #mini-map-body {
+      height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    #mini-map-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #fbfcfd;
+      border-radius: 8px;
+      border: 1px solid #e0e7ea;
+      cursor: pointer;
+    }
+
+    .mini-node {
+      fill: #bcc9cf;
+      stroke: none;
+    }
+
+    .mini-node.duplicate-selected {
+      fill: #ff2d2d;
+    }
+
+    .mini-node.breeder-selected {
+      fill: #e3b900;
+    }
+
+    .mini-node.duplicate-selected.breeder-selected {
+      fill: #ff2d2d;
+    }
+
+    .mini-viewport {
+      fill: rgba(47, 111, 237, 0.08);
+      stroke: #2f6fed;
+      stroke-width: 40;
+      vector-effect: non-scaling-stroke;
+    }
+
     #reset-view-btn {
       position: absolute;
       top: 10px;
       right: 10px;
-      z-index: 10;
+      z-index: 18;
       padding: 8px 14px;
       border: none;
       border-radius: 7px;
@@ -504,13 +505,14 @@
       color: white;
       cursor: pointer;
       font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     #status-badge {
       position: absolute;
       bottom: 10px;
       left: 10px;
-      z-index: 10;
+      z-index: 18;
       background: rgba(255,255,255,0.96);
       border: 1px solid #d8d8d8;
       border-radius: 8px;
@@ -601,14 +603,19 @@
     </div>
 
     <div id="mini-map-card">
-      <div id="mini-map-title">Mini Map</div>
-      <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="mini-map-header">
+        <div id="mini-map-title">Mini Map</div>
+        <button id="mini-map-toggle-btn" type="button">−</button>
+      </div>
+      <div id="mini-map-body">
+        <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
     </div>
 
     <button id="reset-view-btn">Reset View</button>
     <div id="status-badge">Loading pedigree…</div>
 
-    <svg id="pedigree-svg" viewBox="0 0 3400 15000" preserveAspectRatio="xMidYMid meet">
+    <svg id="pedigree-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <g id="lines-layer"></g>
       <g id="highlight-layer"></g>
       <g id="nodes-layer"></g>
@@ -785,9 +792,7 @@
       const rabbitryNorm = normalizeBreederText(data.rabbitry);
       const rabbitryDisplay = String(data.rabbitry || "").trim();
 
-      const titleWords = new Set([
-        "grch", "gch", "gc", "ch", "grand", "champion", "sr", "jr"
-      ]);
+      const titleWords = new Set(["grch", "gch", "gc", "ch", "grand", "champion", "sr", "jr"]);
 
       let nameTokens = tokenizeName(data.name);
       while (nameTokens.length && titleWords.has(nameTokens[0])) {
@@ -819,14 +824,44 @@
       const MAX_GENERATIONS = 8;
       const BOX_WIDTH = 285;
       const BOX_HEIGHT = 168;
-      const H_SPACING = 320;
-      const LEFT_MARGIN = 40;
-      const TOP_MARGIN = 60;
-      const ROOT_STEP = 170;
 
-      const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
-      const baseCanvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + 1100;
-      const baseCanvasHeight = TOP_MARGIN + (totalLeaves * ROOT_STEP) + 200;
+      const generationOffsets = {
+        1: 0,
+        2: 360,
+        3: 760,
+        4: 1210,
+        5: 1710,
+        6: 2260,
+        7: 2860,
+        8: 3510
+      };
+
+      const generationHalfSpans = {
+        1: 0,
+        2: 0,
+        3: 210,
+        4: 420,
+        5: 660,
+        6: 930,
+        7: 1220,
+        8: 1520
+      };
+
+      const generationScale = {
+        1: 1,
+        2: 1,
+        3: 0.90,
+        4: 0.80,
+        5: 0.72,
+        6: 0.64,
+        7: 0.58,
+        8: 0.52
+      };
+
+      const CENTER_X = 4200;
+      const CENTER_Y = 2200;
+      const CANVAS_WIDTH = 8400;
+      const CANVAS_HEIGHT = 4400;
 
       const state = {
         visibleGenerations: 8,
@@ -844,8 +879,7 @@
         duplicateSelections: new Map(),
         breederSelections: new Map(),
         rendered: false,
-        canvasWidth: baseCanvasWidth,
-        canvasHeight: baseCanvasHeight
+        miniMapMinimized: false
       };
 
       const svg = document.getElementById("pedigree-svg");
@@ -853,8 +887,6 @@
       const highlightLayer = document.getElementById("highlight-layer");
       const nodesLayer = document.getElementById("nodes-layer");
       const statusBadge = document.getElementById("status-badge");
-      const miniMapCard = document.getElementById("mini-map-card");
-      const miniMapSvg = document.getElementById("mini-map-svg");
 
       const summaryCard = document.getElementById("summary-card");
       const duplicatesCard = document.getElementById("duplicates-card");
@@ -874,109 +906,84 @@
       const breederHelp = document.getElementById("breeder-help");
       const breederToggles = document.getElementById("breeder-toggles");
 
+      const miniMapCard = document.getElementById("mini-map-card");
+      const miniMapSvg = document.getElementById("mini-map-svg");
+      const miniMapToggleBtn = document.getElementById("mini-map-toggle-btn");
+
+      svg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
+      miniMapSvg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
+
       let panZoom = null;
 
       function updateStatus(text) {
         statusBadge.textContent = text;
       }
 
-      function getIndexRangeForPath(path) {
-        let start = 0;
-        let end = totalLeaves - 1;
-
-        for (const char of path) {
-          const mid = Math.floor((start + end) / 2);
-          if (char === "s") {
-            end = mid;
-          } else {
-            start = mid + 1;
-          }
-        }
-
-        return { start, end };
-      }
-
-      function getBaseCenterYForPath(path) {
-        const range = getIndexRangeForPath(path);
-        const centerIndex = (range.start + range.end) / 2;
-        return TOP_MARGIN + centerIndex * ROOT_STEP;
-      }
-
-      function getGenGroupCenter(path, genLength) {
-        const groupPath = path.slice(0, genLength);
-        return getBaseCenterYForPath(groupPath);
+      function getSide(path) {
+        if (!path) return "root";
+        return path[0] === "s" ? "s" : "d";
       }
 
       function getNodePosition(path) {
         const generation = path.length + 1;
 
-        let x = LEFT_MARGIN + (path.length * H_SPACING);
-        let yCenter = getBaseCenterYForPath(path);
-
-        const rootCenter = getBaseCenterYForPath("");
-        if (generation >= 2) {
-          yCenter = rootCenter + ((yCenter - rootCenter) * 0.88);
-        }
-        if (generation >= 3) {
-          yCenter = rootCenter + ((yCenter - rootCenter) * 0.80);
-        }
-        if (generation >= 4) {
-          yCenter = rootCenter + ((yCenter - rootCenter) * 0.71);
-        }
-        if (generation >= 5) {
-          yCenter = rootCenter + ((yCenter - rootCenter) * 0.62);
-        }
-        if (generation >= 6) {
-          yCenter = rootCenter + ((yCenter - rootCenter) * 0.53);
+        if (generation === 1) {
+          return {
+            x: CENTER_X - (BOX_WIDTH / 2),
+            yCenter: CENTER_Y,
+            y: CENTER_Y - (BOX_HEIGHT / 2)
+          };
         }
 
-        if (generation === 7 || generation === 8) {
-          const gen6Path = path.slice(0, 5);
-          const gen6Center = getBaseCenterYForPath(gen6Path);
-          const isGen7Sire = generation === 7 && path.endsWith("s");
-          const isGen7Dam = generation === 7 && path.endsWith("d");
+        const side = getSide(path);
+        const depthOnSide = generation - 1;
+        const countOnSide = Math.pow(2, Math.max(0, depthOnSide - 1));
+        const branchBits = path.slice(1);
+        const order = branchBits ? parseInt(branchBits.replace(/s/g, "0").replace(/d/g, "1"), 2) : 0;
+        const halfSpan = generationHalfSpans[generation] || 0;
 
-          const gen6SideOffset = gen6Path.endsWith("s") ? -18 : 18;
-          yCenter = gen6Center + gen6SideOffset;
-
-          if (generation === 7) {
-            x += 120;
-            yCenter += isGen7Sire ? -52 : 52;
-          }
-
-          if (generation === 8) {
-            const gen7Path = path.slice(0, 6);
-            const gen7ParentIsSire = gen7Path.endsWith("s");
-            const currentIsSire = path.endsWith("s");
-
-            x += 290;
-            yCenter += gen7ParentIsSire ? -52 : 52;
-            yCenter += currentIsSire ? -30 : 30;
-          }
+        let normalized = 0;
+        if (countOnSide > 1) {
+          normalized = (order / (countOnSide - 1)) * 2 - 1;
         }
+
+        let yCenter = CENTER_Y + (normalized * halfSpan);
+
+        if (generation === 2) {
+          yCenter = CENTER_Y;
+        }
+
+        const offset = generationOffsets[generation] || 0;
+        let xCenter = CENTER_X;
+        if (side === "s") xCenter = CENTER_X - offset;
+        if (side === "d") xCenter = CENTER_X + offset;
 
         return {
-          x,
+          x: xCenter - (BOX_WIDTH / 2),
           yCenter,
           y: yCenter - (BOX_HEIGHT / 2)
         };
       }
 
-      function getRightSideAnchor(node) {
-        return {
-          x: node.x + BOX_WIDTH + 10,
-          y: node.yCenter
-        };
+      function getConnectorAnchor(node, direction) {
+        if (direction === "left") {
+          return { x: node.x - 10, y: node.yCenter };
+        }
+        return { x: node.x + BOX_WIDTH + 10, y: node.yCenter };
       }
 
       function drawPedigreeLine(path, parentNode, childNode) {
-        const midX = parentNode.x + BOX_WIDTH + ((childNode.x - (parentNode.x + BOX_WIDTH)) * 0.35);
+        const childSide = getSide(path);
+        const parentOutX = childSide === "s" ? parentNode.x : parentNode.x + BOX_WIDTH;
+        const childInX = childSide === "s" ? childNode.x + BOX_WIDTH : childNode.x;
+
+        const bend = Math.abs(childInX - parentOutX) * 0.35;
+        const c1x = childSide === "s" ? parentOutX - bend : parentOutX + bend;
+        const c2x = childSide === "s" ? childInX + bend : childInX - bend;
 
         const line = createSvgEl("path", {
-          d: `M ${parentNode.x + BOX_WIDTH} ${parentNode.yCenter}
-              L ${midX} ${parentNode.yCenter}
-              L ${midX} ${childNode.yCenter}
-              L ${childNode.x} ${childNode.yCenter}`,
+          d: `M ${parentOutX} ${parentNode.yCenter}
+              C ${c1x} ${parentNode.yCenter}, ${c2x} ${childNode.yCenter}, ${childInX} ${childNode.yCenter}`,
           class: "line",
           "data-path": path,
           "data-parent": path.slice(0, -1)
@@ -986,8 +993,8 @@
         state.linesByPath.set(path, line);
       }
 
-      function appendText(group, x, y, className, value) {
-        const t = createSvgEl("text", { x, y, class: className });
+      function appendText(group, x, y, className, value, attrs = {}) {
+        const t = createSvgEl("text", Object.assign({ x, y, class: className }, attrs));
         t.textContent = value || "";
         group.appendChild(t);
         return t;
@@ -1001,11 +1008,24 @@
         ].some(Boolean);
       }
 
+      function getBoxMetrics(generation) {
+        const scale = generationScale[generation] || 0.52;
+        return {
+          width: BOX_WIDTH * scale,
+          height: BOX_HEIGHT * scale,
+          nameSize: Math.max(8, 12 * scale),
+          textSize: Math.max(7, 10 * scale),
+          lineHeight: Math.max(9, 12 * scale)
+        };
+      }
+
       function drawNode(path, generationIndex) {
+        const generation = generationIndex + 1;
         const position = getNodePosition(path);
-        const x = position.x;
+        const metrics = getBoxMetrics(generation);
+        const x = position.x + ((BOX_WIDTH - metrics.width) / 2);
+        const y = position.y + ((BOX_HEIGHT - metrics.height) / 2);
         const yCenter = position.yCenter;
-        const y = position.y;
 
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
@@ -1015,15 +1035,17 @@
 
         const group = createSvgEl("g", {
           "data-path": path,
-          "data-generation": String(generationIndex + 1),
+          "data-generation": String(generation),
           class: `node ${empty ? "empty" : ""}`
         });
 
         const rect = createSvgEl("rect", {
           x,
           y,
-          width: BOX_WIDTH,
-          height: BOX_HEIGHT,
+          width: metrics.width,
+          height: metrics.height,
+          rx: 10,
+          ry: 10,
           class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
           "data-slot": path
         });
@@ -1032,8 +1054,8 @@
         const overlay = createSvgEl("rect", {
           x: x + 2,
           y: y + 2,
-          width: BOX_WIDTH - 4,
-          height: BOX_HEIGHT - 4,
+          width: Math.max(0, metrics.width - 4),
+          height: Math.max(0, metrics.height - 4),
           rx: 8,
           ry: 8,
           class: "highlight-overlay"
@@ -1041,8 +1063,8 @@
         group.appendChild(overlay);
 
         const badgeText = createSvgEl("text", {
-          x: x + BOX_WIDTH - 8,
-          y: y + 16,
+          x: x + metrics.width - 8,
+          y: y + Math.max(14, 16 * (metrics.height / BOX_HEIGHT)),
           class: "box-badge",
           "text-anchor": "end"
         });
@@ -1050,34 +1072,44 @@
         group.appendChild(badgeText);
 
         const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
-        appendText(group, x + 8, y + 18, "box-name", title || "—");
+        appendText(group, x + 8, y + 18, "box-name", title || "—", {
+          "font-size": metrics.nameSize
+        });
 
-        appendText(group, x + 8, y + 34, "box-text", `Color: ${data.color || ""}`);
-        appendText(group, x + 8, y + 48, "box-text", `Ear#: ${data.ear || ""}`);
-        appendText(group, x + 150, y + 48, "box-text", `Weight: ${data.weight || ""}`);
+        if (generation <= 5) {
+          appendText(group, x + 8, y + 34, "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + 8, y + 48, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + (metrics.width * 0.52), y + 48, "box-text", `Weight: ${data.weight || ""}`, { "font-size": metrics.textSize });
 
-        appendText(group, x + 8, y + 62, "box-text", `Sex: ${data.sex || ""}`);
-        appendText(group, x + 150, y + 62, "box-text", `Legs: ${data.legs || ""}`);
+          appendText(group, x + 8, y + 62, "box-text", `Sex: ${data.sex || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + (metrics.width * 0.52), y + 62, "box-text", `Legs: ${data.legs || ""}`, { "font-size": metrics.textSize });
 
-        appendText(group, x + 8, y + 76, "box-text", `Reg#: ${data.reg || ""}`);
-        appendText(group, x + 150, y + 76, "box-text", `GC#: ${data.gc || ""}`);
+          appendText(group, x + 8, y + 76, "box-text", `Reg#: ${data.reg || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + (metrics.width * 0.52), y + 76, "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
 
-        appendText(group, x + 8, y + 90, "box-text", data.custom || "");
-        appendMultilineText(group, x + 8, y + 106, "box-text", data.win1 || "", 12);
-        appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", 12);
-        appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", 12);
+          appendText(group, x + 8, y + 90, "box-text", data.custom || "", { "font-size": metrics.textSize });
+          appendMultilineText(group, x + 8, y + 106, "box-text", data.win1 || "", metrics.lineHeight);
+          appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", metrics.lineHeight);
+          appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", metrics.lineHeight);
+        } else if (generation <= 7) {
+          appendText(group, x + 8, y + 34, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + 8, y + 48, "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + 8, y + 62, "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
+        } else {
+          appendText(group, x + 8, y + 34, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
+        }
 
-        if (generationIndex + 1 < MAX_GENERATIONS) {
+        if (generation < MAX_GENERATIONS) {
           const btnCircle = createSvgEl("circle", {
-            cx: x + BOX_WIDTH - 15,
-            cy: y + BOX_HEIGHT - 15,
-            r: 10,
+            cx: x + metrics.width - 12,
+            cy: y + metrics.height - 12,
+            r: 9,
             class: "collapse-btn",
             "data-collapse-path": path
           });
           const btnSymbol = createSvgEl("text", {
-            x: x + BOX_WIDTH - 15,
-            y: y + BOX_HEIGHT - 15,
+            x: x + metrics.width - 12,
+            y: y + metrics.height - 12,
             class: "collapse-symbol",
             "data-collapse-symbol": path
           });
@@ -1090,7 +1122,7 @@
 
         const nodeRecord = {
           path,
-          generation: generationIndex + 1,
+          generation,
           group,
           rect,
           overlay,
@@ -1101,7 +1133,9 @@
           empty,
           x,
           y,
-          yCenter
+          yCenter,
+          width: metrics.width,
+          height: metrics.height
         };
 
         state.nodesByPath.set(path, nodeRecord);
@@ -1113,24 +1147,6 @@
             drawPedigreeLine(path, parentNode, nodeRecord);
           }
         }
-      }
-
-      function updateCanvasBounds() {
-        let maxX = 0;
-        let maxY = 0;
-        let minY = Infinity;
-
-        for (const node of state.nodesByPath.values()) {
-          maxX = Math.max(maxX, node.x + BOX_WIDTH + 180);
-          maxY = Math.max(maxY, node.y + BOX_HEIGHT + 180);
-          minY = Math.min(minY, node.y - 100);
-        }
-
-        state.canvasWidth = Math.max(baseCanvasWidth, maxX);
-        state.canvasHeight = Math.max(2500, maxY - Math.min(0, minY) + 120);
-
-        svg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
-        miniMapSvg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
       }
 
       function renderPedigree() {
@@ -1160,7 +1176,6 @@
           if (queue.length) {
             requestAnimationFrame(processChunk);
           } else {
-            updateCanvasBounds();
             state.rendered = true;
             computeDuplicateGroups();
             computeBreederGroups();
@@ -1293,7 +1308,7 @@
 
       function updateCollapseSymbols() {
         for (const [path, node] of state.nodesByPath.entries()) {
-          const symbol = node.group.querySelector('[data-collapse-symbol]');
+          const symbol = node.group.querySelector("[data-collapse-symbol]");
           if (!symbol) continue;
           symbol.textContent = state.collapsedBranches.has(path) ? "+" : "−";
           if (state.collapsedBranches.has(path)) {
@@ -1373,13 +1388,34 @@
         }
       }
 
-      function drawConnectorBus(nodes, cssClass, laneOffset) {
+      function drawConnectorBus(nodes, cssClass, laneOffset, sidePreference) {
         if (!nodes || nodes.length < 2) return;
 
         const sorted = nodes.slice().sort((a, b) => a.yCenter - b.yCenter);
-        const anchors = sorted.map(getRightSideAnchor);
-        const maxAnchorX = Math.max(...anchors.map(a => a.x));
-        const busX = maxAnchorX + laneOffset;
+        const anchors = sorted.map(node => {
+          if (sidePreference === "left") return getConnectorAnchor(node, "left");
+          if (sidePreference === "right") return getConnectorAnchor(node, "right");
+
+          const side = getSide(node.path);
+          return side === "s" ? getConnectorAnchor(node, "left") : getConnectorAnchor(node, "right");
+        });
+
+        let busX;
+        if (sidePreference === "left") {
+          busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
+        } else if (sidePreference === "right") {
+          busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
+        } else {
+          const sireCount = sorted.filter(n => getSide(n.path) === "s").length;
+          const damCount = sorted.length - sireCount;
+          if (sireCount >= damCount) {
+            busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
+            sidePreference = "left";
+          } else {
+            busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
+            sidePreference = "right";
+          }
+        }
 
         const vertical = createSvgEl("path", {
           d: `M ${busX} ${anchors[0].y} L ${busX} ${anchors[anchors.length - 1].y}`,
@@ -1389,7 +1425,9 @@
 
         anchors.forEach(anchor => {
           const arm = createSvgEl("path", {
-            d: `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
+            d: sidePreference === "left"
+              ? `M ${anchor.x} ${anchor.y} L ${busX + 10} ${anchor.y} L ${busX} ${anchor.y}`
+              : `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
             class: cssClass
           });
           highlightLayer.appendChild(arm);
@@ -1408,28 +1446,35 @@
         clearHighlightLayer();
 
         const visibleSet = new Set(visibleNodes.map(n => n.path));
-        let duplicateLane = 28;
-        let breederLane = 62;
-
-        for (const [breederId, enabled] of state.breederSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.breederGroups.get(breederId);
-          if (!group) continue;
-
-          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            drawConnectorBus(visibleGroup, "breeder-connector", breederLane);
-            breederLane += 22;
-          }
-        }
+        let leftLane = 28;
+        let rightLane = 28;
 
         for (const [rabbitKey, enabled] of state.duplicateSelections.entries()) {
           if (!enabled) continue;
           const group = state.duplicateGroups.get(rabbitKey) || [];
           const visibleGroup = group.filter(node => visibleSet.has(node.path));
           if (visibleGroup.length > 1) {
-            drawConnectorBus(visibleGroup, "duplicate-connector", duplicateLane);
-            duplicateLane += 22;
+            const sireCount = visibleGroup.filter(n => getSide(n.path) === "s").length;
+            const damCount = visibleGroup.filter(n => getSide(n.path) === "d").length;
+            const pref = sireCount >= damCount ? "left" : "right";
+            drawConnectorBus(visibleGroup, "duplicate-connector", pref === "left" ? leftLane : rightLane, pref);
+            if (pref === "left") leftLane += 22;
+            else rightLane += 22;
+          }
+        }
+
+        for (const [breederId, enabled] of state.breederSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.breederGroups.get(breederId);
+          if (!group) continue;
+          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            const sireCount = visibleGroup.filter(n => getSide(n.path) === "s").length;
+            const damCount = visibleGroup.filter(n => getSide(n.path) === "d").length;
+            const pref = sireCount >= damCount ? "left" : "right";
+            drawConnectorBus(visibleGroup, "breeder-connector", pref === "left" ? leftLane : rightLane, pref);
+            if (pref === "left") leftLane += 22;
+            else rightLane += 22;
           }
         }
       }
@@ -1649,6 +1694,7 @@
 
       function updateMiniMap(visibleNodes) {
         miniMapSvg.innerHTML = "";
+        if (state.miniMapMinimized) return;
 
         const visibleSet = new Set(visibleNodes.map(node => node.path));
         const dupNodePaths = new Set();
@@ -1677,19 +1723,15 @@
           const miniRect = createSvgEl("rect", {
             x: node.x,
             y: node.y,
-            width: BOX_WIDTH,
-            height: BOX_HEIGHT,
-            rx: 18,
-            ry: 18,
+            width: node.width,
+            height: node.height,
+            rx: 10,
+            ry: 10,
             class: "mini-node"
           });
 
-          if (breederNodePaths.has(node.path)) {
-            miniRect.classList.add("breeder-selected");
-          }
-          if (dupNodePaths.has(node.path)) {
-            miniRect.classList.add("duplicate-selected");
-          }
+          if (breederNodePaths.has(node.path)) miniRect.classList.add("breeder-selected");
+          if (dupNodePaths.has(node.path)) miniRect.classList.add("duplicate-selected");
 
           frag.appendChild(miniRect);
         });
@@ -1763,13 +1805,10 @@
           center: true,
           minZoom: 0.04,
           maxZoom: 20,
-          dblClickZoomEnabled: true,
-          onZoom: () => updateMiniMap(getVisibleNodes()),
-          onPan: () => updateMiniMap(getVisibleNodes())
+          dblClickZoomEnabled: true
         });
 
         window.panZoomInstance = panZoom;
-        updateMiniMap(getVisibleNodes());
       }
 
       function toggleCollapse(path) {
@@ -1782,7 +1821,7 @@
       }
 
       function centerMiniMapPoint(evt) {
-        if (!panZoom) return;
+        if (!panZoom || state.miniMapMinimized) return;
 
         const rect = miniMapSvg.getBoundingClientRect();
         const px = evt.clientX - rect.left;
@@ -1790,8 +1829,8 @@
         const rx = px / rect.width;
         const ry = py / rect.height;
 
-        const targetX = rx * state.canvasWidth;
-        const targetY = ry * state.canvasHeight;
+        const targetX = rx * CANVAS_WIDTH;
+        const targetY = ry * CANVAS_HEIGHT;
 
         const zoom = panZoom.getZoom();
         const panX = -(targetX * zoom) + (svg.clientWidth / 2);
@@ -1817,6 +1856,13 @@
         });
 
         miniMapSvg.addEventListener("click", centerMiniMapPoint);
+
+        miniMapToggleBtn.addEventListener("click", () => {
+          state.miniMapMinimized = !state.miniMapMinimized;
+          miniMapCard.classList.toggle("minimized", state.miniMapMinimized);
+          miniMapToggleBtn.textContent = state.miniMapMinimized ? "+" : "−";
+          updateMiniMap(getVisibleNodes());
+        });
 
         nodesLayer.addEventListener("click", (e) => {
           const collapsePath = e.target.getAttribute("data-collapse-path");
