@@ -821,12 +821,12 @@
       const BOX_HEIGHT = 168;
       const H_SPACING = 320;
       const LEFT_MARGIN = 40;
-      const TOP_MARGIN = 30;
-      const LEAF_STEP = 190;
+      const TOP_MARGIN = 60;
+      const ROOT_STEP = 170;
 
       const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
-      const baseCanvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 260;
-      const baseCanvasHeight = TOP_MARGIN + (totalLeaves * LEAF_STEP) + 80;
+      const baseCanvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + 1100;
+      const baseCanvasHeight = TOP_MARGIN + (totalLeaves * ROOT_STEP) + 200;
 
       const state = {
         visibleGenerations: 8,
@@ -880,7 +880,7 @@
         statusBadge.textContent = text;
       }
 
-      function getBaseCenterYForPath(path) {
+      function getIndexRangeForPath(path) {
         let start = 0;
         let end = totalLeaves - 1;
 
@@ -893,32 +893,65 @@
           }
         }
 
-        const centerIndex = (start + end) / 2;
-        return TOP_MARGIN + centerIndex * LEAF_STEP;
+        return { start, end };
+      }
+
+      function getBaseCenterYForPath(path) {
+        const range = getIndexRangeForPath(path);
+        const centerIndex = (range.start + range.end) / 2;
+        return TOP_MARGIN + centerIndex * ROOT_STEP;
+      }
+
+      function getGenGroupCenter(path, genLength) {
+        const groupPath = path.slice(0, genLength);
+        return getBaseCenterYForPath(groupPath);
       }
 
       function getNodePosition(path) {
-        const generation = path.length;
-        let x = LEFT_MARGIN + generation * H_SPACING;
+        const generation = path.length + 1;
+
+        let x = LEFT_MARGIN + (path.length * H_SPACING);
         let yCenter = getBaseCenterYForPath(path);
 
+        const rootCenter = getBaseCenterYForPath("");
+        if (generation >= 2) {
+          yCenter = rootCenter + ((yCenter - rootCenter) * 0.88);
+        }
+        if (generation >= 3) {
+          yCenter = rootCenter + ((yCenter - rootCenter) * 0.80);
+        }
+        if (generation >= 4) {
+          yCenter = rootCenter + ((yCenter - rootCenter) * 0.71);
+        }
+        if (generation >= 5) {
+          yCenter = rootCenter + ((yCenter - rootCenter) * 0.62);
+        }
         if (generation >= 6) {
-          const gen6AncestorPath = path.slice(0, 5);
-          const gen6Center = getBaseCenterYForPath(gen6AncestorPath);
-          const isUnderGen6Sire = gen6AncestorPath.endsWith("s");
-          const isUnderGen6Dam = gen6AncestorPath.endsWith("d");
+          yCenter = rootCenter + ((yCenter - rootCenter) * 0.53);
+        }
 
-          if (isUnderGen6Sire) {
-            const factor = generation === 6 ? 0.78 : generation === 7 ? 0.58 : 0.58;
-            yCenter = gen6Center + ((yCenter - gen6Center) * factor);
+        if (generation === 7 || generation === 8) {
+          const gen6Path = path.slice(0, 5);
+          const gen6Center = getBaseCenterYForPath(gen6Path);
+          const isGen7Sire = generation === 7 && path.endsWith("s");
+          const isGen7Dam = generation === 7 && path.endsWith("d");
+
+          const gen6SideOffset = gen6Path.endsWith("s") ? -18 : 18;
+          yCenter = gen6Center + gen6SideOffset;
+
+          if (generation === 7) {
+            x += 120;
+            yCenter += isGen7Sire ? -52 : 52;
           }
 
-          if (isUnderGen6Dam) {
-            const factor = generation === 6 ? 0.84 : generation === 7 ? 0.68 : 0.68;
-            yCenter = gen6Center + ((yCenter - gen6Center) * factor);
+          if (generation === 8) {
+            const gen7Path = path.slice(0, 6);
+            const gen7ParentIsSire = gen7Path.endsWith("s");
+            const currentIsSire = path.endsWith("s");
 
-            if (generation === 6) x += 44;
-            if (generation === 7) x += 88;
+            x += 290;
+            yCenter += gen7ParentIsSire ? -52 : 52;
+            yCenter += currentIsSire ? -30 : 30;
           }
         }
 
@@ -936,16 +969,19 @@
         };
       }
 
-      function drawLine(path, parentPath, parentNode, childNode) {
-        const line = createSvgEl("line", {
-          x1: parentNode.x + BOX_WIDTH,
-          y1: parentNode.yCenter,
-          x2: childNode.x,
-          y2: childNode.yCenter,
+      function drawPedigreeLine(path, parentNode, childNode) {
+        const midX = parentNode.x + BOX_WIDTH + ((childNode.x - (parentNode.x + BOX_WIDTH)) * 0.35);
+
+        const line = createSvgEl("path", {
+          d: `M ${parentNode.x + BOX_WIDTH} ${parentNode.yCenter}
+              L ${midX} ${parentNode.yCenter}
+              L ${midX} ${childNode.yCenter}
+              L ${childNode.x} ${childNode.yCenter}`,
           class: "line",
           "data-path": path,
-          "data-parent": parentPath
+          "data-parent": path.slice(0, -1)
         });
+
         linesLayer.appendChild(line);
         state.linesByPath.set(path, line);
       }
@@ -965,7 +1001,7 @@
         ].some(Boolean);
       }
 
-      function drawNode(path, generation) {
+      function drawNode(path, generationIndex) {
         const position = getNodePosition(path);
         const x = position.x;
         const yCenter = position.yCenter;
@@ -979,7 +1015,7 @@
 
         const group = createSvgEl("g", {
           "data-path": path,
-          "data-generation": String(generation + 1),
+          "data-generation": String(generationIndex + 1),
           class: `node ${empty ? "empty" : ""}`
         });
 
@@ -1031,7 +1067,7 @@
         appendMultilineText(group, x + 8, y + 128, "box-text", data.win2 || "", 12);
         appendMultilineText(group, x + 8, y + 150, "box-text", data.win3 || "", 12);
 
-        if (generation + 1 < MAX_GENERATIONS) {
+        if (generationIndex + 1 < MAX_GENERATIONS) {
           const btnCircle = createSvgEl("circle", {
             cx: x + BOX_WIDTH - 15,
             cy: y + BOX_HEIGHT - 15,
@@ -1054,7 +1090,7 @@
 
         const nodeRecord = {
           path,
-          generation: generation + 1,
+          generation: generationIndex + 1,
           group,
           rect,
           overlay,
@@ -1070,11 +1106,11 @@
 
         state.nodesByPath.set(path, nodeRecord);
 
-        if (generation > 0) {
+        if (generationIndex > 0) {
           const parentPath = path.slice(0, -1);
           const parentNode = state.nodesByPath.get(parentPath);
           if (parentNode) {
-            drawLine(path, parentPath, parentNode, nodeRecord);
+            drawPedigreeLine(path, parentNode, nodeRecord);
           }
         }
       }
@@ -1082,14 +1118,17 @@
       function updateCanvasBounds() {
         let maxX = 0;
         let maxY = 0;
+        let minY = Infinity;
 
         for (const node of state.nodesByPath.values()) {
-          maxX = Math.max(maxX, node.x + BOX_WIDTH + 120);
-          maxY = Math.max(maxY, node.y + BOX_HEIGHT + 120);
+          maxX = Math.max(maxX, node.x + BOX_WIDTH + 180);
+          maxY = Math.max(maxY, node.y + BOX_HEIGHT + 180);
+          minY = Math.min(minY, node.y - 100);
         }
 
         state.canvasWidth = Math.max(baseCanvasWidth, maxX);
-        state.canvasHeight = Math.max(baseCanvasHeight * 0.7, maxY);
+        state.canvasHeight = Math.max(2500, maxY - Math.min(0, minY) + 120);
+
         svg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
         miniMapSvg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
       }
@@ -1186,7 +1225,6 @@
 
           if (!foundGroup) {
             foundGroup = {
-              id: null,
               aliases: new Set(),
               nodes: [],
               displays: new Map()
@@ -1349,7 +1387,7 @@
         });
         highlightLayer.appendChild(vertical);
 
-        anchors.forEach((anchor, index) => {
+        anchors.forEach(anchor => {
           const arm = createSvgEl("path", {
             d: `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
             class: cssClass
