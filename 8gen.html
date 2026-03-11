@@ -51,6 +51,7 @@
       rx: 10;
       ry: 10;
       cursor: pointer;
+      vector-effect: non-scaling-stroke;
     }
 
     .male { fill: #cce5ff; }
@@ -79,15 +80,33 @@
       display: none;
     }
 
+    .highlight-overlay {
+      pointer-events: none;
+      opacity: 0;
+      display: none;
+    }
+
+    .flash-duplicate .highlight-overlay {
+      display: block;
+      fill: rgba(255, 38, 38, 0.34);
+      animation: pulseDuplicateFill 1s ease-in-out infinite;
+    }
+
+    .flash-breeder .highlight-overlay {
+      display: block;
+      fill: rgba(255, 215, 0, 0.34);
+      animation: pulseBreederFill 1s ease-in-out infinite;
+    }
+
     .flash-duplicate .box {
       stroke: #d81f1f !important;
-      stroke-width: 3.4 !important;
+      stroke-width: 2.8 !important;
       animation: flashDuplicateStroke 1s ease-in-out infinite;
     }
 
-    .flash-breeder .box {
+    .flash-breeder:not(.flash-duplicate) .box {
       stroke: #d4aa00 !important;
-      stroke-width: 3.2 !important;
+      stroke-width: 2.6 !important;
       animation: flashBreederStroke 1s ease-in-out infinite;
     }
 
@@ -97,8 +116,8 @@
         stroke-opacity: 1;
       }
       50% {
-        stroke: #8b0000;
-        stroke-opacity: 0.35;
+        stroke: #860000;
+        stroke-opacity: 0.5;
       }
     }
 
@@ -108,8 +127,70 @@
         stroke-opacity: 1;
       }
       50% {
-        stroke: #a17f00;
-        stroke-opacity: 0.35;
+        stroke: #8f7600;
+        stroke-opacity: 0.5;
+      }
+    }
+
+    @keyframes pulseDuplicateFill {
+      0%, 100% {
+        fill-opacity: 0.40;
+      }
+      50% {
+        fill-opacity: 0.10;
+      }
+    }
+
+    @keyframes pulseBreederFill {
+      0%, 100% {
+        fill-opacity: 0.38;
+      }
+      50% {
+        fill-opacity: 0.08;
+      }
+    }
+
+    .duplicate-connector {
+      stroke: #ff2d2d;
+      stroke-width: 4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      animation: flashDuplicateConnector 1s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .breeder-connector {
+      stroke: #ffd400;
+      stroke-width: 4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      animation: flashBreederConnector 1s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes flashDuplicateConnector {
+      0%, 100% {
+        stroke: #ff2d2d;
+        stroke-opacity: 1;
+      }
+      50% {
+        stroke: #7f0000;
+        stroke-opacity: 0.32;
+      }
+    }
+
+    @keyframes flashBreederConnector {
+      0%, 100% {
+        stroke: #ffd400;
+        stroke-opacity: 1;
+      }
+      50% {
+        stroke: #8f7600;
+        stroke-opacity: 0.32;
       }
     }
 
@@ -138,6 +219,7 @@
       stroke: #2f6fed;
       stroke-width: 1.2;
       cursor: pointer;
+      vector-effect: non-scaling-stroke;
     }
 
     .collapse-symbol {
@@ -187,6 +269,64 @@
       transform: translateX(-110%);
       opacity: 0;
       pointer-events: none;
+    }
+
+    #mini-map-card {
+      position: absolute;
+      top: 10px;
+      left: 346px;
+      width: 180px;
+      height: 230px;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      z-index: 11;
+      padding: 8px;
+      box-sizing: border-box;
+      transition: left 0.22s ease, opacity 0.22s ease;
+      opacity: 1;
+    }
+
+    #mini-map-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #234a57;
+      margin-bottom: 6px;
+    }
+
+    #mini-map-svg {
+      width: 100%;
+      height: calc(100% - 20px);
+      display: block;
+      background: #fbfcfd;
+      border-radius: 8px;
+      border: 1px solid #e0e7ea;
+      cursor: pointer;
+    }
+
+    .mini-node {
+      fill: #bcc9cf;
+      stroke: none;
+    }
+
+    .mini-node.duplicate-selected {
+      fill: #ff2d2d;
+    }
+
+    .mini-node.breeder-selected {
+      fill: #e3b900;
+    }
+
+    .mini-node.duplicate-selected.breeder-selected {
+      fill: #ff2d2d;
+    }
+
+    .mini-viewport {
+      fill: rgba(47, 111, 237, 0.08);
+      stroke: #2f6fed;
+      stroke-width: 40;
+      vector-effect: non-scaling-stroke;
     }
 
     #panel-header {
@@ -460,11 +600,17 @@
       </div>
     </div>
 
+    <div id="mini-map-card">
+      <div id="mini-map-title">Mini Map</div>
+      <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
     <button id="reset-view-btn">Reset View</button>
     <div id="status-badge">Loading pedigree…</div>
 
     <svg id="pedigree-svg" viewBox="0 0 3400 15000" preserveAspectRatio="xMidYMid meet">
       <g id="lines-layer"></g>
+      <g id="highlight-layer"></g>
       <g id="nodes-layer"></g>
     </svg>
   </div>
@@ -648,19 +794,10 @@
         nameTokens.shift();
       }
 
-      if (rabbitryNorm) {
-        aliases.add(rabbitryNorm);
-      }
-
-      if (nameTokens.length >= 3) {
-        aliases.add(nameTokens.slice(0, 3).join(" "));
-      }
-      if (nameTokens.length >= 2) {
-        aliases.add(nameTokens.slice(0, 2).join(" "));
-      }
-      if (!rabbitryNorm && nameTokens.length >= 1) {
-        aliases.add(nameTokens[0]);
-      }
+      if (rabbitryNorm) aliases.add(rabbitryNorm);
+      if (nameTokens.length >= 3) aliases.add(nameTokens.slice(0, 3).join(" "));
+      if (nameTokens.length >= 2) aliases.add(nameTokens.slice(0, 2).join(" "));
+      if (!rabbitryNorm && nameTokens.length >= 1) aliases.add(nameTokens[0]);
 
       const display = rabbitryDisplay || displayPrefixFromName(data.name) || "Unknown Breeder";
 
@@ -688,8 +825,8 @@
       const LEAF_STEP = 190;
 
       const totalLeaves = Math.pow(2, MAX_GENERATIONS - 1);
-      const canvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 80;
-      const canvasHeight = TOP_MARGIN + (totalLeaves * LEAF_STEP) + 80;
+      const baseCanvasWidth = LEFT_MARGIN + ((MAX_GENERATIONS - 1) * H_SPACING) + BOX_WIDTH + 260;
+      const baseCanvasHeight = TOP_MARGIN + (totalLeaves * LEAF_STEP) + 80;
 
       const state = {
         visibleGenerations: 8,
@@ -706,13 +843,18 @@
         breederGroups: new Map(),
         duplicateSelections: new Map(),
         breederSelections: new Map(),
-        rendered: false
+        rendered: false,
+        canvasWidth: baseCanvasWidth,
+        canvasHeight: baseCanvasHeight
       };
 
       const svg = document.getElementById("pedigree-svg");
       const linesLayer = document.getElementById("lines-layer");
+      const highlightLayer = document.getElementById("highlight-layer");
       const nodesLayer = document.getElementById("nodes-layer");
       const statusBadge = document.getElementById("status-badge");
+      const miniMapCard = document.getElementById("mini-map-card");
+      const miniMapSvg = document.getElementById("mini-map-svg");
 
       const summaryCard = document.getElementById("summary-card");
       const duplicatesCard = document.getElementById("duplicates-card");
@@ -732,13 +874,13 @@
       const breederHelp = document.getElementById("breeder-help");
       const breederToggles = document.getElementById("breeder-toggles");
 
-      svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+      let panZoom = null;
 
       function updateStatus(text) {
         statusBadge.textContent = text;
       }
 
-      function getCenterYForPath(path) {
+      function getBaseCenterYForPath(path) {
         let start = 0;
         let end = totalLeaves - 1;
 
@@ -755,12 +897,51 @@
         return TOP_MARGIN + centerIndex * LEAF_STEP;
       }
 
-      function drawLine(path, parentPath, parentX, parentY, childX, childY) {
+      function getNodePosition(path) {
+        const generation = path.length;
+        let x = LEFT_MARGIN + generation * H_SPACING;
+        let yCenter = getBaseCenterYForPath(path);
+
+        if (generation >= 6) {
+          const gen6AncestorPath = path.slice(0, 5);
+          const gen6Center = getBaseCenterYForPath(gen6AncestorPath);
+          const isUnderGen6Sire = gen6AncestorPath.endsWith("s");
+          const isUnderGen6Dam = gen6AncestorPath.endsWith("d");
+
+          if (isUnderGen6Sire) {
+            const factor = generation === 6 ? 0.78 : generation === 7 ? 0.58 : 0.58;
+            yCenter = gen6Center + ((yCenter - gen6Center) * factor);
+          }
+
+          if (isUnderGen6Dam) {
+            const factor = generation === 6 ? 0.84 : generation === 7 ? 0.68 : 0.68;
+            yCenter = gen6Center + ((yCenter - gen6Center) * factor);
+
+            if (generation === 6) x += 44;
+            if (generation === 7) x += 88;
+          }
+        }
+
+        return {
+          x,
+          yCenter,
+          y: yCenter - (BOX_HEIGHT / 2)
+        };
+      }
+
+      function getRightSideAnchor(node) {
+        return {
+          x: node.x + BOX_WIDTH + 10,
+          y: node.yCenter
+        };
+      }
+
+      function drawLine(path, parentPath, parentNode, childNode) {
         const line = createSvgEl("line", {
-          x1: parentX,
-          y1: parentY,
-          x2: childX,
-          y2: childY,
+          x1: parentNode.x + BOX_WIDTH,
+          y1: parentNode.yCenter,
+          x2: childNode.x,
+          y2: childNode.yCenter,
           class: "line",
           "data-path": path,
           "data-parent": parentPath
@@ -785,9 +966,10 @@
       }
 
       function drawNode(path, generation) {
-        const x = LEFT_MARGIN + generation * H_SPACING;
-        const yCenter = getCenterYForPath(path);
-        const y = yCenter - (BOX_HEIGHT / 2);
+        const position = getNodePosition(path);
+        const x = position.x;
+        const yCenter = position.yCenter;
+        const y = position.y;
 
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
@@ -809,8 +991,18 @@
           class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
           "data-slot": path
         });
-
         group.appendChild(rect);
+
+        const overlay = createSvgEl("rect", {
+          x: x + 2,
+          y: y + 2,
+          width: BOX_WIDTH - 4,
+          height: BOX_HEIGHT - 4,
+          rx: 8,
+          ry: 8,
+          class: "highlight-overlay"
+        });
+        group.appendChild(overlay);
 
         const badgeText = createSvgEl("text", {
           x: x + BOX_WIDTH - 8,
@@ -860,24 +1052,46 @@
 
         nodesLayer.appendChild(group);
 
-        state.nodesByPath.set(path, {
+        const nodeRecord = {
           path,
           generation: generation + 1,
           group,
           rect,
+          overlay,
           badgeText,
           data,
           rabbitKey,
           breederMeta,
-          empty
-        });
+          empty,
+          x,
+          y,
+          yCenter
+        };
+
+        state.nodesByPath.set(path, nodeRecord);
 
         if (generation > 0) {
           const parentPath = path.slice(0, -1);
-          const parentX = LEFT_MARGIN + ((generation - 1) * H_SPACING) + BOX_WIDTH;
-          const parentY = getCenterYForPath(parentPath);
-          drawLine(path, parentPath, parentX, parentY, x, yCenter);
+          const parentNode = state.nodesByPath.get(parentPath);
+          if (parentNode) {
+            drawLine(path, parentPath, parentNode, nodeRecord);
+          }
         }
+      }
+
+      function updateCanvasBounds() {
+        let maxX = 0;
+        let maxY = 0;
+
+        for (const node of state.nodesByPath.values()) {
+          maxX = Math.max(maxX, node.x + BOX_WIDTH + 120);
+          maxY = Math.max(maxY, node.y + BOX_HEIGHT + 120);
+        }
+
+        state.canvasWidth = Math.max(baseCanvasWidth, maxX);
+        state.canvasHeight = Math.max(baseCanvasHeight * 0.7, maxY);
+        svg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
+        miniMapSvg.setAttribute("viewBox", `0 0 ${state.canvasWidth} ${state.canvasHeight}`);
       }
 
       function renderPedigree() {
@@ -907,6 +1121,7 @@
           if (queue.length) {
             requestAnimationFrame(processChunk);
           } else {
+            updateCanvasBounds();
             state.rendered = true;
             computeDuplicateGroups();
             computeBreederGroups();
@@ -997,9 +1212,7 @@
 
           const displayList = Array.from(group.displays.entries())
             .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]));
-          const preferredDisplay = displayList.length
-            ? displayList[0][0]
-            : titleCaseWords(preferredAlias);
+          const preferredDisplay = displayList.length ? displayList[0][0] : titleCaseWords(preferredAlias);
 
           const id = preferredAlias;
 
@@ -1033,14 +1246,10 @@
 
       function isNodeVisible(path, node) {
         if (node.generation > state.visibleGenerations) return false;
-
         if (state.visibleSide === "s" && path && !path.startsWith("s")) return false;
         if (state.visibleSide === "d" && path && !path.startsWith("d")) return false;
-
         if (isPathCollapsedByAncestor(path)) return false;
-
         if (state.hideEmpty && node.empty && node.generation > 1) return false;
-
         return true;
       }
 
@@ -1101,9 +1310,7 @@
           const group = state.duplicateGroups.get(rabbitKey) || [];
           const visibleGroup = group.filter(node => visibleSet.has(node.path));
           if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => {
-              node.group.classList.add("flash-duplicate");
-            });
+            visibleGroup.forEach(node => node.group.classList.add("flash-duplicate"));
           }
         }
 
@@ -1118,6 +1325,73 @@
                 node.group.classList.add("flash-breeder");
               }
             });
+          }
+        }
+      }
+
+      function clearHighlightLayer() {
+        while (highlightLayer.firstChild) {
+          highlightLayer.removeChild(highlightLayer.firstChild);
+        }
+      }
+
+      function drawConnectorBus(nodes, cssClass, laneOffset) {
+        if (!nodes || nodes.length < 2) return;
+
+        const sorted = nodes.slice().sort((a, b) => a.yCenter - b.yCenter);
+        const anchors = sorted.map(getRightSideAnchor);
+        const maxAnchorX = Math.max(...anchors.map(a => a.x));
+        const busX = maxAnchorX + laneOffset;
+
+        const vertical = createSvgEl("path", {
+          d: `M ${busX} ${anchors[0].y} L ${busX} ${anchors[anchors.length - 1].y}`,
+          class: cssClass
+        });
+        highlightLayer.appendChild(vertical);
+
+        anchors.forEach((anchor, index) => {
+          const arm = createSvgEl("path", {
+            d: `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
+            class: cssClass
+          });
+          highlightLayer.appendChild(arm);
+
+          const dot = createSvgEl("circle", {
+            cx: busX,
+            cy: anchor.y,
+            r: 4.5,
+            class: cssClass
+          });
+          highlightLayer.appendChild(dot);
+        });
+      }
+
+      function updateHighlightConnectors(visibleNodes) {
+        clearHighlightLayer();
+
+        const visibleSet = new Set(visibleNodes.map(n => n.path));
+        let duplicateLane = 28;
+        let breederLane = 62;
+
+        for (const [breederId, enabled] of state.breederSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.breederGroups.get(breederId);
+          if (!group) continue;
+
+          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            drawConnectorBus(visibleGroup, "breeder-connector", breederLane);
+            breederLane += 22;
+          }
+        }
+
+        for (const [rabbitKey, enabled] of state.duplicateSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.duplicateGroups.get(rabbitKey) || [];
+          const visibleGroup = group.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1) {
+            drawConnectorBus(visibleGroup, "duplicate-connector", duplicateLane);
+            duplicateLane += 22;
           }
         }
       }
@@ -1335,6 +1609,79 @@
         return visibleCount;
       }
 
+      function updateMiniMap(visibleNodes) {
+        miniMapSvg.innerHTML = "";
+
+        const visibleSet = new Set(visibleNodes.map(node => node.path));
+        const dupNodePaths = new Set();
+        const breederNodePaths = new Set();
+
+        for (const [key, enabled] of state.duplicateSelections.entries()) {
+          if (!enabled) continue;
+          const nodes = state.duplicateGroups.get(key) || [];
+          nodes.forEach(node => {
+            if (visibleSet.has(node.path)) dupNodePaths.add(node.path);
+          });
+        }
+
+        for (const [key, enabled] of state.breederSelections.entries()) {
+          if (!enabled) continue;
+          const group = state.breederGroups.get(key);
+          if (!group) continue;
+          group.nodes.forEach(node => {
+            if (visibleSet.has(node.path)) breederNodePaths.add(node.path);
+          });
+        }
+
+        const frag = document.createDocumentFragment();
+
+        visibleNodes.forEach(node => {
+          const miniRect = createSvgEl("rect", {
+            x: node.x,
+            y: node.y,
+            width: BOX_WIDTH,
+            height: BOX_HEIGHT,
+            rx: 18,
+            ry: 18,
+            class: "mini-node"
+          });
+
+          if (breederNodePaths.has(node.path)) {
+            miniRect.classList.add("breeder-selected");
+          }
+          if (dupNodePaths.has(node.path)) {
+            miniRect.classList.add("duplicate-selected");
+          }
+
+          frag.appendChild(miniRect);
+        });
+
+        miniMapSvg.appendChild(frag);
+
+        if (!panZoom) return;
+
+        const pan = panZoom.getPan();
+        const zoom = panZoom.getZoom();
+        const visibleWidth = svg.clientWidth / zoom;
+        const visibleHeight = svg.clientHeight / zoom;
+        const visibleX = -pan.x / zoom;
+        const visibleY = -pan.y / zoom;
+
+        const viewportRect = createSvgEl("rect", {
+          x: visibleX,
+          y: visibleY,
+          width: visibleWidth,
+          height: visibleHeight,
+          class: "mini-viewport"
+        });
+
+        miniMapSvg.appendChild(viewportRect);
+      }
+
+      function syncMiniMapPosition(isPanelHidden) {
+        miniMapCard.style.left = isPanelHidden ? "60px" : "346px";
+      }
+
       function applyState() {
         if (!state.rendered) return;
 
@@ -1346,7 +1693,9 @@
 
         updateDuplicateStyles(visibleNodes);
         updateSpecialHighlights(visibleNodes);
+        updateHighlightConnectors(visibleNodes);
         updateSummary(visibleNodes);
+        updateMiniMap(visibleNodes);
 
         updateStatus(
           `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
@@ -1354,8 +1703,6 @@
           }`
         );
       }
-
-      let panZoom = null;
 
       function initPanZoom() {
         if (typeof window.svgPanZoom !== "function") {
@@ -1378,10 +1725,13 @@
           center: true,
           minZoom: 0.04,
           maxZoom: 20,
-          dblClickZoomEnabled: true
+          dblClickZoomEnabled: true,
+          onZoom: () => updateMiniMap(getVisibleNodes()),
+          onPan: () => updateMiniMap(getVisibleNodes())
         });
 
         window.panZoomInstance = panZoom;
+        updateMiniMap(getVisibleNodes());
       }
 
       function toggleCollapse(path) {
@@ -1393,6 +1743,26 @@
         applyState();
       }
 
+      function centerMiniMapPoint(evt) {
+        if (!panZoom) return;
+
+        const rect = miniMapSvg.getBoundingClientRect();
+        const px = evt.clientX - rect.left;
+        const py = evt.clientY - rect.top;
+        const rx = px / rect.width;
+        const ry = py / rect.height;
+
+        const targetX = rx * state.canvasWidth;
+        const targetY = ry * state.canvasHeight;
+
+        const zoom = panZoom.getZoom();
+        const panX = -(targetX * zoom) + (svg.clientWidth / 2);
+        const panY = -(targetY * zoom) + (svg.clientHeight / 2);
+
+        panZoom.pan({ x: panX, y: panY });
+        updateMiniMap(getVisibleNodes());
+      }
+
       function wireInteractions() {
         const controlsPanel = document.getElementById("controls-panel");
         const togglePanelBtn = document.getElementById("toggle-panel-btn");
@@ -1400,11 +1770,15 @@
 
         togglePanelBtn.addEventListener("click", () => {
           controlsPanel.classList.remove("hidden");
+          syncMiniMapPosition(false);
         });
 
         closePanelBtn.addEventListener("click", () => {
           controlsPanel.classList.add("hidden");
+          syncMiniMapPosition(true);
         });
+
+        miniMapSvg.addEventListener("click", centerMiniMapPoint);
 
         nodesLayer.addEventListener("click", (e) => {
           const collapsePath = e.target.getAttribute("data-collapse-path");
@@ -1491,6 +1865,7 @@
           panZoom.resetZoom();
           panZoom.center();
           panZoom.fit();
+          updateMiniMap(getVisibleNodes());
         });
 
         repeatedRabbitsToggles.addEventListener("change", (e) => {
@@ -1506,6 +1881,8 @@
           state.breederSelections.set(key, !!e.target.checked);
           applyState();
         });
+
+        syncMiniMapPosition(true);
       }
 
       renderPedigree();
