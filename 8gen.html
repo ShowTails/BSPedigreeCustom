@@ -401,8 +401,8 @@
 
     #mini-map-card {
       position: absolute;
-      top: 10px;
-      left: 346px;
+      right: 10px;
+      bottom: 10px;
       width: 210px;
       background: rgba(255,255,255,0.97);
       border: 1px solid #d8d8d8;
@@ -411,7 +411,7 @@
       z-index: 19;
       padding: 8px;
       box-sizing: border-box;
-      transition: left 0.22s ease, width 0.22s ease;
+      transition: width 0.22s ease;
     }
 
     #mini-map-card.minimized {
@@ -473,14 +473,27 @@
 
     .mini-node.duplicate-selected {
       fill: #ff2d2d;
+      animation: miniDuplicatePulse 1s ease-in-out infinite;
     }
 
     .mini-node.breeder-selected {
       fill: #e3b900;
+      animation: miniBreederPulse 1s ease-in-out infinite;
     }
 
     .mini-node.duplicate-selected.breeder-selected {
       fill: #ff2d2d;
+      animation: miniDuplicatePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes miniDuplicatePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    @keyframes miniBreederPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
     }
 
     .mini-viewport {
@@ -821,7 +834,7 @@
       const CENTER_X = 4700;
       const CENTER_Y = 3600;
       const CANVAS_WIDTH = 9400;
-      const CANVAS_HEIGHT = 7200;
+      const CANVAS_HEIGHT = 7600;
 
       const generationOffsets = {
         1: 0,
@@ -841,8 +854,8 @@
         4: 950,
         5: 1650,
         6: 2550,
-        7: 3050,
-        8: 3400
+        7: 3150,
+        8: 3700
       };
 
       const generationScale = {
@@ -853,7 +866,7 @@
         5: 0.76,
         6: 0.68,
         7: 0.60,
-        8: 0.50
+        8: 0.46
       };
 
       const state = {
@@ -950,7 +963,7 @@
       }
 
       function getBoxMetrics(generation) {
-        const scale = generationScale[generation] || 0.50;
+        const scale = generationScale[generation] || 0.46;
         return {
           width: BASE_BOX_WIDTH * scale,
           height: BASE_BOX_HEIGHT * scale,
@@ -1079,7 +1092,8 @@
           appendText(group, x + 8, y + 48, "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
           appendText(group, x + 8, y + 62, "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
         } else {
-          appendText(group, x + 8, y + 34, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
+          appendText(group, x + 8, y + 30, "box-text", `${data.name || "—"}`, { "font-size": metrics.textSize });
+          appendText(group, x + 8, y + 44, "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
         }
 
         if (generation < MAX_GENERATIONS) {
@@ -1742,10 +1756,6 @@
         miniMapSvg.appendChild(viewportRect);
       }
 
-      function syncMiniMapPosition(isPanelHidden) {
-        miniMapCard.style.left = isPanelHidden ? "60px" : "346px";
-      }
-
       function applyState() {
         if (!state.rendered) return;
 
@@ -1812,10 +1822,12 @@
           const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
           const delta = e.deltaY;
           const factor = delta > 0 ? 0.9 : 1.1;
+          const currentZoom = panZoom.getZoom();
+          const targetZoom = Math.max(0.25, Math.min(80, currentZoom * factor));
           e.preventDefault();
 
           if (isFinite(point.x) && isFinite(point.y)) {
-            panZoom.zoomAtPoint(factor, point);
+            panZoom.zoomAtPoint(targetZoom, point);
             updateMiniMap(getVisibleNodes());
           }
         }, { passive: false });
@@ -1865,6 +1877,7 @@
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const pinchNow = Math.hypot(dx, dy);
             const zoomRatio = pinchNow / pinchStart;
+            const targetZoom = Math.max(0.25, Math.min(80, startZoom * zoomRatio));
 
             const rect = svg.getBoundingClientRect();
             const mid = {
@@ -1872,7 +1885,7 @@
               y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top
             };
 
-            window.panZoomInstance.zoomAtPoint(startZoom * zoomRatio, mid);
+            window.panZoomInstance.zoomAtPoint(targetZoom, mid);
             updateMiniMap(getVisibleNodes());
           }
         }, { passive: false });
@@ -1898,12 +1911,12 @@
         panZoom = svgPanZoom(svg, {
           panEnabled: true,
           zoomEnabled: true,
-          mouseWheelZoomEnabled: true,
+          mouseWheelZoomEnabled: false,
           controlIconsEnabled: false,
           fit: false,
           center: true,
           minZoom: 0.25,
-          maxZoom: 10,
+          maxZoom: 80,
           dblClickZoomEnabled: true,
           onUpdatedCTM: function() {}
         });
@@ -1952,12 +1965,10 @@
 
         togglePanelBtn.addEventListener("click", () => {
           controlsPanel.classList.remove("hidden");
-          syncMiniMapPosition(false);
         });
 
         closePanelBtn.addEventListener("click", () => {
           controlsPanel.classList.add("hidden");
-          syncMiniMapPosition(true);
         });
 
         miniMapSvg.addEventListener("click", centerMiniMapPoint);
@@ -2061,20 +2072,16 @@
           state.breederSelections.set(key, !!e.target.checked);
           applyState();
         });
-
-        syncMiniMapPosition(true);
       }
 
       const ro = new ResizeObserver(() => {
         if (!initialized) tryInitPanZoom();
-        else fitToContainer();
       });
       ro.observe(container);
 
       document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          if (!initialized) tryInitPanZoom();
-          else fitToContainer();
+        if (document.visibilityState === "visible" && !initialized) {
+          tryInitPanZoom();
         }
       });
 
