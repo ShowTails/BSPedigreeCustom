@@ -618,7 +618,7 @@
         <button id="mini-map-toggle-btn" type="button">−</button>
       </div>
       <div id="mini-map-body">
-        <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
       </div>
     </div>
 
@@ -836,9 +836,9 @@
       const BASE_BOX_HEIGHT = 168;
 
       const CENTER_X = 4700;
-      const CENTER_Y = 4500;
+      const CENTER_Y = 4900;
       const CANVAS_WIDTH = 9400;
-      const CANVAS_HEIGHT = 9000;
+      const CANVAS_HEIGHT = 9800;
 
       const generationOffsets = {
         1: 0,
@@ -856,10 +856,10 @@
         2: 0,
         3: 430,
         4: 980,
-        5: 1780,
-        6: 2850,
-        7: 3550,
-        8: 4300
+        5: 1900,
+        6: 3350,
+        7: 4300,
+        8: 4700
       };
 
       const generationScale = {
@@ -869,7 +869,7 @@
         4: 0.84,
         5: 0.76,
         6: 0.68,
-        7: 0.60,
+        7: 0.58,
         8: 0.46
       };
 
@@ -916,8 +916,8 @@
       const breederHelp = document.getElementById("breeder-help");
       const breederToggles = document.getElementById("breeder-toggles");
 
-      const miniMapCard = document.getElementById("mini-map-card");
       const miniMapSvg = document.getElementById("mini-map-svg");
+      const miniMapCard = document.getElementById("mini-map-card");
       const miniMapToggleBtn = document.getElementById("mini-map-toggle-btn");
 
       svg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
@@ -1869,32 +1869,27 @@
         applyViewFit(computeFit());
       }
 
-      function centerOnRoot() {
+      function fitCurrentGenerationView() {
+        const bounds = computeVisibleBBox(state.visibleGenerations, state.visibleSide);
+        applyViewFit(computeFitForBounds(bounds, 90));
+      }
+
+      function centerOnRoot(zoomLevel = 2.0) {
         const root = state.nodesByPath.get("");
         if (!root || !panZoom) return;
 
         const cw = container.clientWidth;
         const ch = container.clientHeight;
-        const currentZoom = panZoom.getZoom();
-
-        panZoom.pan({
-          x: (cw / 2) - root.yCenter * 0 + (root.x + root.width / 2) * -currentZoom + (cw / 2),
-          y: (ch / 2) - (root.y + root.height / 2) * currentZoom
-        });
-
         const rootCenterX = root.x + root.width / 2;
         const rootCenterY = root.y + root.height / 2;
+
+        panZoom.zoom(zoomLevel);
         panZoom.pan({
-          x: (cw / 2) - rootCenterX * currentZoom,
-          y: (ch / 2) - rootCenterY * currentZoom
+          x: (cw / 2) - rootCenterX * zoomLevel,
+          y: (ch / 2) - rootCenterY * zoomLevel
         });
 
         updateMiniMap(getVisibleNodes());
-      }
-
-      function fitCurrentGenerationView() {
-        const bounds = computeVisibleBBox(state.visibleGenerations, state.visibleSide);
-        applyViewFit(computeFitForBounds(bounds, 90));
       }
 
       function wireWheelZoom() {
@@ -2027,17 +2022,15 @@
         if (!window.panZoomInstance || state.miniMapMinimized) return;
 
         const rect = miniMapSvg.getBoundingClientRect();
-        const px = evt.clientX - rect.left;
-        const py = evt.clientY - rect.top;
-        const rx = px / rect.width;
-        const ry = py / rect.height;
+        const rx = (evt.clientX - rect.left) / rect.width;
+        const ry = (evt.clientY - rect.top) / rect.height;
 
         const targetX = rx * CANVAS_WIDTH;
         const targetY = ry * CANVAS_HEIGHT;
 
         const zoom = window.panZoomInstance.getZoom();
-        const panX = -(targetX * zoom) + (svg.clientWidth / 2);
-        const panY = -(targetY * zoom) + (svg.clientHeight / 2);
+        const panX = (svg.clientWidth / 2) - targetX * zoom;
+        const panY = (svg.clientHeight / 2) - targetY * zoom;
 
         window.panZoomInstance.pan({ x: panX, y: panY });
         updateMiniMap(getVisibleNodes());
@@ -2147,19 +2140,7 @@
         });
 
         document.getElementById("reset-view-btn").addEventListener("click", () => {
-          const root = state.nodesByPath.get("");
-          if (!root || !panZoom) return;
-          const zoom = Math.max(1.6, panZoom.getZoom());
-          panZoom.zoom(zoom);
-          const cw = container.clientWidth;
-          const ch = container.clientHeight;
-          const rootCenterX = root.x + root.width / 2;
-          const rootCenterY = root.y + root.height / 2;
-          panZoom.pan({
-            x: (cw / 2) - rootCenterX * zoom,
-            y: (ch / 2) - rootCenterY * zoom
-          });
-          updateMiniMap(getVisibleNodes());
+          centerOnRoot(2.0);
         });
 
         repeatedRabbitsToggles.addEventListener("change", (e) => {
