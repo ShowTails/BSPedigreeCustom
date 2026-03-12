@@ -529,6 +529,10 @@
       padding: 7px 10px;
       font-size: 12px;
       color: #234a57;
+      max-width: calc(100vw - 260px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 </head>
@@ -832,9 +836,9 @@
       const BASE_BOX_HEIGHT = 168;
 
       const CENTER_X = 4700;
-      const CENTER_Y = 3600;
+      const CENTER_Y = 4500;
       const CANVAS_WIDTH = 9400;
-      const CANVAS_HEIGHT = 7600;
+      const CANVAS_HEIGHT = 9000;
 
       const generationOffsets = {
         1: 0,
@@ -851,11 +855,11 @@
         1: 0,
         2: 0,
         3: 430,
-        4: 950,
-        5: 1650,
-        6: 2550,
-        7: 3150,
-        8: 3700
+        4: 980,
+        5: 1780,
+        6: 2850,
+        7: 3550,
+        8: 4300
       };
 
       const generationScale = {
@@ -1144,6 +1148,34 @@
             drawPedigreeLine(path, parentNode, nodeRecord);
           }
         }
+      }
+
+      function computeVisibleBBox(maxGeneration = state.visibleGenerations, side = state.visibleSide) {
+        const nodes = [];
+        for (const [path, node] of state.nodesByPath.entries()) {
+          if (node.generation > maxGeneration) continue;
+          if (side === "s" && path && !path.startsWith("s")) continue;
+          if (side === "d" && path && !path.startsWith("d")) continue;
+          if (state.hideEmpty && node.empty && node.generation > 1) continue;
+          nodes.push(node);
+        }
+
+        if (!nodes.length) {
+          const root = state.nodesByPath.get("");
+          return root ? {
+            minX: root.x,
+            minY: root.y,
+            maxX: root.x + root.width,
+            maxY: root.y + root.height
+          } : null;
+        }
+
+        const minX = Math.min(...nodes.map(n => n.x));
+        const minY = Math.min(...nodes.map(n => n.y));
+        const maxX = Math.max(...nodes.map(n => n.x + n.width));
+        const maxY = Math.max(...nodes.map(n => n.y + n.height));
+
+        return { minX, minY, maxX, maxY };
       }
 
       function renderPedigree() {
@@ -1738,18 +1770,21 @@
 
         if (!window.panZoomInstance) return;
 
-        const pan = window.panZoomInstance.getPan();
         const zoom = window.panZoomInstance.getZoom();
-        const visibleWidth = svg.clientWidth / zoom;
-        const visibleHeight = svg.clientHeight / zoom;
-        const visibleX = -pan.x / zoom;
-        const visibleY = -pan.y / zoom;
+        const pan = window.panZoomInstance.getPan();
+        const svgWidth = svg.clientWidth;
+        const svgHeight = svg.clientHeight;
+
+        const viewportWidth = svgWidth / zoom;
+        const viewportHeight = svgHeight / zoom;
+        const viewportX = -pan.x / zoom;
+        const viewportY = -pan.y / zoom;
 
         const viewportRect = createSvgEl("rect", {
-          x: visibleX,
-          y: visibleY,
-          width: visibleWidth,
-          height: visibleHeight,
+          x: viewportX,
+          y: viewportY,
+          width: viewportWidth,
+          height: viewportHeight,
           class: "mini-viewport"
         });
 
@@ -1785,34 +1820,81 @@
         return vb && isFinite(vb.width) && vb.width > 0 && isFinite(vb.height) && vb.height > 0;
       }
 
-      function computeFit() {
-        const vb = svg.viewBox.baseVal;
-        if (!validBox(vb)) return null;
+      function computeFitForBounds(bounds, padding = 80) {
+        if (!bounds) return null;
 
         const cw = container.clientWidth;
         const ch = container.clientHeight;
         if (!cw || !ch) return null;
 
-        const scale = Math.min(cw / vb.width, ch / vb.height);
-        if (!isFinite(scale) || scale <= 0) return null;
+        const width = Math.max(1, bounds.maxX - bounds.minX);
+        const height = Math.max(1, bounds.maxY - bounds.minY);
+
+        const scale = Math.min(
+          (cw - padding * 2) / width,
+          (ch - padding * 2) / height
+        );
+
+        const boundedScale = Math.max(0.25, Math.min(80, scale));
+
+        const centerX = (bounds.minX + bounds.maxX) / 2;
+        const centerY = (bounds.minY + bounds.maxY) / 2;
 
         return {
-          scale,
+          scale: boundedScale,
           pan: {
-            x: (cw - vb.width * scale) / 2,
-            y: (ch - vb.height * scale) / 2
+            x: (cw / 2) - centerX * boundedScale,
+            y: (ch / 2) - centerY * boundedScale
           }
         };
       }
 
-      function fitToContainer() {
-        if (!panZoom) return;
-        const fit = computeFit();
-        if (!fit) return;
+      function computeFit() {
+        return computeFitForBounds({
+          minX: 0,
+          minY: 0,
+          maxX: CANVAS_WIDTH,
+          maxY: CANVAS_HEIGHT
+        }, 40);
+      }
 
+      function applyViewFit(fit) {
+        if (!panZoom || !fit) return;
         panZoom.zoom(fit.scale);
         panZoom.pan(fit.pan);
         updateMiniMap(getVisibleNodes());
+      }
+
+      function fitToContainer() {
+        applyViewFit(computeFit());
+      }
+
+      function centerOnRoot() {
+        const root = state.nodesByPath.get("");
+        if (!root || !panZoom) return;
+
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const currentZoom = panZoom.getZoom();
+
+        panZoom.pan({
+          x: (cw / 2) - root.yCenter * 0 + (root.x + root.width / 2) * -currentZoom + (cw / 2),
+          y: (ch / 2) - (root.y + root.height / 2) * currentZoom
+        });
+
+        const rootCenterX = root.x + root.width / 2;
+        const rootCenterY = root.y + root.height / 2;
+        panZoom.pan({
+          x: (cw / 2) - rootCenterX * currentZoom,
+          y: (ch / 2) - rootCenterY * currentZoom
+        });
+
+        updateMiniMap(getVisibleNodes());
+      }
+
+      function fitCurrentGenerationView() {
+        const bounds = computeVisibleBBox(state.visibleGenerations, state.visibleSide);
+        applyViewFit(computeFitForBounds(bounds, 90));
       }
 
       function wireWheelZoom() {
@@ -1918,11 +2000,13 @@
           minZoom: 0.25,
           maxZoom: 80,
           dblClickZoomEnabled: true,
-          onUpdatedCTM: function() {}
+          onUpdatedCTM: function () {
+            updateMiniMap(getVisibleNodes());
+          }
         });
 
         window.panZoomInstance = panZoom;
-        fitToContainer();
+        fitCurrentGenerationView();
         enablePointerPan();
         enablePinchZoom();
         wireWheelZoom();
@@ -1936,6 +2020,7 @@
           state.collapsedBranches.add(path);
         }
         applyState();
+        fitCurrentGenerationView();
       }
 
       function centerMiniMapPoint(evt) {
@@ -2006,6 +2091,7 @@
             btn.classList.add("active");
             state.visibleGenerations = Number(btn.dataset.gen);
             applyState();
+            fitCurrentGenerationView();
           });
         });
 
@@ -2015,6 +2101,7 @@
             btn.classList.add("active");
             state.visibleSide = btn.dataset.side;
             applyState();
+            fitCurrentGenerationView();
           });
         });
 
@@ -2031,6 +2118,7 @@
         document.getElementById("toggle-hide-empty").addEventListener("change", (e) => {
           state.hideEmpty = e.target.checked;
           applyState();
+          fitCurrentGenerationView();
         });
 
         document.getElementById("toggle-badges").addEventListener("change", (e) => {
@@ -2041,22 +2129,37 @@
         document.getElementById("expand-all-btn").addEventListener("click", () => {
           state.collapsedBranches.clear();
           applyState();
+          fitCurrentGenerationView();
         });
 
         document.getElementById("collapse-sire-btn").addEventListener("click", () => {
           state.collapsedBranches.add("s");
           state.collapsedBranches.delete("d");
           applyState();
+          fitCurrentGenerationView();
         });
 
         document.getElementById("collapse-dam-btn").addEventListener("click", () => {
           state.collapsedBranches.add("d");
           state.collapsedBranches.delete("s");
           applyState();
+          fitCurrentGenerationView();
         });
 
         document.getElementById("reset-view-btn").addEventListener("click", () => {
-          fitToContainer();
+          const root = state.nodesByPath.get("");
+          if (!root || !panZoom) return;
+          const zoom = Math.max(1.6, panZoom.getZoom());
+          panZoom.zoom(zoom);
+          const cw = container.clientWidth;
+          const ch = container.clientHeight;
+          const rootCenterX = root.x + root.width / 2;
+          const rootCenterY = root.y + root.height / 2;
+          panZoom.pan({
+            x: (cw / 2) - rootCenterX * zoom,
+            y: (ch / 2) - rootCenterY * zoom
+          });
+          updateMiniMap(getVisibleNodes());
         });
 
         repeatedRabbitsToggles.addEventListener("change", (e) => {
