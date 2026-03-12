@@ -19,9 +19,6 @@
     #pedigree-container {
       width: 100vw;
       height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
       overflow: hidden;
       background: white;
@@ -31,8 +28,6 @@
       display: block;
       width: 100% !important;
       height: 100% !important;
-      transform: none !important;
-      margin: 0 auto !important;
       background: white !important;
       touch-action: none !important;
       -ms-touch-action: none !important;
@@ -835,10 +830,9 @@
       const BASE_BOX_WIDTH = 285;
       const BASE_BOX_HEIGHT = 168;
 
-      const CENTER_X = 4700;
-      const CENTER_Y = 4900;
-      const CANVAS_WIDTH = 9400;
-      const CANVAS_HEIGHT = 9800;
+      // Initial layout workspace. Final viewBox gets trimmed to the actual tree.
+      const LAYOUT_CENTER_X = 4700;
+      const LAYOUT_CENTER_Y = 4900;
 
       const generationOffsets = {
         1: 0,
@@ -888,7 +882,9 @@
         duplicateSelections: new Map(),
         breederSelections: new Map(),
         rendered: false,
-        miniMapMinimized: false
+        miniMapMinimized: false,
+        treeBoundsAll: null,
+        trimmedViewBox: null
       };
 
       const svg = document.getElementById("pedigree-svg");
@@ -920,9 +916,6 @@
       const miniMapCard = document.getElementById("mini-map-card");
       const miniMapToggleBtn = document.getElementById("mini-map-toggle-btn");
 
-      svg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
-      miniMapSvg.setAttribute("viewBox", `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
-
       function updateStatus(text) {
         statusBadge.textContent = text;
       }
@@ -943,8 +936,8 @@
 
         if (generation === 1) {
           return {
-            xCenter: CENTER_X,
-            yCenter: CENTER_Y
+            xCenter: LAYOUT_CENTER_X,
+            yCenter: LAYOUT_CENTER_Y
           };
         }
 
@@ -959,9 +952,9 @@
           normalized = (order / (countOnSide - 1)) * 2 - 1;
         }
 
-        const yCenter = CENTER_Y + (normalized * halfSpan);
+        const yCenter = LAYOUT_CENTER_Y + (normalized * halfSpan);
         const offset = generationOffsets[generation] || 0;
-        const xCenter = side === "s" ? CENTER_X - offset : CENTER_X + offset;
+        const xCenter = side === "s" ? LAYOUT_CENTER_X - offset : LAYOUT_CENTER_X + offset;
 
         return { xCenter, yCenter };
       }
@@ -1150,6 +1143,45 @@
         }
       }
 
+      function computeNodesBBox(nodes) {
+        if (!nodes.length) return null;
+        return {
+          minX: Math.min(...nodes.map(n => n.x)),
+          minY: Math.min(...nodes.map(n => n.y)),
+          maxX: Math.max(...nodes.map(n => n.x + n.width)),
+          maxY: Math.max(...nodes.map(n => n.y + n.height))
+        };
+      }
+
+      function addPadding(bounds, pad = 80) {
+        if (!bounds) return null;
+        return {
+          minX: bounds.minX - pad,
+          minY: bounds.minY - pad,
+          maxX: bounds.maxX + pad,
+          maxY: bounds.maxY + pad
+        };
+      }
+
+      function trimCanvasToTree() {
+        const allNodes = Array.from(state.nodesByPath.values());
+        const rawBounds = computeNodesBBox(allNodes);
+        const paddedBounds = addPadding(rawBounds, 80);
+
+        state.treeBoundsAll = paddedBounds;
+        state.trimmedViewBox = {
+          x: paddedBounds.minX,
+          y: paddedBounds.minY,
+          width: paddedBounds.maxX - paddedBounds.minX,
+          height: paddedBounds.maxY - paddedBounds.minY
+        };
+
+        svg.setAttribute(
+          "viewBox",
+          `${state.trimmedViewBox.x} ${state.trimmedViewBox.y} ${state.trimmedViewBox.width} ${state.trimmedViewBox.height}`
+        );
+      }
+
       function computeVisibleBBox(maxGeneration = state.visibleGenerations, side = state.visibleSide) {
         const nodes = [];
         for (const [path, node] of state.nodesByPath.entries()) {
@@ -1157,25 +1189,21 @@
           if (side === "s" && path && !path.startsWith("s")) continue;
           if (side === "d" && path && !path.startsWith("d")) continue;
           if (state.hideEmpty && node.empty && node.generation > 1) continue;
+          if (isPathCollapsedByAncestor(path)) continue;
           nodes.push(node);
         }
 
         if (!nodes.length) {
           const root = state.nodesByPath.get("");
-          return root ? {
+          return root ? addPadding({
             minX: root.x,
             minY: root.y,
             maxX: root.x + root.width,
             maxY: root.y + root.height
-          } : null;
+          }, 40) : null;
         }
 
-        const minX = Math.min(...nodes.map(n => n.x));
-        const minY = Math.min(...nodes.map(n => n.y));
-        const maxX = Math.max(...nodes.map(n => n.x + n.width));
-        const maxY = Math.max(...nodes.map(n => n.y + n.height));
-
-        return { minX, minY, maxX, maxY };
+        return addPadding(computeNodesBBox(nodes), 80);
       }
 
       function renderPedigree() {
@@ -1205,6 +1233,7 @@
           if (queue.length) {
             requestAnimationFrame(processChunk);
           } else {
+            trimCanvasToTree();
             state.rendered = true;
             computeDuplicateGroups();
             computeBreederGroups();
@@ -1722,9 +1751,37 @@
         return visibleCount;
       }
 
+      function mapViewportToTreeBounds() {
+        if (!window.panZoomInstance || !state.treeBoundsAll) return null;
+
+        const zoom = window.panZoomInstance.getZoom();
+        const pan = window.panZoomInstance.getPan();
+        const svgWidth = svg.clientWidth;
+        const svgHeight = svg.clientHeight;
+
+        const viewportWidth = svgWidth / zoom;
+        const viewportHeight = svgHeight / zoom;
+        const viewportX = -pan.x / zoom;
+        const viewportY = -pan.y / zoom;
+
+        return {
+          x: viewportX,
+          y: viewportY,
+          width: viewportWidth,
+          height: viewportHeight
+        };
+      }
+
       function updateMiniMap(visibleNodes) {
         miniMapSvg.innerHTML = "";
         if (state.miniMapMinimized) return;
+        if (!state.treeBoundsAll) return;
+
+        const tree = state.treeBoundsAll;
+        const treeWidth = tree.maxX - tree.minX;
+        const treeHeight = tree.maxY - tree.minY;
+
+        miniMapSvg.setAttribute("viewBox", `${tree.minX} ${tree.minY} ${treeWidth} ${treeHeight}`);
 
         const visibleSet = new Set(visibleNodes.map(node => node.path));
         const dupNodePaths = new Set();
@@ -1768,23 +1825,14 @@
 
         miniMapSvg.appendChild(frag);
 
-        if (!window.panZoomInstance) return;
-
-        const zoom = window.panZoomInstance.getZoom();
-        const pan = window.panZoomInstance.getPan();
-        const svgWidth = svg.clientWidth;
-        const svgHeight = svg.clientHeight;
-
-        const viewportWidth = svgWidth / zoom;
-        const viewportHeight = svgHeight / zoom;
-        const viewportX = -pan.x / zoom;
-        const viewportY = -pan.y / zoom;
+        const viewport = mapViewportToTreeBounds();
+        if (!viewport) return;
 
         const viewportRect = createSvgEl("rect", {
-          x: viewportX,
-          y: viewportY,
-          width: viewportWidth,
-          height: viewportHeight,
+          x: viewport.x,
+          y: viewport.y,
+          width: viewport.width,
+          height: viewport.height,
           class: "mini-viewport"
         });
 
@@ -1850,12 +1898,7 @@
       }
 
       function computeFit() {
-        return computeFitForBounds({
-          minX: 0,
-          minY: 0,
-          maxX: CANVAS_WIDTH,
-          maxY: CANVAS_HEIGHT
-        }, 40);
+        return computeFitForBounds(state.treeBoundsAll, 40);
       }
 
       function applyViewFit(fit) {
@@ -2019,14 +2062,15 @@
       }
 
       function centerMiniMapPoint(evt) {
-        if (!window.panZoomInstance || state.miniMapMinimized) return;
+        if (!window.panZoomInstance || state.miniMapMinimized || !state.treeBoundsAll) return;
 
+        const tree = state.treeBoundsAll;
         const rect = miniMapSvg.getBoundingClientRect();
         const rx = (evt.clientX - rect.left) / rect.width;
         const ry = (evt.clientY - rect.top) / rect.height;
 
-        const targetX = rx * CANVAS_WIDTH;
-        const targetY = ry * CANVAS_HEIGHT;
+        const targetX = tree.minX + rx * (tree.maxX - tree.minX);
+        const targetY = tree.minY + ry * (tree.maxY - tree.minY);
 
         const zoom = window.panZoomInstance.getZoom();
         const panX = (svg.clientWidth / 2) - targetX * zoom;
