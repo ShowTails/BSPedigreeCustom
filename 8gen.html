@@ -621,9 +621,19 @@
   </div>
 
   <script>
+    const URL_PARAMS = new URLSearchParams(window.location.search);
+
     function getParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name) || "";
+      return URL_PARAMS.get(name) || "";
+    }
+
+    function getFirstParam(names) {
+      for (const name of names) {
+        if (URL_PARAMS.has(name)) {
+          return URL_PARAMS.get(name) || "";
+        }
+      }
+      return "";
     }
 
     function escapeText(value) {
@@ -665,41 +675,42 @@
     function getFieldValue(path, field) {
       if (path === "") {
         const rootMap = {
-          rabbitry: "crabbitry",
-          name: "name",
-          color: "color",
-          ear: "ear number",
-          weight: "weight",
-          sex: "sex",
-          legs: "legs",
-          reg: "reg",
-          gc: "gc",
-          custom: "custom",
-          win1: "win1",
-          win2: "win2",
-          win3: "win3"
+          rabbitry: ["cr", "crabbitry"],
+          name: ["n", "name"],
+          color: ["co", "c", "color"],
+          ear: ["e", "ear", "ear number"],
+          weight: ["we", "w", "weight"],
+          sex: ["s", "sex"],
+          legs: ["l", "legs"],
+          reg: ["re", "reg", "r"],
+          gc: ["g", "gc"],
+          custom: ["cu", "custom"],
+          win1: ["w1", "win1"],
+          win2: ["w2", "win2"],
+          win3: ["w3", "win3"]
         };
-        return getParam(rootMap[field] || "");
+        return getFirstParam(rootMap[field] || []);
       }
 
       const prefix = path;
+
       const nonRootMap = {
-        rabbitry: prefix + "rabbitry",
-        name: getNameParam(path),
-        color: prefix + "color",
-        ear: prefix + "ear",
-        weight: prefix + "weight",
-        sex: prefix + "sex",
-        legs: prefix + "legs",
-        reg: prefix + "reg",
-        gc: prefix + "gc",
-        custom: prefix + "custom",
-        win1: prefix + "win1",
-        win2: prefix + "win2",
-        win3: prefix + "win3"
+        rabbitry: [prefix + "r", prefix + "rabbitry"],
+        name: [prefix + "n", getNameParam(path)],
+        color: [prefix + "co", prefix + "c", prefix + "color"],
+        ear: [prefix + "e", prefix + "ear"],
+        weight: [prefix + "we", prefix + "w", prefix + "weight"],
+        sex: [prefix + "s", prefix + "sex"],
+        legs: [prefix + "l", prefix + "legs"],
+        reg: [prefix + "re", prefix + "reg"],
+        gc: [prefix + "g", prefix + "gc"],
+        custom: [prefix + "cu", prefix + "custom"],
+        win1: [prefix + "w1", prefix + "win1"],
+        win2: [prefix + "w2", prefix + "win2"],
+        win3: [prefix + "w3", prefix + "win3"]
       };
 
-      return getParam(nonRootMap[field] || "");
+      return getFirstParam(nonRootMap[field] || "");
     }
 
     function getRabbitData(path) {
@@ -759,9 +770,9 @@
       return String(value || "")
         .toLowerCase()
         .replace(/&/g, " and ")
-        .replace(/['’]s\\b/g, "")
-        .replace(/[^a-z0-9\\s]/g, " ")
-        .replace(/\\s+/g, " ")
+        .replace(/['’]s\b/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 
@@ -774,7 +785,7 @@
 
     function displayPrefixFromName(name) {
       const rawTokens = String(name || "")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim()
         .split(" ")
         .filter(Boolean);
