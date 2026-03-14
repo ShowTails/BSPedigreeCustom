@@ -14,6 +14,17 @@
       --male:#cce5ff;
       --female:#f8d7da;
       --empty:#bdbdbd;
+
+      --hl-duplicate:#ff2d2d;
+      --hl-breeder:#ffd400;
+      --hl-registered:#2f6fed;
+      --hl-gc:#d4aa00;
+      --hl-win:#2ca24f;
+      --hl-color:#8b5cf6;
+      --hl-genetics:#14b8a6;
+      --hl-missing:#f59e0b;
+      --hl-keyword:#7c3aed;
+      --hl-rabbitry:#0ea5a4;
     }
 
     html, body {
@@ -88,45 +99,55 @@
       opacity: 0;
     }
 
-    .flash-duplicate .highlight-overlay {
+    .flash-duplicate .highlight-overlay,
+    .flash-breeder .highlight-overlay,
+    .flash-registered .highlight-overlay,
+    .flash-gc .highlight-overlay,
+    .flash-win .highlight-overlay,
+    .flash-color .highlight-overlay,
+    .flash-genetics .highlight-overlay,
+    .flash-missing .highlight-overlay,
+    .flash-keyword .highlight-overlay,
+    .flash-rabbitry .highlight-overlay {
       display: block;
-      fill: rgba(255, 38, 38, 0.34);
-      animation: pulseDuplicateFill 1s ease-in-out infinite;
     }
 
-    .flash-breeder .highlight-overlay {
-      display: block;
-      fill: rgba(255, 215, 0, 0.34);
-      animation: pulseBreederFill 1s ease-in-out infinite;
-    }
+    .flash-duplicate .highlight-overlay { fill: rgba(255, 45, 45, 0.34); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-breeder .highlight-overlay   { fill: rgba(255, 212, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-registered .highlight-overlay{ fill: rgba(47, 111, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-gc .highlight-overlay        { fill: rgba(212, 170, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-win .highlight-overlay       { fill: rgba(44, 162, 79, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-color .highlight-overlay     { fill: rgba(139, 92, 246, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-genetics .highlight-overlay  { fill: rgba(20, 184, 166, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-missing .highlight-overlay   { fill: rgba(245, 158, 11, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-keyword .highlight-overlay   { fill: rgba(124, 58, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
+    .flash-rabbitry .highlight-overlay  { fill: rgba(14, 165, 164, 0.28); animation: pulseFill 1s ease-in-out infinite; }
 
-    .flash-duplicate .box {
-      stroke: #d81f1f !important;
-      stroke-width: 2.8 !important;
-      animation: flashDuplicateStroke 1s ease-in-out infinite;
-    }
+    .flash-duplicate .box { stroke: var(--hl-duplicate) !important; stroke-width: 2.8 !important; animation: flashDuplicateStroke 1s ease-in-out infinite; }
+    .flash-breeder:not(.flash-duplicate) .box { stroke: var(--hl-breeder) !important; stroke-width: 2.6 !important; animation: flashBreederStroke 1s ease-in-out infinite; }
+    .flash-registered:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-registered) !important; stroke-width: 2.6 !important; animation: flashRegisteredStroke 1s ease-in-out infinite; }
+    .flash-gc:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-gc) !important; stroke-width: 2.6 !important; animation: flashGCStroke 1s ease-in-out infinite; }
+    .flash-win:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-win) !important; stroke-width: 2.6 !important; animation: flashWinStroke 1s ease-in-out infinite; }
+    .flash-color:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-color) !important; stroke-width: 2.6 !important; animation: flashColorStroke 1s ease-in-out infinite; }
+    .flash-genetics:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-genetics) !important; stroke-width: 2.6 !important; animation: flashGeneticsStroke 1s ease-in-out infinite; }
+    .flash-missing:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-missing) !important; stroke-width: 2.6 !important; animation: flashMissingStroke 1s ease-in-out infinite; }
+    .flash-keyword:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-keyword) !important; stroke-width: 2.6 !important; animation: flashKeywordStroke 1s ease-in-out infinite; }
+    .flash-rabbitry:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-rabbitry) !important; stroke-width: 2.6 !important; animation: flashRabbitryStroke 1s ease-in-out infinite; }
 
-    .flash-breeder:not(.flash-duplicate) .box {
-      stroke: #d4aa00 !important;
-      stroke-width: 2.6 !important;
-      animation: flashBreederStroke 1s ease-in-out infinite;
-    }
+    @keyframes flashDuplicateStroke { 0%,100% { stroke:#ff2d2d; stroke-opacity:1; } 50% { stroke:#860000; stroke-opacity:0.5; } }
+    @keyframes flashBreederStroke   { 0%,100% { stroke:#ffd400; stroke-opacity:1; } 50% { stroke:#8f7600; stroke-opacity:0.5; } }
+    @keyframes flashRegisteredStroke{ 0%,100% { stroke:#2f6fed; stroke-opacity:1; } 50% { stroke:#163f93; stroke-opacity:0.5; } }
+    @keyframes flashGCStroke        { 0%,100% { stroke:#d4aa00; stroke-opacity:1; } 50% { stroke:#7c6200; stroke-opacity:0.5; } }
+    @keyframes flashWinStroke       { 0%,100% { stroke:#2ca24f; stroke-opacity:1; } 50% { stroke:#1d6a33; stroke-opacity:0.5; } }
+    @keyframes flashColorStroke     { 0%,100% { stroke:#8b5cf6; stroke-opacity:1; } 50% { stroke:#4e2ea8; stroke-opacity:0.5; } }
+    @keyframes flashGeneticsStroke  { 0%,100% { stroke:#14b8a6; stroke-opacity:1; } 50% { stroke:#0c6a60; stroke-opacity:0.5; } }
+    @keyframes flashMissingStroke   { 0%,100% { stroke:#f59e0b; stroke-opacity:1; } 50% { stroke:#a76406; stroke-opacity:0.5; } }
+    @keyframes flashKeywordStroke   { 0%,100% { stroke:#7c3aed; stroke-opacity:1; } 50% { stroke:#4a2390; stroke-opacity:0.5; } }
+    @keyframes flashRabbitryStroke  { 0%,100% { stroke:#0ea5a4; stroke-opacity:1; } 50% { stroke:#0a6464; stroke-opacity:0.5; } }
 
-    @keyframes flashDuplicateStroke {
-      0%,100% { stroke:#ff2d2d; stroke-opacity:1; }
-      50% { stroke:#860000; stroke-opacity:0.5; }
-    }
-    @keyframes flashBreederStroke {
-      0%,100% { stroke:#ffd400; stroke-opacity:1; }
-      50% { stroke:#8f7600; stroke-opacity:0.5; }
-    }
-    @keyframes pulseDuplicateFill {
-      0%,100% { fill-opacity:0.40; }
+    @keyframes pulseFill {
+      0%,100% { fill-opacity:0.36; }
       50% { fill-opacity:0.10; }
-    }
-    @keyframes pulseBreederFill {
-      0%,100% { fill-opacity:0.38; }
-      50% { fill-opacity:0.08; }
     }
 
     .duplicate-connector {
@@ -214,7 +235,7 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      width: 320px;
+      width: 340px;
       max-height: calc(100vh - 20px);
       overflow: auto;
       background: var(--panel-bg);
@@ -275,6 +296,13 @@
       margin-bottom: 8px;
     }
 
+    .control-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
     .btn {
       border: 1px solid #b9c4ca;
       background: #fff;
@@ -311,6 +339,7 @@
       cursor: pointer;
     }
 
+    .sub-card,
     #summary-card,
     #duplicates-card,
     #repeated-rabbits-card,
@@ -322,6 +351,7 @@
       margin-top: 8px;
     }
 
+    .sub-card .summary-line,
     #summary-card .summary-line,
     #duplicates-card .summary-line,
     #repeated-rabbits-card .summary-line,
@@ -329,6 +359,31 @@
       font-size: 12px;
       margin: 4px 0;
       color: #234a57;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 6px;
+      margin: 6px 0;
+    }
+
+    .input-row input,
+    .input-row select {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: 1px solid #cdd7dc;
+      border-radius: 7px;
+      padding: 7px 8px;
+      font-size: 13px;
+      color: #234a57;
+      background: #fff;
+      box-sizing: border-box;
+    }
+
+    .subtle-note {
+      font-size: 11px;
+      color: #5b6f78;
+      line-height: 1.35;
     }
 
     #risk-badge {
@@ -471,20 +526,16 @@
       stroke: none;
     }
 
-    .mini-node.duplicate-selected {
-      fill: #ff2d2d;
-      animation: miniDuplicatePulse 1s ease-in-out infinite;
-    }
-
-    .mini-node.breeder-selected {
-      fill: #e3b900;
-      animation: miniBreederPulse 1s ease-in-out infinite;
-    }
-
-    .mini-node.duplicate-selected.breeder-selected {
-      fill: #ff2d2d;
-      animation: miniDuplicatePulse 1s ease-in-out infinite;
-    }
+    .mini-node.duplicate-selected { fill: #ff2d2d; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.breeder-selected { fill: #e3b900; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.registered-selected { fill: #2f6fed; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.gc-selected { fill: #d4aa00; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.win-selected { fill: #2ca24f; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.color-selected { fill: #8b5cf6; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.genetics-selected { fill: #14b8a6; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.missing-selected { fill: #f59e0b; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.keyword-selected { fill: #7c3aed; animation: miniPulse 1s ease-in-out infinite; }
+    .mini-node.rabbitry-selected { fill: #0ea5a4; animation: miniPulse 1s ease-in-out infinite; }
 
     .mini-viewport {
       fill: rgba(47,111,237,0.08);
@@ -494,12 +545,7 @@
       pointer-events: none;
     }
 
-    @keyframes miniDuplicatePulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-
-    @keyframes miniBreederPulse {
+    @keyframes miniPulse {
       0%,100% { opacity: 1; }
       50% { opacity: 0.35; }
     }
@@ -546,7 +592,7 @@
         <button class="btn side-btn" data-side="d">Dam Side</button>
       </div>
 
-      <h3>Tools</h3>
+      <h3>General Tools</h3>
       <div class="toggle">
         <label for="toggle-summary">Show closeness summary</label>
         <input id="toggle-summary" type="checkbox" checked />
@@ -564,6 +610,107 @@
         <input id="toggle-badges" type="checkbox" checked />
       </div>
 
+      <h3>Highlight Filters</h3>
+      <div class="toggle">
+        <label for="toggle-registered">Registered rabbits</label>
+        <input id="toggle-registered" type="checkbox" />
+      </div>
+      <div class="toggle">
+        <label for="toggle-gc">GC rabbits</label>
+        <input id="toggle-gc" type="checkbox" />
+      </div>
+      <div class="toggle">
+        <label for="toggle-win">Winning record rabbits</label>
+        <input id="toggle-win" type="checkbox" />
+      </div>
+
+      <div class="sub-card">
+        <div class="summary-line"><strong>Color Comparison</strong></div>
+        <div class="input-row">
+          <select id="color-mode">
+            <option value="contains">Contains keyword</option>
+            <option value="exact">Exact color</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <input id="color-search-input" type="text" placeholder="Otter, Broken, Blue, Black Otter..." />
+          <button class="btn small" id="apply-color-search-btn" type="button">Apply</button>
+          <button class="btn small" id="clear-color-search-btn" type="button">Clear</button>
+        </div>
+        <div class="subtle-note">Matches against the rabbit color field and flashes matches in purple.</div>
+      </div>
+
+      <div class="sub-card">
+        <div class="summary-line"><strong>Genetics Marker Search</strong></div>
+        <div class="input-row">
+          <input id="genetics-search-input" type="text" placeholder="En, dd, a(t), ee..." />
+          <button class="btn small" id="apply-genetics-search-btn" type="button">Apply</button>
+          <button class="btn small" id="clear-genetics-search-btn" type="button">Clear</button>
+        </div>
+        <div class="subtle-note">Searches the genetics field and flashes matches in teal.</div>
+      </div>
+
+      <div class="sub-card">
+        <div class="summary-line"><strong>Rabbitry Search</strong></div>
+        <div class="input-row">
+          <input id="rabbitry-search-input" type="text" placeholder="Pitchin Hills, Bonne, Swade..." />
+          <button class="btn small" id="apply-rabbitry-search-btn" type="button">Apply</button>
+          <button class="btn small" id="clear-rabbitry-search-btn" type="button">Clear</button>
+        </div>
+        <div class="subtle-note">Searches rabbitry/breeder text and flashes matches in teal-blue.</div>
+      </div>
+
+      <div class="sub-card">
+        <div class="summary-line"><strong>Keyword Search</strong></div>
+        <div class="input-row">
+          <input id="keyword-search-input" type="text" placeholder="Search any data in any box..." />
+          <button class="btn small" id="apply-keyword-search-btn" type="button">Apply</button>
+          <button class="btn small" id="clear-keyword-search-btn" type="button">Clear</button>
+        </div>
+        <div class="subtle-note">Searches all text fields in each rabbit box and flashes matches in purple.</div>
+      </div>
+
+      <div class="sub-card">
+        <div class="summary-line"><strong>Missing Data</strong></div>
+        <div class="toggle">
+          <label for="missing-name">Missing Name</label>
+          <input id="missing-name" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-ear">Missing Ear#</label>
+          <input id="missing-ear" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-color">Missing Color</label>
+          <input id="missing-color" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-weight">Missing Weight</label>
+          <input id="missing-weight" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-dob">Missing DOB</label>
+          <input id="missing-dob" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-reg">Missing Registration</label>
+          <input id="missing-reg" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-gc">Missing GC#</label>
+          <input id="missing-gc" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-genetics">Missing Genetics</label>
+          <input id="missing-genetics" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <label for="missing-rabbitry">Missing Rabbitry</label>
+          <input id="missing-rabbitry" type="checkbox" />
+        </div>
+        <div class="subtle-note">Any box missing one or more checked fields will flash in orange.</div>
+      </div>
+
       <h3>Branch Actions</h3>
       <div class="control-row">
         <button class="btn small" id="expand-all-btn">Expand All Branches</button>
@@ -576,6 +723,7 @@
         <div class="summary-line" id="summary-duplicates">Repeated ancestors: 0</div>
         <div class="summary-line" id="summary-closest">Closest repeated generation: None</div>
         <div class="summary-line" id="summary-visible">Visible boxes: 0</div>
+        <div class="summary-line" id="summary-filter-matches">Active filter matches: 0</div>
         <div id="risk-badge">Closeness: None</div>
       </div>
 
@@ -627,15 +775,6 @@
       return URL_PARAMS.get(name) || "";
     }
 
-    function getFirstParam(names) {
-      for (const name of names) {
-        if (URL_PARAMS.has(name)) {
-          return URL_PARAMS.get(name) || "";
-        }
-      }
-      return "";
-    }
-
     function escapeText(value) {
       return String(value ?? "");
     }
@@ -663,79 +802,6 @@
       }
       if (path === "") return "male";
       return path.endsWith("s") ? "male" : "female";
-    }
-
-    function getNameParam(path) {
-      if (path === "") return "name";
-      const parentPath = path.slice(0, -1);
-      const role = path.endsWith("s") ? "sire" : "dam";
-      return parentPath + role;
-    }
-
-    function getFieldValue(path, field) {
-      if (path === "") {
-        const rootMap = {
-          rabbitry: ["cr", "crabbitry"],
-          name: ["n", "name"],
-          color: ["co", "c", "color"],
-          ear: ["e", "ear", "ear number"],
-          weight: ["we", "w", "weight"],
-          sex: ["s", "sex"],
-          legs: ["l", "legs"],
-          reg: ["re", "reg", "r"],
-          gc: ["g", "gc"],
-          custom: ["cu", "custom"],
-          win1: ["w1", "win1"],
-          win2: ["w2", "win2"],
-          win3: ["w3", "win3"]
-        };
-        return getFirstParam(rootMap[field] || []);
-      }
-
-      const prefix = path;
-
-      const nonRootMap = {
-        rabbitry: [prefix + "r", prefix + "rabbitry"],
-        name: [prefix + "n", getNameParam(path)],
-        color: [prefix + "co", prefix + "c", prefix + "color"],
-        ear: [prefix + "e", prefix + "ear"],
-        weight: [prefix + "we", prefix + "w", prefix + "weight"],
-        sex: [prefix + "s", prefix + "sex"],
-        legs: [prefix + "l", prefix + "legs"],
-        reg: [prefix + "re", prefix + "reg"],
-        gc: [prefix + "g", prefix + "gc"],
-        custom: [prefix + "cu", prefix + "custom"],
-        win1: [prefix + "w1", prefix + "win1"],
-        win2: [prefix + "w2", prefix + "win2"],
-        win3: [prefix + "w3", prefix + "win3"]
-      };
-
-      return getFirstParam(nonRootMap[field] || "");
-    }
-
-    function getRabbitData(path) {
-      return {
-        rabbitry: escapeText(getFieldValue(path, "rabbitry")),
-        name: escapeText(getFieldValue(path, "name")),
-        color: escapeText(getFieldValue(path, "color")),
-        ear: escapeText(getFieldValue(path, "ear")),
-        weight: escapeText(getFieldValue(path, "weight")),
-        sex: escapeText(getFieldValue(path, "sex")),
-        legs: escapeText(getFieldValue(path, "legs")),
-        reg: escapeText(getFieldValue(path, "reg")),
-        gc: escapeText(getFieldValue(path, "gc")),
-        custom: escapeText(getFieldValue(path, "custom")),
-        win1: escapeText(getFieldValue(path, "win1")),
-        win2: escapeText(getFieldValue(path, "win2")),
-        win3: escapeText(getFieldValue(path, "win3"))
-      };
-    }
-
-    function buildRabbitKey(data) {
-      const name = normalizeValue(data.name);
-      const ear = normalizeValue(data.ear);
-      if (!name && !ear) return "";
-      return `${name}||${ear}`;
     }
 
     function splitPedigreeLines(value) {
@@ -826,12 +892,141 @@
         .join(" ");
     }
 
+    function buildRabbitKey(data) {
+      const name = normalizeValue(data.name);
+      const ear = normalizeValue(data.ear);
+      if (!name && !ear) return "";
+      return `${name}||${ear}`;
+    }
+
     function isEmptyRabbit(data) {
       return ![
         data.rabbitry, data.name, data.color, data.ear, data.weight,
-        data.sex, data.legs, data.reg, data.gc, data.custom,
-        data.win1, data.win2, data.win3
+        data.sex, data.legs, data.reg, data.gc, data.dob,
+        data.earLength, data.genetics, data.custom, data.win1, data.win2, data.win3
       ].some(Boolean);
+    }
+
+    function getNodeParamName(path) {
+      return path === "" ? "c" : path;
+    }
+
+    function parsePackedRabbitBlock(raw) {
+      const text = String(raw || "");
+      const record = {
+        n: "",
+        r: "",
+        e: "",
+        c: "",
+        w: "",
+        w1: "",
+        w2: "",
+        w3: "",
+        re: "",
+        g: "",
+        d: "",
+        el: "",
+        ge: "",
+        cu: "",
+        l: "",
+        weight: "",
+        wins: []
+      };
+
+      if (!text.trim()) return record;
+
+      const lines = text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n");
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        const idx = line.indexOf(":");
+        if (idx === -1) continue;
+
+        const key = line.slice(0, idx).trim().toLowerCase();
+        const value = line.slice(idx + 1).trim();
+
+        if (key === "w") {
+          record.weight = value;
+          continue;
+        }
+
+        if (key === "w1" || key === "w2" || key === "w3") {
+          if (value) record.wins.push(value);
+          record[key] = value;
+          continue;
+        }
+
+        if (key in record) {
+          record[key] = value;
+        }
+      }
+
+      return record;
+    }
+
+    const packedRabbitCache = new Map();
+
+    function getPackedRabbitData(path) {
+      const key = getNodeParamName(path);
+      if (!packedRabbitCache.has(key)) {
+        packedRabbitCache.set(key, parsePackedRabbitBlock(getParam(key)));
+      }
+      return packedRabbitCache.get(key);
+    }
+
+    function getRabbitData(path) {
+      const parsed = getPackedRabbitData(path);
+
+      return {
+        rabbitry: escapeText(parsed.r),
+        name: escapeText(parsed.n),
+        color: escapeText(parsed.c),
+        ear: escapeText(parsed.e),
+        weight: escapeText(parsed.weight || parsed.w),
+        sex: escapeText(path === "" ? getParam("sx") || getParam("sex") || "" : ""),
+        legs: escapeText(parsed.l),
+        reg: escapeText(parsed.re),
+        gc: escapeText(parsed.g),
+        dob: escapeText(parsed.d),
+        earLength: escapeText(parsed.el),
+        genetics: escapeText(parsed.ge),
+        custom: escapeText(parsed.cu),
+        win1: escapeText(parsed.w1 || parsed.wins[0] || ""),
+        win2: escapeText(parsed.w2 || parsed.wins[1] || ""),
+        win3: escapeText(parsed.w3 || parsed.wins[2] || "")
+      };
+    }
+
+    function getDisplayCustom(data) {
+      if (data.custom) return data.custom;
+      if (data.dob) return `DOB: ${data.dob}`;
+      return "";
+    }
+
+    function getSearchableText(data) {
+      return normalizeValue([
+        data.rabbitry,
+        data.name,
+        data.color,
+        data.ear,
+        data.weight,
+        data.sex,
+        data.legs,
+        data.reg,
+        data.gc,
+        data.dob,
+        data.earLength,
+        data.genetics,
+        data.custom,
+        data.win1,
+        data.win2,
+        data.win3
+      ].join(" | "));
     }
 
     (function () {
@@ -885,7 +1080,29 @@
         rendered: false,
         miniMapMinimized: false,
         worldBounds: null,
-        view: { x: 0, y: 0, scale: 0.12, minScale: 0.03, maxScale: 16 }
+        view: { x: 0, y: 0, scale: 0.12, minScale: 0.03, maxScale: 16 },
+
+        filters: {
+          registered: false,
+          gc: false,
+          wins: false,
+          colorMode: "contains",
+          colorQuery: "",
+          geneticsQuery: "",
+          keywordQuery: "",
+          rabbitryQuery: "",
+          missing: {
+            name: false,
+            ear: false,
+            color: false,
+            weight: false,
+            dob: false,
+            reg: false,
+            gc: false,
+            genetics: false,
+            rabbitry: false
+          }
+        }
       };
 
       const container = document.getElementById("pedigree-container");
@@ -904,6 +1121,7 @@
       const summaryDuplicates = document.getElementById("summary-duplicates");
       const summaryClosest = document.getElementById("summary-closest");
       const summaryVisible = document.getElementById("summary-visible");
+      const summaryFilterMatches = document.getElementById("summary-filter-matches");
       const riskBadge = document.getElementById("risk-badge");
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
@@ -987,6 +1205,7 @@
         const empty = isEmptyRabbit(data);
         const rabbitKey = buildRabbitKey(data);
         const breederMeta = getBreederMeta(data);
+        const displayCustom = getDisplayCustom(data);
 
         const group = createSvgEl("g", {
           "data-path": path,
@@ -1042,7 +1261,7 @@
           appendText(group, x + metrics.pad, y + 76 * BOX_SCALE[generation], "box-text", `Reg#: ${data.reg || ""}`, { "font-size": metrics.textSize });
           appendText(group, x + (metrics.width * 0.52), y + 76 * BOX_SCALE[generation], "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
 
-          appendText(group, x + metrics.pad, y + 90 * BOX_SCALE[generation], "box-text", data.custom || "", { "font-size": metrics.textSize });
+          appendText(group, x + metrics.pad, y + 90 * BOX_SCALE[generation], "box-text", displayCustom || "", { "font-size": metrics.textSize });
           appendMultilineText(group, x + metrics.pad, y + 106 * BOX_SCALE[generation], "box-text", data.win1 || "", metrics.lineHeight, { "font-size": metrics.textSize });
           appendMultilineText(group, x + metrics.pad, y + 128 * BOX_SCALE[generation], "box-text", data.win2 || "", metrics.lineHeight, { "font-size": metrics.textSize });
           appendMultilineText(group, x + metrics.pad, y + 150 * BOX_SCALE[generation], "box-text", data.win3 || "", metrics.lineHeight, { "font-size": metrics.textSize });
@@ -1089,6 +1308,7 @@
           rabbitKey,
           breederMeta,
           empty,
+          searchableText: getSearchableText(data),
           x,
           y,
           width: metrics.width,
@@ -1240,8 +1460,7 @@
       }
 
       function drawPath(d, cls, parentData) {
-        const p = createSvgEl("path", Object.assign({ d, class: cls }, parentData || {}));
-        return p;
+        return createSvgEl("path", Object.assign({ d, class: cls }, parentData || {}));
       }
 
       function rebuildVisibleBranchLines() {
@@ -1405,12 +1624,89 @@
         });
       }
 
+      function nodeHasWinData(node) {
+        return !!(node.data.win1 || node.data.win2 || node.data.win3);
+      }
+
+      function getMissingChecks() {
+        return Object.values(state.filters.missing).some(Boolean);
+      }
+
+      function nodeMatchesMissing(node) {
+        const m = state.filters.missing;
+        const d = node.data;
+        return (
+          (m.name && !d.name) ||
+          (m.ear && !d.ear) ||
+          (m.color && !d.color) ||
+          (m.weight && !d.weight) ||
+          (m.dob && !d.dob) ||
+          (m.reg && !d.reg) ||
+          (m.gc && !d.gc) ||
+          (m.genetics && !d.genetics) ||
+          (m.rabbitry && !d.rabbitry)
+        );
+      }
+
+      function nodeMatchesColor(node) {
+        const query = normalizeValue(state.filters.colorQuery);
+        if (!query) return false;
+        const color = normalizeValue(node.data.color);
+        if (!color) return false;
+        if (state.filters.colorMode === "exact") return color === query;
+        return color.includes(query);
+      }
+
+      function nodeMatchesGenetics(node) {
+        const query = normalizeValue(state.filters.geneticsQuery);
+        if (!query) return false;
+        return normalizeValue(node.data.genetics).includes(query);
+      }
+
+      function nodeMatchesKeyword(node) {
+        const query = normalizeValue(state.filters.keywordQuery);
+        if (!query) return false;
+        return node.searchableText.includes(query);
+      }
+
+      function nodeMatchesRabbitry(node) {
+        const query = normalizeValue(state.filters.rabbitryQuery);
+        if (!query) return false;
+        return normalizeValue(node.data.rabbitry).includes(query) ||
+               normalizeValue(node.breederMeta.display).includes(query);
+      }
+
+      function getActiveFilterMatches(visibleNodes) {
+        let count = 0;
+        visibleNodes.forEach(node => {
+          if (state.filters.registered && node.data.reg) count++;
+          else if (state.filters.gc && node.data.gc) count++;
+          else if (state.filters.wins && nodeHasWinData(node)) count++;
+          else if (nodeMatchesColor(node)) count++;
+          else if (nodeMatchesGenetics(node)) count++;
+          else if (nodeMatchesKeyword(node)) count++;
+          else if (nodeMatchesRabbitry(node)) count++;
+          else if (getMissingChecks() && nodeMatchesMissing(node)) count++;
+        });
+        return count;
+      }
+
       function updateSpecialHighlights(visibleNodes) {
         const visibleSet = new Set(visibleNodes.map(node => node.path));
 
         for (const node of state.nodesByPath.values()) {
-          node.group.classList.remove("flash-duplicate");
-          node.group.classList.remove("flash-breeder");
+          node.group.classList.remove(
+            "flash-duplicate",
+            "flash-breeder",
+            "flash-registered",
+            "flash-gc",
+            "flash-win",
+            "flash-color",
+            "flash-genetics",
+            "flash-missing",
+            "flash-keyword",
+            "flash-rabbitry"
+          );
         }
 
         clearHighlightLayer();
@@ -1448,6 +1744,17 @@
             if (pref === "left") leftLane += 22; else rightLane += 22;
           }
         }
+
+        visibleNodes.forEach(node => {
+          if (state.filters.registered && node.data.reg) node.group.classList.add("flash-registered");
+          if (state.filters.gc && node.data.gc) node.group.classList.add("flash-gc");
+          if (state.filters.wins && nodeHasWinData(node)) node.group.classList.add("flash-win");
+          if (nodeMatchesColor(node)) node.group.classList.add("flash-color");
+          if (nodeMatchesGenetics(node)) node.group.classList.add("flash-genetics");
+          if (getMissingChecks() && nodeMatchesMissing(node)) node.group.classList.add("flash-missing");
+          if (nodeMatchesKeyword(node)) node.group.classList.add("flash-keyword");
+          if (nodeMatchesRabbitry(node)) node.group.classList.add("flash-rabbitry");
+        });
       }
 
       function calculateCloseness(visibleNodes) {
@@ -1587,6 +1894,7 @@
         summaryDuplicates.textContent = `Repeated ancestors: ${result.repeatedAncestors}`;
         summaryClosest.textContent = `Closest repeated generation: ${result.closestGeneration || "None"}`;
         summaryVisible.textContent = `Visible boxes: ${visibleNodes.length}`;
+        summaryFilterMatches.textContent = `Active filter matches: ${getActiveFilterMatches(visibleNodes)}`;
         riskBadge.textContent = `Closeness: ${result.risk}`;
 
         const riskStyles = {
@@ -1710,23 +2018,6 @@
         const b = state.worldBounds;
         miniMapSvg.setAttribute("viewBox", `${b.minX} ${b.minY} ${b.width} ${b.height}`);
 
-        const visibleSet = new Set(visibleNodes.map(n => n.path));
-        const dupNodePaths = new Set();
-        const breederNodePaths = new Set();
-
-        for (const [key, enabled] of state.duplicateSelections.entries()) {
-          if (!enabled) continue;
-          const nodes = state.duplicateGroups.get(key) || [];
-          nodes.forEach(node => { if (visibleSet.has(node.path)) dupNodePaths.add(node.path); });
-        }
-
-        for (const [key, enabled] of state.breederSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.breederGroups.get(key);
-          if (!group) continue;
-          group.nodes.forEach(node => { if (visibleSet.has(node.path)) breederNodePaths.add(node.path); });
-        }
-
         visibleNodes.forEach(node => {
           const miniRect = createSvgEl("rect", {
             x: node.x,
@@ -1738,8 +2029,17 @@
             class: "mini-node"
           });
 
-          if (breederNodePaths.has(node.path)) miniRect.classList.add("breeder-selected");
-          if (dupNodePaths.has(node.path)) miniRect.classList.add("duplicate-selected");
+          if (node.group.classList.contains("flash-duplicate")) miniRect.classList.add("duplicate-selected");
+          else if (node.group.classList.contains("flash-breeder")) miniRect.classList.add("breeder-selected");
+          else if (node.group.classList.contains("flash-keyword")) miniRect.classList.add("keyword-selected");
+          else if (node.group.classList.contains("flash-color")) miniRect.classList.add("color-selected");
+          else if (node.group.classList.contains("flash-genetics")) miniRect.classList.add("genetics-selected");
+          else if (node.group.classList.contains("flash-rabbitry")) miniRect.classList.add("rabbitry-selected");
+          else if (node.group.classList.contains("flash-missing")) miniRect.classList.add("missing-selected");
+          else if (node.group.classList.contains("flash-win")) miniRect.classList.add("win-selected");
+          else if (node.group.classList.contains("flash-gc")) miniRect.classList.add("gc-selected");
+          else if (node.group.classList.contains("flash-registered")) miniRect.classList.add("registered-selected");
+
           miniMapSvg.appendChild(miniRect);
         });
 
@@ -1996,6 +2296,89 @@
           applyState();
         });
 
+        document.getElementById("toggle-registered").addEventListener("change", (e) => {
+          state.filters.registered = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-gc").addEventListener("change", (e) => {
+          state.filters.gc = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("toggle-win").addEventListener("change", (e) => {
+          state.filters.wins = e.target.checked;
+          applyState();
+        });
+
+        document.getElementById("color-mode").addEventListener("change", (e) => {
+          state.filters.colorMode = e.target.value;
+          applyState();
+        });
+
+        document.getElementById("apply-color-search-btn").addEventListener("click", () => {
+          state.filters.colorQuery = document.getElementById("color-search-input").value || "";
+          applyState();
+        });
+
+        document.getElementById("clear-color-search-btn").addEventListener("click", () => {
+          document.getElementById("color-search-input").value = "";
+          state.filters.colorQuery = "";
+          applyState();
+        });
+
+        document.getElementById("apply-genetics-search-btn").addEventListener("click", () => {
+          state.filters.geneticsQuery = document.getElementById("genetics-search-input").value || "";
+          applyState();
+        });
+
+        document.getElementById("clear-genetics-search-btn").addEventListener("click", () => {
+          document.getElementById("genetics-search-input").value = "";
+          state.filters.geneticsQuery = "";
+          applyState();
+        });
+
+        document.getElementById("apply-keyword-search-btn").addEventListener("click", () => {
+          state.filters.keywordQuery = document.getElementById("keyword-search-input").value || "";
+          applyState();
+        });
+
+        document.getElementById("clear-keyword-search-btn").addEventListener("click", () => {
+          document.getElementById("keyword-search-input").value = "";
+          state.filters.keywordQuery = "";
+          applyState();
+        });
+
+        document.getElementById("apply-rabbitry-search-btn").addEventListener("click", () => {
+          state.filters.rabbitryQuery = document.getElementById("rabbitry-search-input").value || "";
+          applyState();
+        });
+
+        document.getElementById("clear-rabbitry-search-btn").addEventListener("click", () => {
+          document.getElementById("rabbitry-search-input").value = "";
+          state.filters.rabbitryQuery = "";
+          applyState();
+        });
+
+        const missingMap = {
+          "missing-name": "name",
+          "missing-ear": "ear",
+          "missing-color": "color",
+          "missing-weight": "weight",
+          "missing-dob": "dob",
+          "missing-reg": "reg",
+          "missing-gc": "gc",
+          "missing-genetics": "genetics",
+          "missing-rabbitry": "rabbitry"
+        };
+
+        Object.entries(missingMap).forEach(([id, key]) => {
+          document.getElementById(id).addEventListener("change", (e) => {
+            state.filters.missing[key] = e.target.checked;
+            applyState();
+          });
+        });
+
         document.getElementById("expand-all-btn").addEventListener("click", () => {
           state.collapsedBranches.clear();
           applyState();
@@ -2030,6 +2413,25 @@
           if (!key) return;
           state.breederSelections.set(key, !!e.target.checked);
           applyState();
+        });
+
+        [
+          "color-search-input",
+          "genetics-search-input",
+          "keyword-search-input",
+          "rabbitry-search-input"
+        ].forEach(id => {
+          document.getElementById(id).addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+
+            if (id === "color-search-input") state.filters.colorQuery = e.target.value || "";
+            if (id === "genetics-search-input") state.filters.geneticsQuery = e.target.value || "";
+            if (id === "keyword-search-input") state.filters.keywordQuery = e.target.value || "";
+            if (id === "rabbitry-search-input") state.filters.rabbitryQuery = e.target.value || "";
+
+            applyState();
+          });
         });
       }
 
