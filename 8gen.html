@@ -3,28 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ShowTails 8 Generation Pedigree Explorer</title>
+  <title>4-Generation Rabbit Pedigree</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --panel-text:#234a57;
-      --panel-border:#d8d8d8;
-      --panel-bg:rgba(255,255,255,0.97);
-      --accent:#2f6fed;
-      --male:#cce5ff;
-      --female:#f8d7da;
-      --empty:#bdbdbd;
-
-      --hl-duplicate:#ff2d2d;
-      --hl-breeder:#ffd400;
-      --hl-registered:#2f6fed;
-      --hl-gc:#d4aa00;
-      --hl-win:#2ca24f;
-      --hl-color:#8b5cf6;
-      --hl-genetics:#14b8a6;
-      --hl-missing:#f59e0b;
-      --hl-keyword:#7c3aed;
-      --hl-rabbitry:#0ea5a4;
+    :root {
+      --menu-font: Arial, sans-serif;
     }
 
     html, body {
@@ -34,2417 +21,2419 @@
       height: 100%;
       overflow: hidden;
       background: #fff;
-      font-family: Arial, sans-serif;
+      font-family: var(--menu-font);
     }
 
     #pedigree-container {
-      position: relative;
       width: 100vw;
       height: 100vh;
+      position: relative;
       overflow: hidden;
       background: #fff;
-      touch-action: none;
-    }
-
-    svg {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #fff;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
-    }
-
-    .line {
-      stroke: #555;
-      stroke-width: 1.4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .box {
-      stroke: #000;
-      stroke-width: 1.2;
-      vector-effect: non-scaling-stroke;
-      cursor: pointer;
-    }
-
-    .male { fill: var(--male); }
-    .female { fill: var(--female); }
-
-    .empty-box {
-      stroke: var(--empty) !important;
-      stroke-dasharray: 4 3;
-    }
-
-    .dim-empty .node.empty .box {
-      opacity: 0.42;
-    }
-
-    .hidden-node {
-      display: none;
-    }
-
-    .collapsed > .box {
-      stroke: var(--accent) !important;
-      stroke-width: 2 !important;
-    }
-
-    .highlight-overlay {
-      pointer-events: none;
-      display: none;
-      opacity: 0;
-    }
-
-    .flash-duplicate .highlight-overlay,
-    .flash-breeder .highlight-overlay,
-    .flash-registered .highlight-overlay,
-    .flash-gc .highlight-overlay,
-    .flash-win .highlight-overlay,
-    .flash-color .highlight-overlay,
-    .flash-genetics .highlight-overlay,
-    .flash-missing .highlight-overlay,
-    .flash-keyword .highlight-overlay,
-    .flash-rabbitry .highlight-overlay {
-      display: block;
-    }
-
-    .flash-duplicate .highlight-overlay { fill: rgba(255, 45, 45, 0.34); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-breeder .highlight-overlay   { fill: rgba(255, 212, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-registered .highlight-overlay{ fill: rgba(47, 111, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-gc .highlight-overlay        { fill: rgba(212, 170, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-win .highlight-overlay       { fill: rgba(44, 162, 79, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-color .highlight-overlay     { fill: rgba(139, 92, 246, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-genetics .highlight-overlay  { fill: rgba(20, 184, 166, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-missing .highlight-overlay   { fill: rgba(245, 158, 11, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-keyword .highlight-overlay   { fill: rgba(124, 58, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-rabbitry .highlight-overlay  { fill: rgba(14, 165, 164, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-
-    .flash-duplicate .box { stroke: var(--hl-duplicate) !important; stroke-width: 2.8 !important; animation: flashDuplicateStroke 1s ease-in-out infinite; }
-    .flash-breeder:not(.flash-duplicate) .box { stroke: var(--hl-breeder) !important; stroke-width: 2.6 !important; animation: flashBreederStroke 1s ease-in-out infinite; }
-    .flash-registered:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-registered) !important; stroke-width: 2.6 !important; animation: flashRegisteredStroke 1s ease-in-out infinite; }
-    .flash-gc:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-gc) !important; stroke-width: 2.6 !important; animation: flashGCStroke 1s ease-in-out infinite; }
-    .flash-win:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-win) !important; stroke-width: 2.6 !important; animation: flashWinStroke 1s ease-in-out infinite; }
-    .flash-color:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-color) !important; stroke-width: 2.6 !important; animation: flashColorStroke 1s ease-in-out infinite; }
-    .flash-genetics:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-genetics) !important; stroke-width: 2.6 !important; animation: flashGeneticsStroke 1s ease-in-out infinite; }
-    .flash-missing:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-missing) !important; stroke-width: 2.6 !important; animation: flashMissingStroke 1s ease-in-out infinite; }
-    .flash-keyword:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-keyword) !important; stroke-width: 2.6 !important; animation: flashKeywordStroke 1s ease-in-out infinite; }
-    .flash-rabbitry:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-rabbitry) !important; stroke-width: 2.6 !important; animation: flashRabbitryStroke 1s ease-in-out infinite; }
-
-    @keyframes flashDuplicateStroke { 0%,100% { stroke:#ff2d2d; stroke-opacity:1; } 50% { stroke:#860000; stroke-opacity:0.5; } }
-    @keyframes flashBreederStroke   { 0%,100% { stroke:#ffd400; stroke-opacity:1; } 50% { stroke:#8f7600; stroke-opacity:0.5; } }
-    @keyframes flashRegisteredStroke{ 0%,100% { stroke:#2f6fed; stroke-opacity:1; } 50% { stroke:#163f93; stroke-opacity:0.5; } }
-    @keyframes flashGCStroke        { 0%,100% { stroke:#d4aa00; stroke-opacity:1; } 50% { stroke:#7c6200; stroke-opacity:0.5; } }
-    @keyframes flashWinStroke       { 0%,100% { stroke:#2ca24f; stroke-opacity:1; } 50% { stroke:#1d6a33; stroke-opacity:0.5; } }
-    @keyframes flashColorStroke     { 0%,100% { stroke:#8b5cf6; stroke-opacity:1; } 50% { stroke:#4e2ea8; stroke-opacity:0.5; } }
-    @keyframes flashGeneticsStroke  { 0%,100% { stroke:#14b8a6; stroke-opacity:1; } 50% { stroke:#0c6a60; stroke-opacity:0.5; } }
-    @keyframes flashMissingStroke   { 0%,100% { stroke:#f59e0b; stroke-opacity:1; } 50% { stroke:#a76406; stroke-opacity:0.5; } }
-    @keyframes flashKeywordStroke   { 0%,100% { stroke:#7c3aed; stroke-opacity:1; } 50% { stroke:#4a2390; stroke-opacity:0.5; } }
-    @keyframes flashRabbitryStroke  { 0%,100% { stroke:#0ea5a4; stroke-opacity:1; } 50% { stroke:#0a6464; stroke-opacity:0.5; } }
-
-    @keyframes pulseFill {
-      0%,100% { fill-opacity:0.36; }
-      50% { fill-opacity:0.10; }
-    }
-
-    .duplicate-connector {
-      stroke: #ff2d2d;
-      stroke-width: 4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      animation: flashDuplicateStroke 1s ease-in-out infinite;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      pointer-events: none;
-    }
-
-    .breeder-connector {
-      stroke: #ffd400;
-      stroke-width: 4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      animation: flashBreederStroke 1s ease-in-out infinite;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      pointer-events: none;
-    }
-
-    .box-name {
-      font-weight: bold;
-      fill: #000;
-      pointer-events: none;
-    }
-
-    .box-text {
-      fill: #000;
-      pointer-events: none;
-    }
-
-    .box-badge {
-      font-size: 10px;
-      font-weight: bold;
-      fill: #234a57;
-      pointer-events: none;
-    }
-
-    .collapse-btn {
-      fill: #fff;
-      stroke: var(--accent);
-      stroke-width: 1.2;
-      vector-effect: non-scaling-stroke;
-      cursor: pointer;
-    }
-
-    .collapse-symbol {
-      font-size: 12px;
-      font-weight: bold;
-      fill: var(--accent);
-      text-anchor: middle;
-      dominant-baseline: middle;
-      pointer-events: none;
-    }
-
-    #toggle-panel-btn,
-    #reset-view-btn {
-      position: absolute;
-      top: 10px;
-      z-index: 20;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 7px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    #toggle-panel-btn {
-      left: 10px;
-      background: #234a57;
-    }
-
-    #reset-view-btn {
-      right: 10px;
-      background: #4a4a4a;
-    }
-
-    #controls-panel {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 340px;
-      max-height: calc(100vh - 20px);
-      overflow: auto;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 21;
-      padding: 12px 12px 10px 12px;
-      color: var(--panel-text);
-      transition: transform 0.22s ease, opacity 0.22s ease;
-      transform: translateX(0);
-      opacity: 1;
-      box-sizing: border-box;
-    }
-
-    #controls-panel.hidden {
-      transform: translateX(-110%);
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #panel-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: center;
+    }
+
+    #pedigree-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #fff;
+      touch-action: none !important;
+      -ms-touch-action: none !important;
+    }
+
+    #menu-toggle {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 10020;
+      border: none;
+      border-radius: 10px;
+      background: #234a57;
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    }
+
+    #pedigree-menu {
+      position: fixed;
+      top: 58px;
+      right: 12px;
+      z-index: 10019;
+      width: 340px;
+      max-height: calc(100vh - 76px);
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #d8e1e8;
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.16);
+      padding: 14px;
+      display: none;
+      box-sizing: border-box;
+      color: #234a57;
+      font-family: Arial, sans-serif;
+    }
+
+    #pedigree-menu.open {
+      display: block;
+    }
+
+    .menu-title {
+      font-size: 16px;
+      font-weight: 700;
       margin-bottom: 10px;
     }
 
-    #panel-header h2 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    #close-panel-btn {
-      border: 1px solid #b9c4ca;
-      background: #fff;
-      color: #234a57;
-      border-radius: 6px;
-      width: 30px;
-      height: 30px;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      flex: 0 0 auto;
-    }
-
-    #controls-panel h3 {
-      margin: 12px 0 6px 0;
-      font-size: 14px;
-      color: #234a57;
-    }
-
-    .control-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .control-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .btn {
-      border: 1px solid #b9c4ca;
-      background: #fff;
-      color: #234a57;
-      border-radius: 7px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .btn.active {
-      background: #234a57;
-      color: #fff;
-      border-color: #234a57;
-    }
-
-    .btn.small {
+    .menu-note {
       font-size: 12px;
-      padding: 5px 8px;
-    }
-
-    .toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 6px 0;
-      font-size: 13px;
-      color: #234a57;
-    }
-
-    .toggle input {
-      transform: scale(1.1);
-      cursor: pointer;
-    }
-
-    .sub-card,
-    #summary-card,
-    #duplicates-card,
-    #repeated-rabbits-card,
-    #breeder-card {
-      border: 1px solid #d8d8d8;
-      border-radius: 8px;
-      padding: 8px;
-      background: #fcfcfc;
-      margin-top: 8px;
-    }
-
-    .sub-card .summary-line,
-    #summary-card .summary-line,
-    #duplicates-card .summary-line,
-    #repeated-rabbits-card .summary-line,
-    #breeder-card .summary-line {
-      font-size: 12px;
-      margin: 4px 0;
-      color: #234a57;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 6px;
-      margin: 6px 0;
-    }
-
-    .input-row input,
-    .input-row select {
-      flex: 1 1 auto;
-      min-width: 0;
-      border: 1px solid #cdd7dc;
-      border-radius: 7px;
-      padding: 7px 8px;
-      font-size: 13px;
-      color: #234a57;
-      background: #fff;
-      box-sizing: border-box;
-    }
-
-    .subtle-note {
-      font-size: 11px;
-      color: #5b6f78;
+      color: #5f7280;
+      margin-bottom: 12px;
       line-height: 1.35;
     }
 
-    #risk-badge {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
+    .menu-section {
+      border-top: 1px solid #e9eef2;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .menu-section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .menu-section label {
+      display: block;
       font-size: 12px;
-      font-weight: bold;
-      border: 1px solid #c8d3d9;
-      background: #eef4f6;
+      font-weight: 700;
+      margin-bottom: 6px;
       color: #234a57;
     }
 
-    #duplicate-list {
-      margin: 6px 0 0 18px;
-      padding: 0;
-      font-size: 12px;
-      color: #234a57;
+    .menu-section select,
+    .menu-section input[type="color"],
+    .menu-section input[type="range"],
+    .menu-section button {
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    #duplicate-list li {
-      margin: 3px 0;
-    }
-
-    .dynamic-toggle-list {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .dynamic-toggle-item {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 6px 8px;
-      border: 1px solid #e2e7ea;
+    .menu-section select,
+    .menu-section input[type="color"] {
+      height: 38px;
+      border: 1px solid #cfd9e1;
       border-radius: 8px;
       background: #fff;
     }
 
-    .dynamic-toggle-item .label-wrap {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .dynamic-toggle-item .main-label {
-      font-size: 12px;
-      font-weight: bold;
-      color: #234a57;
-      word-break: break-word;
-      line-height: 1.3;
-    }
-
-    .dynamic-toggle-item .sub-label {
-      font-size: 11px;
-      color: #5b6f78;
-      margin-top: 2px;
-      line-height: 1.25;
-    }
-
-    .dynamic-toggle-item input {
-      margin-top: 2px;
-      transform: scale(1.05);
-      cursor: pointer;
-      flex: 0 0 auto;
-    }
-
-    #mini-map-card {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      width: 220px;
-      background: rgba(255,255,255,0.97);
-      border: 1px solid #d8d8d8;
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 19;
-      padding: 8px;
-      box-sizing: border-box;
-      transition: width 0.22s ease;
-    }
-
-    #mini-map-card.minimized {
-      width: 136px;
-    }
-
-    #mini-map-header {
+    .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
+      gap: 12px;
+      margin-bottom: 10px;
     }
 
-    #mini-map-title {
+    .toggle-row span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #234a57;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      width: auto;
+      transform: scale(1.15);
+    }
+
+    .range-readout {
       font-size: 12px;
-      font-weight: bold;
-      color: #234a57;
+      color: #617483;
+      margin: 4px 0 8px;
     }
 
-    #mini-map-toggle-btn {
-      border: 1px solid #b9c4ca;
+    .menu-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .menu-actions button {
+      padding: 10px 12px;
+      border: none;
+      border-radius: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .menu-actions button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    #menu-save-btn { background: #2f6f86; color: #fff; }
+    #menu-print-btn { background: #234a57; color: #fff; }
+    #menu-image-btn { background: #4d7c8a; color: #fff; }
+    #menu-svg-btn { background: #5d8d99; color: #fff; }
+    #reset-styles-btn { background: #eaf2f6; color: #234a57; }
+
+    .font-picker {
+      position: relative;
+      width: 100%;
+    }
+
+    .font-picker-button {
+      width: 100%;
+      min-height: 40px;
+      padding: 10px 12px;
+      border: 1px solid #cfd9e1;
+      border-radius: 8px;
       background: #fff;
-      color: #234a57;
-      border-radius: 6px;
-      width: 28px;
-      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       cursor: pointer;
       font-size: 14px;
-      line-height: 1;
-      padding: 0;
-    }
-
-    #mini-map-body {
-      height: 240px;
-      transition: height 0.22s ease, opacity 0.22s ease;
-    }
-
-    #mini-map-card.minimized #mini-map-body {
-      height: 0;
-      opacity: 0;
-      overflow: hidden;
-    }
-
-    #mini-map-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #fbfcfd;
-      border-radius: 8px;
-      border: 1px solid #e0e7ea;
-      cursor: pointer;
-    }
-
-    .mini-node {
-      fill: #bcc9cf;
-      stroke: none;
-    }
-
-    .mini-node.duplicate-selected { fill: #ff2d2d; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.breeder-selected { fill: #e3b900; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.registered-selected { fill: #2f6fed; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.gc-selected { fill: #d4aa00; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.win-selected { fill: #2ca24f; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.color-selected { fill: #8b5cf6; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.genetics-selected { fill: #14b8a6; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.missing-selected { fill: #f59e0b; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.keyword-selected { fill: #7c3aed; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.rabbitry-selected { fill: #0ea5a4; animation: miniPulse 1s ease-in-out infinite; }
-
-    .mini-viewport {
-      fill: rgba(47,111,237,0.08);
-      stroke: #2f6fed;
-      stroke-width: 26;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-
-    @keyframes miniPulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-
-    #status-badge {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      z-index: 18;
-      background: rgba(255,255,255,0.96);
-      border: 1px solid #d8d8d8;
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 12px;
       color: #234a57;
-      max-width: calc(100vw - 260px);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+
+    .font-picker-arrow {
+      font-size: 12px;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+
+    .font-picker-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #cfd9e1;
+      border-radius: 10px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+      max-height: 240px;
+      overflow-y: auto;
+      display: none;
+      z-index: 10030;
+    }
+
+    .font-picker.open .font-picker-dropdown {
+      display: block;
+    }
+
+    .font-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 15px;
+      border-bottom: 1px solid #eef2f6;
+    }
+
+    .font-option:last-child {
+      border-bottom: none;
+    }
+
+    .font-option:hover {
+      background: #f8fbfd;
+    }
+
+    .font-option.active {
+      background: #eaf2f6;
+      font-weight: 700;
+    }
+
+    @media print {
+      @page { margin: 0; }
+
+      #menu-toggle,
+      #pedigree-menu {
+        display: none !important;
+      }
+
+      html, body,
+      #pedigree-container,
+      #pedigree-svg {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        background: #fff !important;
+      }
+
+      #viewport {
+        transform: none !important;
+      }
     }
   </style>
 </head>
 <body>
+  <button id="menu-toggle" type="button">Customize / Print</button>
+
+  <div id="pedigree-menu">
+    <div class="menu-title">Pedigree Options</div>
+    <div class="menu-note">Choose border styles, colors, fonts, layout settings, and rabbit data visibility below.</div>
+
+    <div class="menu-section">
+      <div class="menu-actions">
+        <button id="menu-save-btn" type="button">Save Settings</button>
+        <button id="menu-print-btn" type="button">Print/SavePDF-Desktop</button>
+        <button id="menu-image-btn" type="button">Save PNG-Mobile</button>
+        <button id="menu-svg-btn" type="button">Save SVG-Mobile</button>
+        <button id="reset-styles-btn" type="button">Reset Defaults</button>
+      </div>
+      <div class="menu-note" id="save-status" style="margin-top:8px; margin-bottom:0;"></div>
+    </div>
+
+    <div class="menu-section">
+      <label for="border-style">Border Style</label>
+      <select id="border-style">
+        <option value="classicDouble">Victorian Double Frame</option>
+        <option value="elegantCorners">Baroque Corner Flourish</option>
+        <option value="ribbonFrame">Heraldic Ribbon Crest</option>
+        <option value="royalArch">Cathedral Arch</option>
+        <option value="modernGeo">Art Deco Geometric</option>
+        <option value="scallop">Pearled Scallop</option>
+        <option value="ornateLines">Scrollwork Engraved</option>
+        <option value="ticketEdge">Plaque & Notched Frame</option>
+        <option value="floralLite">Botanical Vine Border</option>
+        <option value="showFrame">Championship Showcase</option>
+      </select>
+
+      <label for="border-color-preset" style="margin-top:10px;">Border Color Preset</label>
+      <select id="border-color-preset">
+        <option value="custom">Custom</option>
+        <option value="classicBluePink">Classic Blue / Pink</option>
+        <option value="navyBlush">Navy / Blush</option>
+        <option value="sagePeach">Sage / Peach</option>
+        <option value="tealLavender">Teal / Lavender</option>
+        <option value="steelRose">Steel / Rose</option>
+        <option value="iceCoral">Ice Blue / Coral</option>
+        <option value="forestCream">Forest / Cream</option>
+        <option value="showtails">ShowTails Blue / Cream</option>
+        <option value="blackWhite">Black / White</option>
+      </select>
+
+      <label for="border-primary-color" style="margin-top:10px;">Border Primary Color</label>
+      <input type="color" id="border-primary-color" value="#234a57">
+
+      <label for="border-secondary-color" style="margin-top:10px;">Border Secondary Color</label>
+      <input type="color" id="border-secondary-color" value="#d8c79a">
+    </div>
+
+    <div class="menu-section">
+      <label for="color-preset">Preset Male / Female Pairings</label>
+      <select id="color-preset">
+        <option value="custom">Custom</option>
+        <option value="classicBluePink">Classic Blue / Pink</option>
+        <option value="navyBlush">Navy / Blush</option>
+        <option value="sagePeach">Sage / Peach</option>
+        <option value="tealLavender">Teal / Lavender</option>
+        <option value="steelRose">Steel / Rose</option>
+        <option value="iceCoral">Ice Blue / Coral</option>
+        <option value="forestCream">Forest / Cream</option>
+        <option value="showtails">ShowTails Blue / Cream</option>
+        <option value="blackWhite">Black / White</option>
+      </select>
+    </div>
+
+    <div class="menu-section">
+      <div class="toggle-row">
+        <span>Main Rabbit Uses Sex Color</span>
+        <input type="checkbox" id="main-sex-color-toggle">
+      </div>
+
+      <label for="main-box-color">Main Rabbit Box Color</label>
+      <input type="color" id="main-box-color" value="#ffffff">
+
+      <label for="male-box-color">Male Box Color</label>
+      <input type="color" id="male-box-color" value="#cce5ff">
+
+      <label for="female-box-color">Female Box Color</label>
+      <input type="color" id="female-box-color" value="#f8d7da">
+    </div>
+
+    <div class="menu-section">
+      <label>Rabbit Box Data Visibility</label>
+      <div class="toggle-row">
+        <span>DOB</span>
+        <input type="checkbox" id="toggle-show-dob" checked>
+      </div>
+      <div class="toggle-row">
+        <span>Ear Length</span>
+        <input type="checkbox" id="toggle-show-earl" checked>
+      </div>
+      <div class="toggle-row">
+        <span>Custom</span>
+        <input type="checkbox" id="toggle-show-custom" checked>
+      </div>
+      <div class="toggle-row" style="margin-bottom:0;">
+        <span>Wins</span>
+        <input type="checkbox" id="toggle-show-wins" checked>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <label>Font Style</label>
+      <div class="font-picker" id="fontPicker">
+        <button type="button" class="font-picker-button" id="fontPickerButton">
+          <span id="selectedFontPreview" style="font-family: Arial, sans-serif;">Arial</span>
+          <span class="font-picker-arrow">▾</span>
+        </button>
+        <div class="font-picker-dropdown" id="fontPickerDropdown">
+          <div class="font-option active" data-font="Arial, sans-serif" style="font-family: Arial, sans-serif;">Arial</div>
+          <div class="font-option" data-font="'Poppins', sans-serif" style="font-family: 'Poppins', sans-serif;">Poppins</div>
+          <div class="font-option" data-font="'Inter', sans-serif" style="font-family: 'Inter', sans-serif;">Inter</div>
+          <div class="font-option" data-font="'Georgia', serif" style="font-family: 'Georgia', serif;">Georgia</div>
+          <div class="font-option" data-font="'Times New Roman', serif" style="font-family: 'Times New Roman', serif;">Times New Roman</div>
+          <div class="font-option" data-font="'Verdana', sans-serif" style="font-family: 'Verdana', sans-serif;">Verdana</div>
+          <div class="font-option" data-font="'Courier New', monospace" style="font-family: 'Courier New', monospace;">Courier New</div>
+        </div>
+      </div>
+
+      <label for="font-color" style="margin-top:10px;">Font Color</label>
+      <input type="color" id="font-color" value="#000000">
+
+      <label for="box-name-font-size" style="margin-top:10px;">Rabbit Name Font Size</label>
+      <input type="range" id="box-name-font-size" min="12" max="22" step="1" value="15">
+      <div class="range-readout"><span id="box-name-font-size-value">15</span> px</div>
+
+      <label for="box-body-font-size">Box Body Font Size</label>
+      <input type="range" id="box-body-font-size" min="9" max="16" step="1" value="11">
+      <div class="range-readout"><span id="box-body-font-size-value">11</span> px</div>
+    </div>
+
+    <div class="menu-section">
+      <label for="layout-orientation">Pedigree Layout</label>
+      <select id="layout-orientation">
+        <option value="landscape">Landscape</option>
+        <option value="portrait">Portrait</option>
+      </select>
+
+      <label for="box-width">Box Width</label>
+      <input type="range" id="box-width" min="180" max="320" step="5" value="220">
+      <div class="range-readout"><span id="box-width-value">220</span> px</div>
+
+      <label for="box-height">Box Height</label>
+      <input type="range" id="box-height" min="110" max="190" step="5" value="125">
+      <div class="range-readout"><span id="box-height-value">125</span> px</div>
+    </div>
+
+    <div class="menu-section">
+      <label for="line-style">Pedigree Line Style</label>
+      <select id="line-style">
+        <option value="diagonal">Diagonal</option>
+        <option value="tree">Standard Tree</option>
+      </select>
+
+      <label for="line-color">Line Color</label>
+      <input type="color" id="line-color" value="#000000">
+
+      <label for="line-thickness">Line Thickness</label>
+      <input type="range" id="line-thickness" min="1" max="6" step="0.5" value="1.5">
+      <div class="range-readout"><span id="line-thickness-value">1.5</span> px</div>
+    </div>
+
+    <div class="menu-section">
+      <div class="toggle-row">
+        <span>Show Watermark</span>
+        <input type="checkbox" id="toggle-watermark">
+      </div>
+
+      <label for="watermark-opacity">Watermark Opacity</label>
+      <input type="range" id="watermark-opacity" min="0.03" max="0.30" step="0.01" value="0.10">
+      <div class="range-readout"><span id="watermark-opacity-value">0.10</span></div>
+
+      <label for="watermark-size">Watermark Size</label>
+      <input type="range" id="watermark-size" min="25" max="95" step="1" value="55">
+      <div class="range-readout"><span id="watermark-size-value">55</span>%</div>
+    </div>
+
+    <div class="menu-section">
+      <div class="toggle-row">
+        <span>Show Rabbit Photo</span>
+        <input type="checkbox" id="toggle-rabbit-photo">
+      </div>
+      <div class="menu-note" style="margin-bottom:0;"><strong></strong></div>
+    </div>
+  </div>
+
   <div id="pedigree-container">
-    <button id="toggle-panel-btn">Tools</button>
-
-    <div id="controls-panel" class="hidden">
-      <div id="panel-header">
-        <h2>Pedigree Explorer</h2>
-        <button id="close-panel-btn" type="button">✕</button>
-      </div>
-
-      <h3>Visible Generations</h3>
-      <div class="control-row">
-        <button class="btn gen-btn" data-gen="4">4 Gen</button>
-        <button class="btn gen-btn" data-gen="6">6 Gen</button>
-        <button class="btn gen-btn active" data-gen="8">8 Gen</button>
-      </div>
-
-      <h3>View Side</h3>
-      <div class="control-row">
-        <button class="btn side-btn active" data-side="all">All</button>
-        <button class="btn side-btn" data-side="s">Sire Side</button>
-        <button class="btn side-btn" data-side="d">Dam Side</button>
-      </div>
-
-      <h3>General Tools</h3>
-      <div class="toggle">
-        <label for="toggle-summary">Show closeness summary</label>
-        <input id="toggle-summary" type="checkbox" checked />
-      </div>
-      <div class="toggle">
-        <label for="toggle-dim-empty">Dim empty boxes</label>
-        <input id="toggle-dim-empty" type="checkbox" checked />
-      </div>
-      <div class="toggle">
-        <label for="toggle-hide-empty">Hide empty boxes past selected generation rules</label>
-        <input id="toggle-hide-empty" type="checkbox" />
-      </div>
-      <div class="toggle">
-        <label for="toggle-badges">Show repeated count badges</label>
-        <input id="toggle-badges" type="checkbox" checked />
-      </div>
-
-      <h3>Highlight Filters</h3>
-      <div class="toggle">
-        <label for="toggle-registered">Registered rabbits</label>
-        <input id="toggle-registered" type="checkbox" />
-      </div>
-      <div class="toggle">
-        <label for="toggle-gc">GC rabbits</label>
-        <input id="toggle-gc" type="checkbox" />
-      </div>
-      <div class="toggle">
-        <label for="toggle-win">Winning record rabbits</label>
-        <input id="toggle-win" type="checkbox" />
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Color Comparison</strong></div>
-        <div class="input-row">
-          <select id="color-mode">
-            <option value="contains">Contains keyword</option>
-            <option value="exact">Exact color</option>
-          </select>
-        </div>
-        <div class="input-row">
-          <input id="color-search-input" type="text" placeholder="Otter, Broken, Blue, Black Otter..." />
-          <button class="btn small" id="apply-color-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-color-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Matches against the rabbit color field and flashes matches in purple.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Genetics Marker Search</strong></div>
-        <div class="input-row">
-          <input id="genetics-search-input" type="text" placeholder="En, dd, a(t), ee..." />
-          <button class="btn small" id="apply-genetics-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-genetics-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches the genetics field and flashes matches in teal.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Rabbitry Search</strong></div>
-        <div class="input-row">
-          <input id="rabbitry-search-input" type="text" placeholder="Pitchin Hills, Bonne, Swade..." />
-          <button class="btn small" id="apply-rabbitry-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-rabbitry-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches rabbitry/breeder text and flashes matches in teal-blue.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Keyword Search</strong></div>
-        <div class="input-row">
-          <input id="keyword-search-input" type="text" placeholder="Search any data in any box..." />
-          <button class="btn small" id="apply-keyword-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-keyword-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches all text fields in each rabbit box and flashes matches in purple.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Missing Data</strong></div>
-        <div class="toggle">
-          <label for="missing-name">Missing Name</label>
-          <input id="missing-name" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-ear">Missing Ear#</label>
-          <input id="missing-ear" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-color">Missing Color</label>
-          <input id="missing-color" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-weight">Missing Weight</label>
-          <input id="missing-weight" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-dob">Missing DOB</label>
-          <input id="missing-dob" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-reg">Missing Registration</label>
-          <input id="missing-reg" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-gc">Missing GC#</label>
-          <input id="missing-gc" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-genetics">Missing Genetics</label>
-          <input id="missing-genetics" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-rabbitry">Missing Rabbitry</label>
-          <input id="missing-rabbitry" type="checkbox" />
-        </div>
-        <div class="subtle-note">Any box missing one or more checked fields will flash in orange.</div>
-      </div>
-
-      <h3>Branch Actions</h3>
-      <div class="control-row">
-        <button class="btn small" id="expand-all-btn">Expand All Branches</button>
-        <button class="btn small" id="collapse-sire-btn">Collapse Sire Branch</button>
-        <button class="btn small" id="collapse-dam-btn">Collapse Dam Branch</button>
-      </div>
-
-      <div id="summary-card">
-        <div class="summary-line"><strong>Relationship Summary</strong></div>
-        <div class="summary-line" id="summary-duplicates">Repeated ancestors: 0</div>
-        <div class="summary-line" id="summary-closest">Closest repeated generation: None</div>
-        <div class="summary-line" id="summary-visible">Visible boxes: 0</div>
-        <div class="summary-line" id="summary-filter-matches">Active filter matches: 0</div>
-        <div id="risk-badge">Closeness: None</div>
-      </div>
-
-      <div id="duplicates-card">
-        <div class="summary-line"><strong>Repeated Ancestors</strong></div>
-        <div class="summary-line" id="duplicates-help">No repeated ancestors detected.</div>
-        <ul id="duplicate-list"></ul>
-      </div>
-
-      <div id="repeated-rabbits-card">
-        <div class="summary-line"><strong>Repeated Rabbit Finder</strong></div>
-        <div class="summary-line" id="repeated-rabbits-help">No repeated rabbits detected.</div>
-        <div id="repeated-rabbits-toggles" class="dynamic-toggle-list"></div>
-      </div>
-
-      <div id="breeder-card">
-        <div class="summary-line"><strong>Same Breeder Finder</strong></div>
-        <div class="summary-line" id="breeder-help">No breeder matches detected.</div>
-        <div id="breeder-toggles" class="dynamic-toggle-list"></div>
-      </div>
-    </div>
-
-    <div id="mini-map-card">
-      <div id="mini-map-header">
-        <div id="mini-map-title">Mini Map</div>
-        <button id="mini-map-toggle-btn" type="button">−</button>
-      </div>
-      <div id="mini-map-body">
-        <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-    </div>
-
-    <button id="reset-view-btn">Reset View</button>
-    <div id="status-badge">Loading pedigree…</div>
-
-    <svg id="pedigree-svg">
-      <g id="viewport">
-        <g id="lines-layer"></g>
-        <g id="highlight-layer"></g>
-        <g id="nodes-layer"></g>
-      </g>
+    <svg id="pedigree-svg" xmlns="http://www.w3.org/2000/svg">
+      <g id="viewport"></g>
     </svg>
   </div>
 
+  <style id="print-page-style">
+    @page { size: 11in 8.5in landscape; margin: 0; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
   <script>
-    const URL_PARAMS = new URLSearchParams(window.location.search);
-
-    function getParam(name) {
-      return URL_PARAMS.get(name) || "";
-    }
-
-    function escapeText(value) {
-      return String(value ?? "");
-    }
-
-    function normalizeValue(value) {
-      return String(value || "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ");
-    }
-
-    function createSvgEl(tag, attrs = {}) {
-      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-      for (const [key, value] of Object.entries(attrs)) {
-        el.setAttribute(key, value);
-      }
-      return el;
-    }
-
-    function inferSexClass(path, explicitSex) {
-      if (explicitSex) {
-        const s = explicitSex.toLowerCase();
-        if (s.startsWith("m") || s === "buck" || s === "sire") return "male";
-        if (s.startsWith("f") || s === "doe" || s === "dam") return "female";
-      }
-      if (path === "") return "male";
-      return path.endsWith("s") ? "male" : "female";
-    }
-
-    function splitPedigreeLines(value) {
-      return String(value || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n")
-        .map(line => line.trim())
-        .filter(Boolean);
-    }
-
-    function appendMultilineText(group, x, y, className, value, lineHeight = 12, extraAttrs = {}) {
-      const lines = splitPedigreeLines(value);
-      if (!lines.length) return null;
-
-      const textEl = createSvgEl("text", Object.assign({ x, y, class: className }, extraAttrs));
-
-      lines.forEach((line, index) => {
-        const tspan = createSvgEl("tspan", {
-          x,
-          dy: index === 0 ? 0 : lineHeight
-        });
-        tspan.textContent = line;
-        textEl.appendChild(tspan);
-      });
-
-      group.appendChild(textEl);
-      return textEl;
-    }
-
-    function normalizeBreederText(value) {
-      return String(value || "")
-        .toLowerCase()
-        .replace(/&/g, " and ")
-        .replace(/['’]s\b/g, "")
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    function tokenizeName(value) {
-      return normalizeBreederText(value)
-        .split(" ")
-        .map(token => token.trim())
-        .filter(Boolean);
-    }
-
-    function displayPrefixFromName(name) {
-      const rawTokens = String(name || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .split(" ")
-        .filter(Boolean);
-
-      if (!rawTokens.length) return "";
-      return rawTokens.slice(0, Math.min(2, rawTokens.length)).join(" ");
-    }
-
-    function getBreederMeta(data) {
-      const aliases = new Set();
-      const rabbitryNorm = normalizeBreederText(data.rabbitry);
-      const rabbitryDisplay = String(data.rabbitry || "").trim();
-      const titleWords = new Set(["grch", "gch", "gc", "ch", "grand", "champion", "sr", "jr"]);
-
-      let nameTokens = tokenizeName(data.name);
-      while (nameTokens.length && titleWords.has(nameTokens[0])) {
-        nameTokens.shift();
-      }
-
-      if (rabbitryNorm) aliases.add(rabbitryNorm);
-      if (nameTokens.length >= 3) aliases.add(nameTokens.slice(0, 3).join(" "));
-      if (nameTokens.length >= 2) aliases.add(nameTokens.slice(0, 2).join(" "));
-      if (!rabbitryNorm && nameTokens.length >= 1) aliases.add(nameTokens[0]);
-
-      const display = rabbitryDisplay || displayPrefixFromName(data.name) || "Unknown Breeder";
-
-      return {
-        aliases: Array.from(aliases).filter(Boolean),
-        display
-      };
-    }
-
-    function titleCaseWords(value) {
-      return String(value || "")
-        .split(" ")
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
-    }
-
-    function buildRabbitKey(data) {
-      const name = normalizeValue(data.name);
-      const ear = normalizeValue(data.ear);
-      if (!name && !ear) return "";
-      return `${name}||${ear}`;
-    }
-
-    function isEmptyRabbit(data) {
-      return ![
-        data.rabbitry, data.name, data.color, data.ear, data.weight,
-        data.sex, data.legs, data.reg, data.gc, data.dob,
-        data.earLength, data.genetics, data.custom, data.win1, data.win2, data.win3
-      ].some(Boolean);
-    }
-
-    function getNodeParamName(path) {
-      return path === "" ? "c" : path;
-    }
-
-    function parsePackedRabbitBlock(raw) {
-      const text = String(raw || "");
-      const record = {
-        n: "",
-        r: "",
-        e: "",
-        c: "",
-        w: "",
-        w1: "",
-        w2: "",
-        w3: "",
-        re: "",
-        g: "",
-        d: "",
-        el: "",
-        ge: "",
-        cu: "",
-        l: "",
-        weight: "",
-        wins: []
-      };
-
-      if (!text.trim()) return record;
-
-      const lines = text
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n");
-
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-
-        const idx = line.indexOf(":");
-        if (idx === -1) continue;
-
-        const key = line.slice(0, idx).trim().toLowerCase();
-        const value = line.slice(idx + 1).trim();
-
-        if (key === "w") {
-          record.weight = value;
-          continue;
-        }
-
-        if (key === "w1" || key === "w2" || key === "w3") {
-          if (value) record.wins.push(value);
-          record[key] = value;
-          continue;
-        }
-
-        if (key in record) {
-          record[key] = value;
-        }
-      }
-
-      return record;
-    }
-
-    const packedRabbitCache = new Map();
-
-    function getPackedRabbitData(path) {
-      const key = getNodeParamName(path);
-      if (!packedRabbitCache.has(key)) {
-        packedRabbitCache.set(key, parsePackedRabbitBlock(getParam(key)));
-      }
-      return packedRabbitCache.get(key);
-    }
-
-    function getRabbitData(path) {
-      const parsed = getPackedRabbitData(path);
-
-      return {
-        rabbitry: escapeText(parsed.r),
-        name: escapeText(parsed.n),
-        color: escapeText(parsed.c),
-        ear: escapeText(parsed.e),
-        weight: escapeText(parsed.weight || parsed.w),
-        sex: escapeText(path === "" ? getParam("sx") || getParam("sex") || "" : ""),
-        legs: escapeText(parsed.l),
-        reg: escapeText(parsed.re),
-        gc: escapeText(parsed.g),
-        dob: escapeText(parsed.d),
-        earLength: escapeText(parsed.el),
-        genetics: escapeText(parsed.ge),
-        custom: escapeText(parsed.cu),
-        win1: escapeText(parsed.w1 || parsed.wins[0] || ""),
-        win2: escapeText(parsed.w2 || parsed.wins[1] || ""),
-        win3: escapeText(parsed.w3 || parsed.wins[2] || "")
-      };
-    }
-
-    function getDisplayCustom(data) {
-      if (data.custom) return data.custom;
-      if (data.dob) return `DOB: ${data.dob}`;
-      return "";
-    }
-
-    function getSearchableText(data) {
-      return normalizeValue([
-        data.rabbitry,
-        data.name,
-        data.color,
-        data.ear,
-        data.weight,
-        data.sex,
-        data.legs,
-        data.reg,
-        data.gc,
-        data.dob,
-        data.earLength,
-        data.genetics,
-        data.custom,
-        data.win1,
-        data.win2,
-        data.win3
-      ].join(" | "));
-    }
-
     (function () {
-      const MAX_GENERATIONS = 8;
+      const svgNS = "http://www.w3.org/2000/svg";
+      const xlinkNS = "http://www.w3.org/1999/xlink";
+      const SAVE_SETTINGS_WEBHOOK = "https://go.glideapps.com/api/container/plugin/webhook-trigger/8lcj30iX3DO7vjRtX1XK/624b9f6d-a5cf-4408-bb59-a4004e64dae8";
 
-      const LAYOUT = {
-        rootX: 0,
-        rootY: 0,
-        sideColumnX: {
-          2: 580,
-          3: 1170,
-          4: 1810,
-          5: 2510,
-          6: 3280,
-          7: 4110,
-          8: 5010
+      const PRINT_TUNING = {
+        landscape: {
+          borderMargin: 20,
+          headerX: 70,
+          headerY: 80,
+          treeLeft: 90,
+          treeTop: 110,
+          treeRightInset: 100,
+          treeBottom: 1152,
+          footerX: 80,
+          footerY: 1140,
+          footerTaglineY: 1144
         },
-        leafGap: 126,
-        branchGap: 26,
-        padding: 120,
-        focusPadding: 260
-      };
-
-      const BOX_SCALE = {
-        1: 1.00,
-        2: 0.98,
-        3: 0.92,
-        4: 0.84,
-        5: 0.74,
-        6: 0.64,
-        7: 0.54,
-        8: 0.46
-      };
-
-      const BASE_BOX_WIDTH = 292;
-      const BASE_BOX_HEIGHT = 168;
-
-      const state = {
-        visibleGenerations: 8,
-        visibleSide: "all",
-        showSummary: true,
-        dimEmpty: true,
-        hideEmpty: false,
-        showBadges: true,
-        collapsedBranches: new Set(),
-        nodesByPath: new Map(),
-        duplicateGroups: new Map(),
-        breederGroups: new Map(),
-        duplicateSelections: new Map(),
-        breederSelections: new Map(),
-        rendered: false,
-        miniMapMinimized: false,
-        worldBounds: null,
-        view: { x: 0, y: 0, scale: 0.12, minScale: 0.03, maxScale: 16 },
-
-        filters: {
-          registered: false,
-          gc: false,
-          wins: false,
-          colorMode: "contains",
-          colorQuery: "",
-          geneticsQuery: "",
-          keywordQuery: "",
-          rabbitryQuery: "",
-          missing: {
-            name: false,
-            ear: false,
-            color: false,
-            weight: false,
-            dob: false,
-            reg: false,
-            gc: false,
-            genetics: false,
-            rabbitry: false
-          }
+        portrait: {
+          borderMargin: 20,
+          headerX: 80,
+          headerY: 100,
+          treeLeft: 70,
+          treeTop: 250,
+          treeRightInset: 80,
+          treeBottom: 1514,
+          footerX: 90,
+          footerY: 1500,
+          footerTaglineY: 1560
         }
       };
 
-      const container = document.getElementById("pedigree-container");
       const svg = document.getElementById("pedigree-svg");
       const viewport = document.getElementById("viewport");
-      const linesLayer = document.getElementById("lines-layer");
-      const highlightLayer = document.getElementById("highlight-layer");
-      const nodesLayer = document.getElementById("nodes-layer");
-      const statusBadge = document.getElementById("status-badge");
+      const container = document.getElementById("pedigree-container");
+      const menuToggle = document.getElementById("menu-toggle");
+      const pedigreeMenu = document.getElementById("pedigree-menu");
+      const printPageStyle = document.getElementById("print-page-style");
 
-      const summaryCard = document.getElementById("summary-card");
-      const duplicatesCard = document.getElementById("duplicates-card");
-      const repeatedRabbitsCard = document.getElementById("repeated-rabbits-card");
-      const breederCard = document.getElementById("breeder-card");
+      const borderStyleInput = document.getElementById("border-style");
+      const borderColorPreset = document.getElementById("border-color-preset");
+      const borderPrimaryColor = document.getElementById("border-primary-color");
+      const borderSecondaryColor = document.getElementById("border-secondary-color");
 
-      const summaryDuplicates = document.getElementById("summary-duplicates");
-      const summaryClosest = document.getElementById("summary-closest");
-      const summaryVisible = document.getElementById("summary-visible");
-      const summaryFilterMatches = document.getElementById("summary-filter-matches");
-      const riskBadge = document.getElementById("risk-badge");
-      const duplicatesHelp = document.getElementById("duplicates-help");
-      const duplicateList = document.getElementById("duplicate-list");
+      const colorPreset = document.getElementById("color-preset");
+      const mainSexColorToggle = document.getElementById("main-sex-color-toggle");
+      const mainBoxColor = document.getElementById("main-box-color");
+      const maleBoxColor = document.getElementById("male-box-color");
+      const femaleBoxColor = document.getElementById("female-box-color");
 
-      const repeatedRabbitsHelp = document.getElementById("repeated-rabbits-help");
-      const repeatedRabbitsToggles = document.getElementById("repeated-rabbits-toggles");
+      const toggleShowDob = document.getElementById("toggle-show-dob");
+      const toggleShowEarl = document.getElementById("toggle-show-earl");
+      const toggleShowCustom = document.getElementById("toggle-show-custom");
+      const toggleShowWins = document.getElementById("toggle-show-wins");
 
-      const breederHelp = document.getElementById("breeder-help");
-      const breederToggles = document.getElementById("breeder-toggles");
+      const fontColor = document.getElementById("font-color");
+      const layoutOrientation = document.getElementById("layout-orientation");
+      const boxWidthInput = document.getElementById("box-width");
+      const boxHeightInput = document.getElementById("box-height");
+      const boxWidthValue = document.getElementById("box-width-value");
+      const boxHeightValue = document.getElementById("box-height-value");
+      const boxNameFontSizeInput = document.getElementById("box-name-font-size");
+      const boxBodyFontSizeInput = document.getElementById("box-body-font-size");
+      const boxNameFontSizeValue = document.getElementById("box-name-font-size-value");
+      const boxBodyFontSizeValue = document.getElementById("box-body-font-size-value");
+      const lineStyleInput = document.getElementById("line-style");
+      const lineColorInput = document.getElementById("line-color");
+      const lineThicknessInput = document.getElementById("line-thickness");
+      const lineThicknessValue = document.getElementById("line-thickness-value");
+      const toggleWatermark = document.getElementById("toggle-watermark");
+      const watermarkOpacity = document.getElementById("watermark-opacity");
+      const watermarkSize = document.getElementById("watermark-size");
+      const watermarkOpacityValue = document.getElementById("watermark-opacity-value");
+      const watermarkSizeValue = document.getElementById("watermark-size-value");
+      const toggleRabbitPhoto = document.getElementById("toggle-rabbit-photo");
+      const resetStylesBtn = document.getElementById("reset-styles-btn");
+      const printBtn = document.getElementById("menu-print-btn");
+      const imageBtn = document.getElementById("menu-image-btn");
+      const svgBtn = document.getElementById("menu-svg-btn");
+      const saveBtn = document.getElementById("menu-save-btn");
+      const saveStatus = document.getElementById("save-status");
 
-      const miniMapSvg = document.getElementById("mini-map-svg");
-      const miniMapCard = document.getElementById("mini-map-card");
-      const miniMapToggleBtn = document.getElementById("mini-map-toggle-btn");
+      const fontPicker = document.getElementById("fontPicker");
+      const fontPickerButton = document.getElementById("fontPickerButton");
+      const selectedFontPreview = document.getElementById("selectedFontPreview");
+      const fontOptions = document.querySelectorAll(".font-option");
 
-      function updateStatus(text) {
-        statusBadge.textContent = text;
+      let panZoom = null;
+      let params = null;
+      let wheelWired = false;
+      let pointerWired = false;
+      let pinchWired = false;
+      let renderNonce = 0;
+      let initialized = false;
+      let packedParams = null;
+
+      const defaults = {
+        borderStyle: "classicDouble",
+        borderColorPreset: "showtails",
+        borderPrimary: "#234a57",
+        borderSecondary: "#d8c79a",
+        preset: "custom",
+        mainSexColor: false,
+        main: "#ffffff",
+        male: "#cce5ff",
+        female: "#f8d7da",
+        showDob: true,
+        showEarl: true,
+        showCustom: true,
+        showWins: true,
+        fontColor: "#000000",
+        fontFamily: "Arial, sans-serif",
+        layout: "landscape",
+        boxWidth: 220,
+        boxHeight: 125,
+        nameFont: 15,
+        bodyFont: 11,
+        lineStyle: "diagonal",
+        lineColor: "#000000",
+        lineThickness: 1.5,
+        watermarkEnabled: false,
+        watermarkOpacity: 0.10,
+        watermarkSize: 55,
+        rabbitPhotoEnabled: false
+      };
+
+      const presets = {
+        classicBluePink: { male: "#cce5ff", female: "#f8d7da", main: "#ffffff" },
+        navyBlush:      { male: "#b8cbe6", female: "#f1d0db", main: "#f9fbfd" },
+        sagePeach:      { male: "#cfe1d0", female: "#f7d7c3", main: "#fffaf3" },
+        tealLavender:   { male: "#bfe4e8", female: "#ddd0f1", main: "#f8fcfd" },
+        steelRose:      { male: "#ccd6e3", female: "#efc9d2", main: "#fbfbfc" },
+        iceCoral:       { male: "#d7eefb", female: "#f8cfc4", main: "#fffdfb" },
+        forestCream:    { male: "#cad8c7", female: "#f2e8d2", main: "#fffdf7" },
+        showtails:      { male: "#cfe7f7", female: "#f6eed7", main: "#fbfaf4" },
+        blackWhite:     { male: "#d6d6d6", female: "#f7f7f7", main: "#ececec" }
+      };
+
+      const borderPresets = {
+        classicBluePink: { primary: "#5b7fa3", secondary: "#d7aab8" },
+        navyBlush:      { primary: "#2f4e6f", secondary: "#d8a8b7" },
+        sagePeach:      { primary: "#6f8a70", secondary: "#d9a57d" },
+        tealLavender:   { primary: "#3b7f88", secondary: "#9b88c7" },
+        steelRose:      { primary: "#5c6f83", secondary: "#c48d99" },
+        iceCoral:       { primary: "#6eaac7", secondary: "#d98d7e" },
+        forestCream:    { primary: "#4d6b4f", secondary: "#d8c79a" },
+        showtails:      { primary: "#234a57", secondary: "#d8c79a" },
+        blackWhite:     { primary: "#111111", secondary: "#8f8f8f" }
+      };
+
+      const boxDefs = [
+        { id: "main",   gen: 1, sexType: "main",   titleChain: ["crabbitry","name"],     fields: [["Color","color"],["Ear#","ear number"],["Weight","weight"],["Sex","sex"],["Legs","legs"],["Reg#","reg"],["GC#","gc"],["DOB","dob"],["Ear Length","earl"]], extra: ["customdata"], wins: "win1" },
+        { id: "sire",   gen: 2, sexType: "male",   titleChain: ["srabbitry","sire"],     fields: [["Color","scolor"],["Ear#","sear"],["Weight","sweight"],["Sex","ssex"],["Legs","slegs"],["Reg#","sreg"],["GC#","sgc"],["DOB","sdob"],["Ear Length","searl"]], extra: ["scustomdata"], wins: "swin1" },
+        { id: "dam",    gen: 2, sexType: "female", titleChain: ["drabbitry","dam"],      fields: [["Color","dcolor"],["Ear#","dear"],["Weight","dweight"],["Sex","dsex"],["Legs","dlegs"],["Reg#","dreg"],["GC#","dgc"],["DOB","ddob"],["Ear Length","dearl"]], extra: ["dcustomdata"], wins: "dwin1" },
+        { id: "ssire",  gen: 3, sexType: "male",   titleChain: ["ssrabbitry","ssire"],   fields: [["Color","sscolor"],["Ear#","ssear"],["Weight","ssweight"],["Sex","sssex"],["Legs","sslegs"],["Reg#","ssreg"],["GC#","ssgc"],["DOB","ssdob"],["Ear Length","ssearl"]], extra: ["sscustomdata"], wins: "sswin1" },
+        { id: "sdam",   gen: 3, sexType: "female", titleChain: ["sdrabbitry","sdam"],    fields: [["Color","sdcolor"],["Ear#","sdear"],["Weight","sdweight"],["Sex","sdsex"],["Legs","sdlegs"],["Reg#","sdreg"],["GC#","sdgc"],["DOB","sddob"],["Ear Length","sdearl"]], extra: ["sdcustomdata"], wins: "sdwin1" },
+        { id: "dsire",  gen: 3, sexType: "male",   titleChain: ["dsrabbitry","dsire"],   fields: [["Color","dscolor"],["Ear#","dsear"],["Weight","dsweight"],["Sex","dssex"],["Legs","dslegs"],["Reg#","dsreg"],["GC#","dsgc"],["DOB","dsdob"],["Ear Length","dsearl"]], extra: ["dscustomdata"], wins: "dswin1" },
+        { id: "ddam",   gen: 3, sexType: "female", titleChain: ["ddrabbitry","ddam"],    fields: [["Color","ddcolor"],["Ear#","ddear"],["Weight","ddweight"],["Sex","ddsex"],["Legs","ddlegs"],["Reg#","ddreg"],["GC#","ddgc"],["DOB","dddob"],["Ear Length","ddearl"]], extra: ["ddcustomdata"], wins: "ddwin1" },
+        { id: "sssire", gen: 4, sexType: "male",   titleChain: ["sssrabbitry","sssire"], fields: [["Color","ssscolor"],["Ear#","sssear"],["Weight","sssweight"],["Sex","ssssex"],["Legs","ssslegs"],["Reg#","sssreg"],["GC#","sssgc"],["DOB","sssdob"],["Ear Length","sssearl"]], extra: ["ssscustomdata"], wins: "" },
+        { id: "ssdam",  gen: 4, sexType: "female", titleChain: ["ssdrabbitry","ssdam"],  fields: [["Color","ssdcolor"],["Ear#","ssdear"],["Weight","ssdweight"],["Sex","ssdsex"],["Legs","ssdlegs"],["Reg#","ssdreg"],["GC#","ssdgc"],["DOB","ssddob"],["Ear Length","ssdearl"]], extra: ["ssdcustomdata"], wins: "" },
+        { id: "sdsire", gen: 4, sexType: "male",   titleChain: ["sdsrabbitry","sdsire"], fields: [["Color","sdscolor"],["Ear#","sdsear"],["Weight","sdsweight"],["Sex","sdssex"],["Legs","sdslegs"],["Reg#","sdsreg"],["GC#","sdsgc"],["DOB","sdsdob"],["Ear Length","sdsearl"]], extra: ["sdscustomdata"], wins: "" },
+        { id: "sddam",  gen: 4, sexType: "female", titleChain: ["sddrabbitry","sddam"],  fields: [["Color","sddcolor"],["Ear#","sddear"],["Weight","sddweight"],["Sex","sddsex"],["Legs","sddlegs"],["Reg#","sddreg"],["GC#","sddgc"],["DOB","sdddob"],["Ear Length","sddearl"]], extra: ["sddcustomdata"], wins: "" },
+        { id: "dssire", gen: 4, sexType: "male",   titleChain: ["dssrabbitry","dssire"], fields: [["Color","dsscolor"],["Ear#","dssear"],["Weight","dssweight"],["Sex","dsssex"],["Legs","dsslegs"],["Reg#","dssreg"],["GC#","dssgc"],["DOB","dssdob"],["Ear Length","dssearl"]], extra: ["dsscustomdata"], wins: "" },
+        { id: "dsdam",  gen: 4, sexType: "female", titleChain: ["dsdrabbitry","dsdam"],  fields: [["Color","dsdcolor"],["Ear#","dsdear"],["Weight","dsdweight"],["Sex","dsdsex"],["Legs","dsdlegs"],["Reg#","dsdreg"],["GC#","dsdgc"],["DOB","dsddob"],["Ear Length","dsdearl"]], extra: ["dsdcustomdata"], wins: "" },
+        { id: "ddsire", gen: 4, sexType: "male",   titleChain: ["ddsrabbitry","ddsire"], fields: [["Color","ddscolor"],["Ear#","ddsear"],["Weight","ddsweight"],["Sex","ddssex"],["Legs","ddslegs"],["Reg#","ddsreg"],["GC#","ddsgc"],["DOB","ddsdob"],["Ear Length","ddsearl"]], extra: ["ddscustomdata"], wins: "" },
+        { id: "dddam",  gen: 4, sexType: "female", titleChain: ["dddrabbitry","dddam"],  fields: [["Color","dddcolor"],["Ear#","dddear"],["Weight","dddweight"],["Sex","dddsex"],["Legs","dddlegs"],["Reg#","dddreg"],["GC#","dddgc"],["DOB","ddddob"],["Ear Length","dddearl"]], extra: ["dddcustomdata"], wins: "" }
+      ];
+
+      const parentMap = [
+        ["main","sire"],["main","dam"],
+        ["sire","ssire"],["sire","sdam"],
+        ["dam","dsire"],["dam","ddam"],
+        ["ssire","sssire"],["ssire","ssdam"],
+        ["sdam","sdsire"],["sdam","sddam"],
+        ["dsire","dssire"],["dsire","dsdam"],
+        ["ddam","ddsire"],["ddam","dddam"]
+      ];
+
+      function getSearchParams() {
+        let search = window.location.search || "";
+        while (search.startsWith("?")) search = search.slice(1);
+        return new URLSearchParams(search);
       }
 
-      function getNodeSide(path) {
-        if (!path) return "root";
-        return path[0] === "s" ? "s" : "d";
+      function refreshParams() {
+        params = getSearchParams();
       }
 
-      function getOrderWithinSide(path) {
-        const bits = path.slice(1).replace(/s/g, "0").replace(/d/g, "1");
-        return bits ? parseInt(bits, 2) : 0;
+      function base64ToUtf8(str) {
+        return decodeURIComponent(
+          Array.from(atob(str))
+            .map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+            .join("")
+        );
       }
 
-      function getMetrics(generation) {
-        const scale = BOX_SCALE[generation] || 0.46;
-        return {
-          width: BASE_BOX_WIDTH * scale,
-          height: BASE_BOX_HEIGHT * scale,
-          nameSize: Math.max(8, 12 * scale),
-          textSize: Math.max(7, 10 * scale),
-          lineHeight: Math.max(9, 12 * scale),
-          pad: Math.max(6, 8 * scale),
-          corner: Math.max(7, 10 * scale),
-          collapseR: Math.max(8, 9 * scale)
-        };
-      }
+      function loadPackedParams() {
+        const search = new URLSearchParams(window.location.search);
+        const packed = search.get("p");
 
-      function getNodePosition(path) {
-        const generation = path.length + 1;
-
-        if (generation === 1) {
-          return { xCenter: LAYOUT.rootX, yCenter: LAYOUT.rootY };
+        if (!packed) {
+          packedParams = null;
+          return;
         }
 
-        const side = getNodeSide(path);
-        const nodesInBand = Math.pow(2, generation - 2);
-        const order = getOrderWithinSide(path);
-        const bandHeight = Math.pow(2, 7 - (generation - 1)) * LAYOUT.leafGap;
-        const top = -((nodesInBand * bandHeight) / 2);
-        const centerY = top + (order * bandHeight) + (bandHeight / 2);
-
-        const x = LAYOUT.sideColumnX[generation] || LAYOUT.sideColumnX[8];
-        return {
-          xCenter: side === "s" ? -x : x,
-          yCenter: centerY
-        };
+        try {
+          packedParams = JSON.parse(base64ToUtf8(decodeURIComponent(packed)));
+        } catch (err) {
+          console.error("Failed to decode packed pedigree data:", err);
+          packedParams = null;
+        }
       }
 
-      function appendText(group, x, y, className, value, attrs = {}) {
-        const t = createSvgEl("text", Object.assign({ x, y, class: className }, attrs));
-        t.textContent = value || "";
+      function getRawParam(name) {
+        if (packedParams && Object.prototype.hasOwnProperty.call(packedParams, name)) {
+          return packedParams[name] || "";
+        }
+        return params.get(name) || "";
+      }
+
+      function decodeParam(raw) {
+        const urlDecoded = decodeURIComponent(String(raw).replace(/\+/g, " "));
+        const ta = document.createElement("textarea");
+        ta.innerHTML = urlDecoded;
+        return ta.value;
+      }
+
+      function getParam(name) {
+        return decodeParam(getRawParam(name));
+      }
+
+      function getUrlParam(name) {
+        const raw = getRawParam(name);
+        return raw ? decodeURIComponent(raw) : "";
+      }
+
+      function getChain(keys) {
+        return keys.map(k => getParam(k)).filter(Boolean).join(" ");
+      }
+
+      function setPrintPage() {
+        if (layoutOrientation.value === "portrait") {
+          printPageStyle.textContent = "@page { size: 8.5in 11in portrait; margin: 0; }";
+        } else {
+          printPageStyle.textContent = "@page { size: 11in 8.5in landscape; margin: 0; }";
+        }
+      }
+
+      function makeEl(tag, attrs = {}) {
+        const el = document.createElementNS(svgNS, tag);
+        Object.entries(attrs).forEach(([k, v]) => {
+          if (k === "href") {
+            el.setAttributeNS(xlinkNS, "xlink:href", v);
+            el.setAttribute("href", v);
+          } else {
+            el.setAttribute(k, v);
+          }
+        });
+        return el;
+      }
+
+      function addText(group, x, y, text, opts = {}) {
+        const t = makeEl("text", { x, y, "text-anchor": opts.anchor || "start" });
+        t.style.fontFamily = getCurrentFont();
+        t.style.fill = fontColor.value;
+        t.style.fontSize = (opts.size || 14) + "px";
+        if (opts.weight) t.style.fontWeight = opts.weight;
+        t.textContent = text || "";
         group.appendChild(t);
         return t;
       }
 
-      function drawNode(path) {
-        const generation = path.length + 1;
-        const pos = getNodePosition(path);
-        const metrics = getMetrics(generation);
+      function clearViewport() {
+        while (viewport.firstChild) viewport.removeChild(viewport.firstChild);
+      }
 
-        const x = pos.xCenter - (metrics.width / 2);
-        const y = pos.yCenter - (metrics.height / 2);
+      function destroyPanZoom() {
+        if (panZoom) {
+          try { panZoom.destroy(); } catch (err) {}
+          panZoom = null;
+        }
+        window.panZoomInstance = null;
+        initialized = false;
+      }
 
-        const data = getRabbitData(path);
-        const sexClass = inferSexClass(path, data.sex);
-        const empty = isEmptyRabbit(data);
-        const rabbitKey = buildRabbitKey(data);
-        const breederMeta = getBreederMeta(data);
-        const displayCustom = getDisplayCustom(data);
+      function validBox(vb) {
+        return vb && isFinite(vb.width) && vb.width > 0 && isFinite(vb.height) && vb.height > 0;
+      }
 
-        const group = createSvgEl("g", {
-          "data-path": path,
-          "data-generation": String(generation),
-          class: `node ${empty ? "empty" : ""}`
+      function computeFit() {
+        const vb = svg.viewBox.baseVal;
+        if (!validBox(vb)) return null;
+
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        if (!cw || !ch) return null;
+
+        const scale = Math.min(cw / vb.width, ch / vb.height);
+        if (!isFinite(scale) || scale <= 0) return null;
+
+        return {
+          scale,
+          pan: {
+            x: (cw - vb.width * scale) / 2,
+            y: (ch - vb.height * scale) / 2
+          }
+        };
+      }
+
+      function fitToContainer() {
+        if (!panZoom) return;
+        const fit = computeFit();
+        if (!fit) return;
+        panZoom.zoom(fit.scale);
+        panZoom.pan(fit.pan);
+      }
+
+      function tryInitPanZoom(state = null) {
+        if (initialized) return;
+        if (typeof window.svgPanZoom !== "function") return;
+
+        const vb = svg.viewBox.baseVal;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        if (!validBox(vb) || !cw || !ch) return;
+
+        panZoom = svgPanZoom(svg, {
+          viewportSelector: "#viewport",
+          panEnabled: true,
+          zoomEnabled: true,
+          mouseWheelZoomEnabled: false,
+          controlIconsEnabled: false,
+          fit: false,
+          center: false,
+          minZoom: 0.25,
+          maxZoom: 10,
+          dblClickZoomEnabled: true
         });
 
-        const rect = createSvgEl("rect", {
-          x,
-          y,
-          width: metrics.width,
-          height: metrics.height,
-          rx: metrics.corner,
-          ry: metrics.corner,
-          class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
-          "data-slot": path
-        });
-        group.appendChild(rect);
+        window.panZoomInstance = panZoom;
 
-        const overlay = createSvgEl("rect", {
-          x: x + 2,
-          y: y + 2,
-          width: Math.max(0, metrics.width - 4),
-          height: Math.max(0, metrics.height - 4),
-          rx: Math.max(0, metrics.corner - 2),
-          ry: Math.max(0, metrics.corner - 2),
-          class: "highlight-overlay"
-        });
-        group.appendChild(overlay);
-
-        const badgeText = createSvgEl("text", {
-          x: x + metrics.width - metrics.pad,
-          y: y + (metrics.pad + metrics.nameSize),
-          class: "box-badge",
-          "text-anchor": "end"
-        });
-        badgeText.textContent = "";
-        group.appendChild(badgeText);
-
-        const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
-        appendText(group, x + metrics.pad, y + metrics.pad + metrics.nameSize, "box-name", title || "—", {
-          "font-size": metrics.nameSize
-        });
-
-        if (generation <= 5) {
-          appendText(group, x + metrics.pad, y + 34 * BOX_SCALE[generation], "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 48 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 48 * BOX_SCALE[generation], "box-text", `Weight: ${data.weight || ""}`, { "font-size": metrics.textSize });
-
-          appendText(group, x + metrics.pad, y + 62 * BOX_SCALE[generation], "box-text", `Sex: ${data.sex || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 62 * BOX_SCALE[generation], "box-text", `Legs: ${data.legs || ""}`, { "font-size": metrics.textSize });
-
-          appendText(group, x + metrics.pad, y + 76 * BOX_SCALE[generation], "box-text", `Reg#: ${data.reg || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 76 * BOX_SCALE[generation], "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
-
-          appendText(group, x + metrics.pad, y + 90 * BOX_SCALE[generation], "box-text", displayCustom || "", { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 106 * BOX_SCALE[generation], "box-text", data.win1 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 128 * BOX_SCALE[generation], "box-text", data.win2 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 150 * BOX_SCALE[generation], "box-text", data.win3 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-        } else if (generation <= 7) {
-          appendText(group, x + metrics.pad, y + 34 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 48 * BOX_SCALE[generation], "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 62 * BOX_SCALE[generation], "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
+        if (state && isFinite(state.zoom)) {
+          panZoom.zoom(state.zoom);
+          panZoom.pan(state.pan || { x: 0, y: 0 });
         } else {
-          appendText(group, x + metrics.pad, y + 30 * BOX_SCALE[generation], "box-text", `${data.name || "—"}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 44 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
+          fitToContainer();
         }
 
-        if (generation < MAX_GENERATIONS) {
-          const cx = x + metrics.width - (metrics.collapseR + 3);
-          const cy = y + metrics.height - (metrics.collapseR + 3);
-          const btnCircle = createSvgEl("circle", {
-            cx,
-            cy,
-            r: metrics.collapseR,
-            class: "collapse-btn",
-            "data-collapse-path": path
-          });
-          const btnSymbol = createSvgEl("text", {
-            x: cx,
-            y: cy,
-            class: "collapse-symbol",
-            "data-collapse-symbol": path
-          });
-          btnSymbol.textContent = "−";
-          group.appendChild(btnCircle);
-          group.appendChild(btnSymbol);
-        }
-
-        nodesLayer.appendChild(group);
-
-        state.nodesByPath.set(path, {
-          path,
-          generation,
-          group,
-          rect,
-          overlay,
-          badgeText,
-          data,
-          rabbitKey,
-          breederMeta,
-          empty,
-          searchableText: getSearchableText(data),
-          x,
-          y,
-          width: metrics.width,
-          height: metrics.height,
-          xCenter: pos.xCenter,
-          yCenter: pos.yCenter
-        });
+        wireWheelZoom();
+        enablePointerPan();
+        enablePinchZoom();
+        initialized = true;
       }
 
-      function walkPaths() {
-        const queue = [""];
-        while (queue.length) {
-          const path = queue.shift();
-          drawNode(path);
-          const generation = path.length + 1;
-          if (generation < MAX_GENERATIONS) {
-            queue.push(path + "s");
-            queue.push(path + "d");
+      function refreshPanZoom(state = null) {
+        if (!panZoom) {
+          tryInitPanZoom(state);
+          return;
+        }
+
+        try {
+          panZoom.resize();
+          panZoom.updateBBox();
+
+          if (state && isFinite(state.zoom)) {
+            panZoom.zoom(state.zoom);
+            panZoom.pan(state.pan || { x: 0, y: 0 });
           }
+        } catch (err) {
+          destroyPanZoom();
+          tryInitPanZoom(state);
         }
       }
 
-      function computeWorldBounds() {
-        const nodes = Array.from(state.nodesByPath.values());
-        const minX = Math.min(...nodes.map(n => n.x)) - LAYOUT.padding;
-        const minY = Math.min(...nodes.map(n => n.y)) - LAYOUT.padding;
-        const maxX = Math.max(...nodes.map(n => n.x + n.width)) + LAYOUT.padding;
-        const maxY = Math.max(...nodes.map(n => n.y + n.height)) + LAYOUT.padding;
-        state.worldBounds = { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+      function getCurrentFont() {
+        const active = Array.from(fontOptions).find(opt => opt.classList.contains("active"));
+        return active ? active.dataset.font : defaults.fontFamily;
       }
 
-      function computeDuplicateGroups() {
-        state.duplicateGroups.clear();
+      function getFontLabel(fontValue) {
+        const option = Array.from(fontOptions).find(opt => opt.dataset.font === fontValue);
+        return option ? option.textContent.trim() : "Arial";
+      }
 
-        for (const node of state.nodesByPath.values()) {
-          if (!node.rabbitKey) continue;
-          if (!state.duplicateGroups.has(node.rabbitKey)) state.duplicateGroups.set(node.rabbitKey, []);
-          state.duplicateGroups.get(node.rabbitKey).push(node);
-        }
+      function setActiveFontOption(fontValue) {
+        fontOptions.forEach(opt => opt.classList.toggle("active", opt.dataset.font === fontValue));
+      }
 
-        for (const [key, nodes] of Array.from(state.duplicateGroups.entries())) {
-          if (nodes.length < 2) {
-            state.duplicateGroups.delete(key);
-            state.duplicateSelections.delete(key);
-          } else if (!state.duplicateSelections.has(key)) {
-            state.duplicateSelections.set(key, false);
+      function applyFont(fontValue, shouldRender = true) {
+        selectedFontPreview.textContent = getFontLabel(fontValue);
+        selectedFontPreview.style.fontFamily = fontValue;
+        document.documentElement.style.setProperty("--menu-font", fontValue);
+        setActiveFontOption(fontValue);
+        if (shouldRender) render(true);
+      }
+
+      function getMainRabbitSex() {
+        const sex = getParam("sex").trim().toLowerCase();
+        if (sex.startsWith("m") || sex === "buck") return "male";
+        if (sex.startsWith("f") || sex === "doe") return "female";
+        return "main";
+      }
+
+      function getBoxFill(sexType) {
+        if (sexType === "main") {
+          if (mainSexColorToggle.checked) {
+            const mainSex = getMainRabbitSex();
+            if (mainSex === "male") return maleBoxColor.value;
+            if (mainSex === "female") return femaleBoxColor.value;
           }
+          return mainBoxColor.value;
         }
+        return sexType === "male" ? maleBoxColor.value : femaleBoxColor.value;
       }
 
-      function computeBreederGroups() {
-        state.breederGroups.clear();
-        const groups = [];
-
-        for (const node of state.nodesByPath.values()) {
-          if (node.empty) continue;
-          const aliases = new Set((node.breederMeta && node.breederMeta.aliases) || []);
-          if (!aliases.size) continue;
-
-          let foundGroup = null;
-
-          for (const group of groups) {
-            let intersects = false;
-            for (const alias of aliases) {
-              if (group.aliases.has(alias)) {
-                intersects = true;
-                break;
-              }
-            }
-            if (intersects) {
-              foundGroup = group;
-              break;
-            }
-          }
-
-          if (!foundGroup) {
-            foundGroup = { aliases: new Set(), nodes: [], displays: new Map() };
-            groups.push(foundGroup);
-          }
-
-          for (const alias of aliases) foundGroup.aliases.add(alias);
-          foundGroup.nodes.push(node);
-
-          const display = (node.breederMeta && node.breederMeta.display) || "Unknown Breeder";
-          foundGroup.displays.set(display, (foundGroup.displays.get(display) || 0) + 1);
-        }
-
-        groups.forEach(group => {
-          if (group.nodes.length < 2) return;
-
-          const aliasList = Array.from(group.aliases).filter(Boolean).sort((a, b) => b.length - a.length || a.localeCompare(b));
-          const preferredAlias = aliasList[0] || "unknown breeder";
-
-          const displayList = Array.from(group.displays.entries())
-            .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]));
-          const preferredDisplay = displayList.length ? displayList[0][0] : titleCaseWords(preferredAlias);
-
-          const id = preferredAlias;
-
-          state.breederGroups.set(id, {
-            id,
-            label: preferredDisplay,
-            aliases: aliasList,
-            nodes: group.nodes
-          });
-
-          if (!state.breederSelections.has(id)) {
-            state.breederSelections.set(id, false);
-          }
-        });
-
-        for (const key of Array.from(state.breederSelections.keys())) {
-          if (!state.breederGroups.has(key)) state.breederSelections.delete(key);
-        }
+      function getCanvas() {
+        return layoutOrientation.value === "portrait"
+          ? { width: 1275, height: 1650 }
+          : { width: 1650, height: 1275 };
       }
 
-      function isPathCollapsedByAncestor(path) {
-        for (const collapsedPath of state.collapsedBranches) {
-          if (collapsedPath && path.startsWith(collapsedPath) && path.length > collapsedPath.length) return true;
-        }
-        return false;
+      function getPrintTuning() {
+        return layoutOrientation.value === "portrait"
+          ? PRINT_TUNING.portrait
+          : PRINT_TUNING.landscape;
       }
 
-      function isNodeVisible(path, node) {
-        if (node.generation > state.visibleGenerations) return false;
-        if (state.visibleSide === "s" && path && !path.startsWith("s")) return false;
-        if (state.visibleSide === "d" && path && !path.startsWith("d")) return false;
-        if (state.hideEmpty && node.empty && node.generation > 1) return false;
-        if (isPathCollapsedByAncestor(path)) return false;
+      function getLayoutMeta() {
+        const canvas = getCanvas();
+        const t = getPrintTuning();
+        const M = t.borderMargin;
+
+        if (layoutOrientation.value === "portrait") {
+          return {
+            canvas,
+            border: { x: M, y: M, w: canvas.width - (M * 2), h: canvas.height - (M * 2) },
+            header: { x: t.headerX, y: t.headerY, logoSize: 116, textScale: 1.0, textGap: 22 },
+            tree: {
+              left: t.treeLeft,
+              top: t.treeTop,
+              right: canvas.width - t.treeRightInset,
+              bottom: t.treeBottom
+            },
+            footer: {
+              x: t.footerX,
+              y: t.footerY,
+              right: canvas.width - t.footerX,
+              taglineY: t.footerTaglineY
+            },
+            photoGap: 16,
+            photoSize: { w: 176, h: 142 }
+          };
+        }
+
+        return {
+          canvas,
+          border: { x: M, y: M, w: canvas.width - (M * 2), h: canvas.height - (M * 2) },
+          header: { x: t.headerX, y: t.headerY, logoSize: 106, textScale: 1.0, textGap: 20 },
+          tree: {
+            left: t.treeLeft,
+            top: t.treeTop,
+            right: canvas.width - t.treeRightInset,
+            bottom: t.treeBottom
+          },
+          footer: {
+            x: t.footerX,
+            y: t.footerY,
+            right: canvas.width - t.footerX,
+            taglineY: t.footerTaglineY
+          },
+          photoGap: 14,
+          photoSize: { w: 184, h: 148 }
+        };
+      }
+
+      function getPositions(boxW, boxH) {
+        const meta = getLayoutMeta();
+        const tree = meta.tree;
+        const isPortrait = layoutOrientation.value === "portrait";
+
+        const usableWidth = tree.right - tree.left;
+        const gapX = Math.max(isPortrait ? 4 : 8, (usableWidth - (boxW * 4)) / 3);
+
+        const x1 = tree.left;
+        const x2 = x1 + boxW + gapX;
+        const x3 = x2 + boxW + gapX;
+        const x4 = x3 + boxW + gapX;
+
+        const usableHeight = tree.bottom - tree.top;
+        const gap4 = Math.max(isPortrait ? 4 : 6, (usableHeight - (boxH * 8)) / 7);
+
+        const gen4 = [];
+        for (let i = 0; i < 8; i++) {
+          gen4.push(tree.top + i * (boxH + gap4));
+        }
+
+        const centerY = (boxTop) => boxTop + (boxH / 2);
+        const topFromCenter = (center) => center - (boxH / 2);
+
+        const ssireY = topFromCenter((centerY(gen4[0]) + centerY(gen4[1])) / 2);
+        const sdamY  = topFromCenter((centerY(gen4[2]) + centerY(gen4[3])) / 2);
+        const dsireY = topFromCenter((centerY(gen4[4]) + centerY(gen4[5])) / 2);
+        const ddamY  = topFromCenter((centerY(gen4[6]) + centerY(gen4[7])) / 2);
+
+        const sireY = topFromCenter((centerY(ssireY) + centerY(sdamY)) / 2);
+        const damY  = topFromCenter((centerY(dsireY) + centerY(ddamY)) / 2);
+        const mainY = topFromCenter((centerY(sireY) + centerY(damY)) / 2);
+
+        return {
+          main:   { x: x1, y: mainY },
+          sire:   { x: x2, y: sireY },
+          dam:    { x: x2, y: damY },
+          ssire:  { x: x3, y: ssireY },
+          sdam:   { x: x3, y: sdamY },
+          dsire:  { x: x3, y: dsireY },
+          ddam:   { x: x3, y: ddamY },
+          sssire: { x: x4, y: gen4[0] },
+          ssdam:  { x: x4, y: gen4[1] },
+          sdsire: { x: x4, y: gen4[2] },
+          sddam:  { x: x4, y: gen4[3] },
+          dssire: { x: x4, y: gen4[4] },
+          dsdam:  { x: x4, y: gen4[5] },
+          ddsire: { x: x4, y: gen4[6] },
+          dddam:  { x: x4, y: gen4[7] }
+        };
+      }
+
+      function shouldShowField(label) {
+        if (label === "DOB") return toggleShowDob.checked;
+        if (label === "Ear Length") return toggleShowEarl.checked;
         return true;
       }
 
-      function getVisibleNodes() {
-        const arr = [];
-        for (const [path, node] of state.nodesByPath.entries()) {
-          if (isNodeVisible(path, node)) arr.push(node);
-        }
-        return arr;
-      }
+      function buildBoxText(def) {
+        const lines = [];
+        lines.push({ text: getChain(def.titleChain), type: "title" });
 
-      function clearLayer(layer) {
-        while (layer.firstChild) layer.removeChild(layer.firstChild);
-      }
-
-      function getConnectorAnchor(node, side) {
-        return side === "left"
-          ? { x: node.x - 6, y: node.yCenter }
-          : { x: node.x + node.width + 6, y: node.yCenter };
-      }
-
-      function drawPath(d, cls, parentData) {
-        return createSvgEl("path", Object.assign({ d, class: cls }, parentData || {}));
-      }
-
-      function rebuildVisibleBranchLines() {
-        clearLayer(linesLayer);
-
-        const root = state.nodesByPath.get("");
-        if (!root || !isNodeVisible("", root)) return;
-
-        const sire = state.nodesByPath.get("s");
-        const dam = state.nodesByPath.get("d");
-
-        function drawParentChild(parentNode, childNode) {
-          const side = getNodeSide(childNode.path);
-          const parentAnchor = side === "s"
-            ? getConnectorAnchor(parentNode, "left")
-            : getConnectorAnchor(parentNode, "right");
-          const childAnchor = side === "s"
-            ? getConnectorAnchor(childNode, "right")
-            : getConnectorAnchor(childNode, "left");
-
-          const branchX = side === "s"
-            ? Math.max(childAnchor.x, parentAnchor.x - 30)
-            : Math.min(childAnchor.x, parentAnchor.x + 30);
-
-          const d = `
-            M ${parentAnchor.x} ${parentAnchor.y}
-            L ${branchX} ${parentAnchor.y}
-            L ${branchX} ${childAnchor.y}
-            L ${childAnchor.x} ${childAnchor.y}
-          `;
-          linesLayer.appendChild(drawPath(d, "line"));
-        }
-
-        function drawParentTwoChildren(parentNode, childS, childD) {
-          const side = getNodeSide(childS.path);
-          const parentAnchor = side === "s"
-            ? getConnectorAnchor(parentNode, "left")
-            : getConnectorAnchor(parentNode, "right");
-          const a1 = side === "s" ? getConnectorAnchor(childS, "right") : getConnectorAnchor(childS, "left");
-          const a2 = side === "s" ? getConnectorAnchor(childD, "right") : getConnectorAnchor(childD, "left");
-
-          const top = a1.y < a2.y ? a1 : a2;
-          const bottom = a1.y < a2.y ? a2 : a1;
-
-          const branchX = side === "s"
-            ? Math.max(a1.x, a2.x) + LAYOUT.branchGap
-            : Math.min(a1.x, a2.x) - LAYOUT.branchGap;
-
-          const d = `
-            M ${parentAnchor.x} ${parentAnchor.y}
-            L ${branchX} ${parentAnchor.y}
-            L ${branchX} ${top.y}
-            M ${branchX} ${top.y}
-            L ${top.x} ${top.y}
-            M ${branchX} ${bottom.y}
-            L ${bottom.x} ${bottom.y}
-            M ${branchX} ${top.y}
-            L ${branchX} ${bottom.y}
-          `;
-          linesLayer.appendChild(drawPath(d, "line"));
-        }
-
-        if (sire && isNodeVisible("s", sire)) drawParentChild(root, sire);
-        if (dam && isNodeVisible("d", dam)) drawParentChild(root, dam);
-
-        for (const [path, parentNode] of state.nodesByPath.entries()) {
-          if (!path) continue;
-          if (parentNode.generation >= MAX_GENERATIONS) continue;
-          if (!isNodeVisible(path, parentNode)) continue;
-
-          const childS = state.nodesByPath.get(path + "s");
-          const childD = state.nodesByPath.get(path + "d");
-
-          const showS = !!childS && isNodeVisible(childS.path, childS);
-          const showD = !!childD && isNodeVisible(childD.path, childD);
-
-          if (showS && showD) {
-            drawParentTwoChildren(parentNode, childS, childD);
-          } else if (showS) {
-            drawParentChild(parentNode, childS);
-          } else if (showD) {
-            drawParentChild(parentNode, childD);
-          }
-        }
-      }
-
-      function updateCollapseSymbols() {
-        for (const [path, node] of state.nodesByPath.entries()) {
-          const symbol = node.group.querySelector("[data-collapse-symbol]");
-          if (!symbol) continue;
-          symbol.textContent = state.collapsedBranches.has(path) ? "+" : "−";
-          node.group.classList.toggle("collapsed", state.collapsedBranches.has(path));
-        }
-      }
-
-      function updateRepeatedBadges(visibleNodes) {
-        for (const node of state.nodesByPath.values()) node.badgeText.textContent = "";
-        if (!state.showBadges) return;
-
-        const visibleSet = new Set(visibleNodes.map(n => n.path));
-        for (const group of state.duplicateGroups.values()) {
-          const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => node.badgeText.textContent = `×${visibleGroup.length}`);
-          }
-        }
-      }
-
-      function clearHighlightLayer() {
-        clearLayer(highlightLayer);
-      }
-
-      function drawConnectorBus(nodes, cssClass, laneOffset, sidePreference) {
-        if (!nodes || nodes.length < 2) return;
-
-        const sorted = nodes.slice().sort((a, b) => a.yCenter - b.yCenter);
-
-        const anchors = sorted.map(node => {
-          if (sidePreference === "left") return getConnectorAnchor(node, "left");
-          if (sidePreference === "right") return getConnectorAnchor(node, "right");
-          return getNodeSide(node.path) === "s"
-            ? getConnectorAnchor(node, "left")
-            : getConnectorAnchor(node, "right");
+        def.fields.forEach(([label, key]) => {
+          if (!shouldShowField(label)) return;
+          lines.push({ text: `${label}: ${getParam(key)}`, type: "field" });
         });
 
-        let busX;
-        let resolvedSide = sidePreference;
-
-        if (resolvedSide === "left") {
-          busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
-        } else if (resolvedSide === "right") {
-          busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
-        } else {
-          const sireCount = sorted.filter(n => getNodeSide(n.path) === "s").length;
-          const damCount = sorted.length - sireCount;
-          resolvedSide = sireCount >= damCount ? "left" : "right";
-          busX = resolvedSide === "left"
-            ? Math.min(...anchors.map(a => a.x)) - laneOffset
-            : Math.max(...anchors.map(a => a.x)) + laneOffset;
-        }
-
-        highlightLayer.appendChild(createSvgEl("path", {
-          d: `M ${busX} ${anchors[0].y} L ${busX} ${anchors[anchors.length - 1].y}`,
-          class: cssClass
-        }));
-
-        anchors.forEach(anchor => {
-          highlightLayer.appendChild(createSvgEl("path", {
-            d: resolvedSide === "left"
-              ? `M ${anchor.x} ${anchor.y} L ${busX + 10} ${anchor.y} L ${busX} ${anchor.y}`
-              : `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
-            class: cssClass
-          }));
-
-          highlightLayer.appendChild(createSvgEl("circle", {
-            cx: busX,
-            cy: anchor.y,
-            r: 4.5,
-            class: cssClass
-          }));
-        });
-      }
-
-      function nodeHasWinData(node) {
-        return !!(node.data.win1 || node.data.win2 || node.data.win3);
-      }
-
-      function getMissingChecks() {
-        return Object.values(state.filters.missing).some(Boolean);
-      }
-
-      function nodeMatchesMissing(node) {
-        const m = state.filters.missing;
-        const d = node.data;
-        return (
-          (m.name && !d.name) ||
-          (m.ear && !d.ear) ||
-          (m.color && !d.color) ||
-          (m.weight && !d.weight) ||
-          (m.dob && !d.dob) ||
-          (m.reg && !d.reg) ||
-          (m.gc && !d.gc) ||
-          (m.genetics && !d.genetics) ||
-          (m.rabbitry && !d.rabbitry)
-        );
-      }
-
-      function nodeMatchesColor(node) {
-        const query = normalizeValue(state.filters.colorQuery);
-        if (!query) return false;
-        const color = normalizeValue(node.data.color);
-        if (!color) return false;
-        if (state.filters.colorMode === "exact") return color === query;
-        return color.includes(query);
-      }
-
-      function nodeMatchesGenetics(node) {
-        const query = normalizeValue(state.filters.geneticsQuery);
-        if (!query) return false;
-        return normalizeValue(node.data.genetics).includes(query);
-      }
-
-      function nodeMatchesKeyword(node) {
-        const query = normalizeValue(state.filters.keywordQuery);
-        if (!query) return false;
-        return node.searchableText.includes(query);
-      }
-
-      function nodeMatchesRabbitry(node) {
-        const query = normalizeValue(state.filters.rabbitryQuery);
-        if (!query) return false;
-        return normalizeValue(node.data.rabbitry).includes(query) ||
-               normalizeValue(node.breederMeta.display).includes(query);
-      }
-
-      function getActiveFilterMatches(visibleNodes) {
-        let count = 0;
-        visibleNodes.forEach(node => {
-          if (state.filters.registered && node.data.reg) count++;
-          else if (state.filters.gc && node.data.gc) count++;
-          else if (state.filters.wins && nodeHasWinData(node)) count++;
-          else if (nodeMatchesColor(node)) count++;
-          else if (nodeMatchesGenetics(node)) count++;
-          else if (nodeMatchesKeyword(node)) count++;
-          else if (nodeMatchesRabbitry(node)) count++;
-          else if (getMissingChecks() && nodeMatchesMissing(node)) count++;
-        });
-        return count;
-      }
-
-      function updateSpecialHighlights(visibleNodes) {
-        const visibleSet = new Set(visibleNodes.map(node => node.path));
-
-        for (const node of state.nodesByPath.values()) {
-          node.group.classList.remove(
-            "flash-duplicate",
-            "flash-breeder",
-            "flash-registered",
-            "flash-gc",
-            "flash-win",
-            "flash-color",
-            "flash-genetics",
-            "flash-missing",
-            "flash-keyword",
-            "flash-rabbitry"
-          );
-        }
-
-        clearHighlightLayer();
-
-        let leftLane = 28;
-        let rightLane = 28;
-
-        for (const [rabbitKey, enabled] of state.duplicateSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.duplicateGroups.get(rabbitKey) || [];
-          const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => node.group.classList.add("flash-duplicate"));
-            const sireCount = visibleGroup.filter(n => getNodeSide(n.path) === "s").length;
-            const damCount = visibleGroup.filter(n => getNodeSide(n.path) === "d").length;
-            const pref = sireCount >= damCount ? "left" : "right";
-            drawConnectorBus(visibleGroup, "duplicate-connector", pref === "left" ? leftLane : rightLane, pref);
-            if (pref === "left") leftLane += 22; else rightLane += 22;
-          }
-        }
-
-        for (const [breederId, enabled] of state.breederSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.breederGroups.get(breederId);
-          if (!group) continue;
-          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => {
-              if (!node.group.classList.contains("flash-duplicate")) node.group.classList.add("flash-breeder");
+        if (toggleShowCustom.checked) {
+          def.extra.forEach(key => {
+            const raw = getParam(key);
+            if (!raw) return;
+            raw.replace(/\\n/g, "\n").split("\n").forEach(line => {
+              if (line.trim()) lines.push({ text: line.trim(), type: "extra" });
             });
-            const sireCount = visibleGroup.filter(n => getNodeSide(n.path) === "s").length;
-            const damCount = visibleGroup.filter(n => getNodeSide(n.path) === "d").length;
-            const pref = sireCount >= damCount ? "left" : "right";
-            drawConnectorBus(visibleGroup, "breeder-connector", pref === "left" ? leftLane : rightLane, pref);
-            if (pref === "left") leftLane += 22; else rightLane += 22;
-          }
-        }
-
-        visibleNodes.forEach(node => {
-          if (state.filters.registered && node.data.reg) node.group.classList.add("flash-registered");
-          if (state.filters.gc && node.data.gc) node.group.classList.add("flash-gc");
-          if (state.filters.wins && nodeHasWinData(node)) node.group.classList.add("flash-win");
-          if (nodeMatchesColor(node)) node.group.classList.add("flash-color");
-          if (nodeMatchesGenetics(node)) node.group.classList.add("flash-genetics");
-          if (getMissingChecks() && nodeMatchesMissing(node)) node.group.classList.add("flash-missing");
-          if (nodeMatchesKeyword(node)) node.group.classList.add("flash-keyword");
-          if (nodeMatchesRabbitry(node)) node.group.classList.add("flash-rabbitry");
-        });
-      }
-
-      function calculateCloseness(visibleNodes) {
-        const visibleSet = new Set(visibleNodes.map(n => n.path));
-        let repeatedAncestors = 0;
-        let closestGeneration = null;
-        const duplicateItems = [];
-
-        for (const group of state.duplicateGroups.values()) {
-          const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            repeatedAncestors++;
-            const nearest = Math.min(...visibleGroup.map(node => node.generation));
-            if (closestGeneration === null || nearest < closestGeneration) closestGeneration = nearest;
-
-            const first = visibleGroup[0];
-            duplicateItems.push({
-              key: first.rabbitKey,
-              label: `${first.data.name || "Unnamed"} (${first.data.ear || "No Ear#"})`,
-              count: visibleGroup.length,
-              closest: nearest
-            });
-          }
-        }
-
-        duplicateItems.sort((a, b) => a.closest - b.closest || b.count - a.count || a.label.localeCompare(b.label));
-
-        let risk = "None";
-        if (closestGeneration === null) risk = "None";
-        else if (closestGeneration <= 3) risk = "Very High";
-        else if (closestGeneration === 4) risk = "High";
-        else if (closestGeneration === 5) risk = "Moderate";
-        else risk = "Low";
-
-        return { repeatedAncestors, closestGeneration, risk, duplicateItems };
-      }
-
-      function renderDynamicToggleLists() {
-        const duplicateEntries = Array.from(state.duplicateGroups.entries())
-          .map(([key, nodes]) => {
-            const nearest = Math.min(...nodes.map(node => node.generation));
-            const first = nodes[0];
-            return {
-              key,
-              label: first.data.name || "Unnamed",
-              ear: first.data.ear || "No Ear#",
-              count: nodes.length,
-              nearest
-            };
-          })
-          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
-
-        repeatedRabbitsToggles.innerHTML = "";
-        if (!duplicateEntries.length) {
-          repeatedRabbitsHelp.textContent = "No repeated rabbits detected.";
-        } else {
-          repeatedRabbitsHelp.textContent = "Turn on a rabbit below to flash every matching occurrence in red.";
-          duplicateEntries.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "dynamic-toggle-item";
-
-            const labelWrap = document.createElement("div");
-            labelWrap.className = "label-wrap";
-
-            const main = document.createElement("div");
-            main.className = "main-label";
-            main.textContent = item.label;
-
-            const sub = document.createElement("div");
-            sub.className = "sub-label";
-            sub.textContent = `Ear#: ${item.ear} • appears ${item.count} times • nearest gen ${item.nearest}`;
-
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.checked = !!state.duplicateSelections.get(item.key);
-            input.dataset.duplicateKey = item.key;
-
-            labelWrap.appendChild(main);
-            labelWrap.appendChild(sub);
-            row.appendChild(labelWrap);
-            row.appendChild(input);
-            repeatedRabbitsToggles.appendChild(row);
           });
         }
 
-        const breederEntries = Array.from(state.breederGroups.values())
-          .map(group => {
-            const nearest = Math.min(...group.nodes.map(node => node.generation));
-            const distinctRabbits = new Set(group.nodes.map(node => node.rabbitKey || node.path)).size;
-            return {
-              id: group.id,
-              label: group.label,
-              count: group.nodes.length,
-              nearest,
-              distinctRabbits
-            };
-          })
-          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
-
-        breederToggles.innerHTML = "";
-        if (!breederEntries.length) {
-          breederHelp.textContent = "No breeder matches detected.";
-        } else {
-          breederHelp.textContent = "Turn on a breeder below to flash matching rabbits in yellow.";
-          breederEntries.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "dynamic-toggle-item";
-
-            const labelWrap = document.createElement("div");
-            labelWrap.className = "label-wrap";
-
-            const main = document.createElement("div");
-            main.className = "main-label";
-            main.textContent = item.label;
-
-            const sub = document.createElement("div");
-            sub.className = "sub-label";
-            sub.textContent = `${item.count} box(es) matched • ${item.distinctRabbits} rabbit(s) • nearest gen ${item.nearest}`;
-
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.checked = !!state.breederSelections.get(item.id);
-            input.dataset.breederKey = item.id;
-
-            labelWrap.appendChild(main);
-            labelWrap.appendChild(sub);
-            row.appendChild(labelWrap);
-            row.appendChild(input);
-            breederToggles.appendChild(row);
-          });
-        }
+        return lines;
       }
 
-      function updateSummary(visibleNodes) {
-        const result = calculateCloseness(visibleNodes);
+      function getLineRenderMetrics(line) {
+        const bodySize = Number(boxBodyFontSizeInput.value);
+        const nameSize = Number(boxNameFontSizeInput.value);
 
-        summaryDuplicates.textContent = `Repeated ancestors: ${result.repeatedAncestors}`;
-        summaryClosest.textContent = `Closest repeated generation: ${result.closestGeneration || "None"}`;
-        summaryVisible.textContent = `Visible boxes: ${visibleNodes.length}`;
-        summaryFilterMatches.textContent = `Active filter matches: ${getActiveFilterMatches(visibleNodes)}`;
-        riskBadge.textContent = `Closeness: ${result.risk}`;
-
-        const riskStyles = {
-          "None": { bg: "#eef4f6", color: "#234a57", border: "#c8d3d9" },
-          "Low": { bg: "#eef7ee", color: "#245b2a", border: "#bfd8c2" },
-          "Moderate": { bg: "#fff8e8", color: "#8a5b00", border: "#ead39b" },
-          "High": { bg: "#fff0e8", color: "#a34d00", border: "#e4b490" },
-          "Very High": { bg: "#fdeaea", color: "#9b1c1c", border: "#e4aaaa" }
-        };
-
-        const style = riskStyles[result.risk] || riskStyles["None"];
-        riskBadge.style.background = style.bg;
-        riskBadge.style.color = style.color;
-        riskBadge.style.borderColor = style.border;
-
-        duplicateList.innerHTML = "";
-        if (!result.duplicateItems.length) {
-          duplicatesHelp.textContent = "No repeated ancestors detected.";
-        } else {
-          duplicatesHelp.textContent = `${result.duplicateItems.length} repeated ancestor group(s) detected.`;
-          result.duplicateItems.slice(0, 20).forEach(item => {
-            const li = document.createElement("li");
-            li.textContent = `${item.label} • ×${item.count} • nearest gen ${item.closest}`;
-            duplicateList.appendChild(li);
-          });
-        }
-
-        const summaryDisplay = state.showSummary ? "block" : "none";
-        summaryCard.style.display = summaryDisplay;
-        duplicatesCard.style.display = summaryDisplay;
-        repeatedRabbitsCard.style.display = summaryDisplay;
-        breederCard.style.display = summaryDisplay;
-      }
-
-      function updateVisibility() {
-        let visibleCount = 0;
-
-        for (const [path, node] of state.nodesByPath.entries()) {
-          const visible = isNodeVisible(path, node);
-          node.group.classList.toggle("hidden-node", !visible);
-          if (visible) visibleCount++;
-        }
-
-        rebuildVisibleBranchLines();
-        return visibleCount;
-      }
-
-      function applyTransform() {
-        viewport.setAttribute("transform", `translate(${state.view.x}, ${state.view.y}) scale(${state.view.scale})`);
-      }
-
-      function screenToWorld(clientX, clientY) {
-        const rect = svg.getBoundingClientRect();
-        return {
-          x: (clientX - rect.left - state.view.x) / state.view.scale,
-          y: (clientY - rect.top - state.view.y) / state.view.scale
-        };
-      }
-
-      function getVisibleBounds() {
-        const nodes = getVisibleNodes();
-        if (!nodes.length) {
-          const root = state.nodesByPath.get("");
+        if (line.type === "title") {
           return {
-            minX: root.x - 60,
-            minY: root.y - 60,
-            maxX: root.x + root.width + 60,
-            maxY: root.y + root.height + 60
+            fontSize: nameSize,
+            lineHeight: Math.max(nameSize, bodySize + 1),
+            weight: "700"
           };
         }
+
         return {
-          minX: Math.min(...nodes.map(n => n.x)) - 80,
-          minY: Math.min(...nodes.map(n => n.y)) - 80,
-          maxX: Math.max(...nodes.map(n => n.x + n.width)) + 80,
-          maxY: Math.max(...nodes.map(n => n.y + n.height)) + 80
+          fontSize: bodySize,
+          lineHeight: Math.max(bodySize, 10),
+          weight: "400"
         };
       }
 
-      function getRootFocusBounds() {
-        const paths = ["", "s", "d"];
-        const nodes = paths.map(p => state.nodesByPath.get(p)).filter(Boolean);
-        return {
-          minX: Math.min(...nodes.map(n => n.x)) - LAYOUT.focusPadding,
-          minY: Math.min(...nodes.map(n => n.y)) - LAYOUT.focusPadding,
-          maxX: Math.max(...nodes.map(n => n.x + n.width)) + LAYOUT.focusPadding,
-          maxY: Math.max(...nodes.map(n => n.y + n.height)) + LAYOUT.focusPadding
-        };
+      function fitTextLinesToBox(lines, boxH) {
+        const topPadMin = 8;
+        const bottomPadMin = 8;
+        const usableH = boxH - topPadMin - bottomPadMin;
+
+        let used = 0;
+        const visible = [];
+
+        for (const line of lines) {
+          const metrics = getLineRenderMetrics(line);
+          if (used + metrics.lineHeight > usableH) break;
+          visible.push({ ...line, metrics });
+          used += metrics.lineHeight;
+        }
+
+        const startY = Math.max(topPadMin, (boxH - used) / 2);
+        return { visible, startY };
       }
 
-      function fitBounds(bounds, maxScaleOverride) {
-        const width = bounds.maxX - bounds.minX;
-        const height = bounds.maxY - bounds.minY;
-        const cw = container.clientWidth;
-        const ch = container.clientHeight;
+      function drawWins(group, def, x, y, boxW, boxH) {
+        if (!toggleShowWins.checked) return;
+        if (def.gen >= 4 || !def.wins) return;
 
-        const scaleX = cw / width;
-        const scaleY = ch / height;
-        let scale = Math.min(scaleX, scaleY) * 0.94;
-        scale = Math.max(state.view.minScale, Math.min(maxScaleOverride || state.view.maxScale, scale));
+        const raw = getParam(def.wins);
+        if (!raw) return;
 
-        state.view.scale = scale;
-        state.view.x = (cw / 2) - ((bounds.minX + bounds.maxX) / 2) * scale;
-        state.view.y = (ch / 2) - ((bounds.minY + bounds.maxY) / 2) * scale;
+        const lines = raw.replace(/\\n/g, "\n").split("\n").filter(Boolean);
+        if (!lines.length) return;
 
-        applyTransform();
-        updateMiniMap(getVisibleNodes());
-      }
+        const size = Math.max(10, Number(boxBodyFontSizeInput.value));
+        const textEl = makeEl("text", { x: x + 6, y: y + boxH + 16 });
+        textEl.style.fontFamily = getCurrentFont();
+        textEl.style.fill = fontColor.value;
+        textEl.style.fontSize = size + "px";
 
-      function centerOnRoot() {
-        fitBounds(getRootFocusBounds(), 5);
-      }
-
-      function fitCurrentGenerationView() {
-        fitBounds(getVisibleBounds());
-      }
-
-      function updateMiniMap(visibleNodes) {
-        miniMapSvg.innerHTML = "";
-        if (state.miniMapMinimized || !state.worldBounds) return;
-
-        const b = state.worldBounds;
-        miniMapSvg.setAttribute("viewBox", `${b.minX} ${b.minY} ${b.width} ${b.height}`);
-
-        visibleNodes.forEach(node => {
-          const miniRect = createSvgEl("rect", {
-            x: node.x,
-            y: node.y,
-            width: node.width,
-            height: node.height,
-            rx: 10,
-            ry: 10,
-            class: "mini-node"
+        lines.slice(0, 3).forEach((line, i) => {
+          const ts = makeEl("tspan", {
+            x: x + 6,
+            dy: i === 0 ? 0 : size + 2
           });
-
-          if (node.group.classList.contains("flash-duplicate")) miniRect.classList.add("duplicate-selected");
-          else if (node.group.classList.contains("flash-breeder")) miniRect.classList.add("breeder-selected");
-          else if (node.group.classList.contains("flash-keyword")) miniRect.classList.add("keyword-selected");
-          else if (node.group.classList.contains("flash-color")) miniRect.classList.add("color-selected");
-          else if (node.group.classList.contains("flash-genetics")) miniRect.classList.add("genetics-selected");
-          else if (node.group.classList.contains("flash-rabbitry")) miniRect.classList.add("rabbitry-selected");
-          else if (node.group.classList.contains("flash-missing")) miniRect.classList.add("missing-selected");
-          else if (node.group.classList.contains("flash-win")) miniRect.classList.add("win-selected");
-          else if (node.group.classList.contains("flash-gc")) miniRect.classList.add("gc-selected");
-          else if (node.group.classList.contains("flash-registered")) miniRect.classList.add("registered-selected");
-
-          miniMapSvg.appendChild(miniRect);
+          ts.textContent = line;
+          textEl.appendChild(ts);
         });
 
-        const rect = svg.getBoundingClientRect();
-        const worldView = {
-          x: (-state.view.x) / state.view.scale,
-          y: (-state.view.y) / state.view.scale,
-          width: rect.width / state.view.scale,
-          height: rect.height / state.view.scale
-        };
+        group.appendChild(textEl);
+      }
 
-        miniMapSvg.appendChild(createSvgEl("rect", {
-          x: worldView.x,
-          y: worldView.y,
-          width: worldView.width,
-          height: worldView.height,
-          class: "mini-viewport"
+      function drawBox(group, winsLayer, def, x, y, boxW, boxH) {
+        const fill = getBoxFill(def.sexType);
+
+        group.appendChild(makeEl("rect", {
+          x, y, width: boxW, height: boxH, rx: 8, ry: 8,
+          fill, stroke: "#000000", "stroke-width": 1.1
+        }));
+
+        const textLines = buildBoxText(def);
+        const fitted = fitTextLinesToBox(textLines, boxH);
+        const padX = 8;
+
+        const t = makeEl("text", {
+          x: x + padX,
+          y: y + fitted.startY
+        });
+
+        t.style.fontFamily = getCurrentFont();
+        t.style.fill = fontColor.value;
+        t.setAttribute("dominant-baseline", "hanging");
+
+        let currentY = y + fitted.startY;
+
+        fitted.visible.forEach((line) => {
+          const ts = makeEl("tspan", {
+            x: x + padX,
+            y: currentY
+          });
+          ts.textContent = line.text;
+          ts.style.fontSize = line.metrics.fontSize + "px";
+          ts.style.fontWeight = line.metrics.weight;
+          ts.setAttribute("dominant-baseline", "hanging");
+          t.appendChild(ts);
+
+          currentY += line.metrics.lineHeight;
+        });
+
+        group.appendChild(t);
+        drawWins(winsLayer, def, x, y, boxW, boxH);
+      }
+
+      function drawLine(group, childPos, parentPos, boxW, boxH) {
+        const stroke = lineColorInput.value;
+        const sw = lineThicknessInput.value;
+        const style = lineStyleInput.value;
+
+        const p1 = { x: childPos.x + boxW, y: childPos.y + boxH / 2 };
+        const p2 = { x: parentPos.x, y: parentPos.y + boxH / 2 };
+
+        if (style === "diagonal") {
+          group.appendChild(makeEl("line", {
+            x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+            stroke, "stroke-width": sw
+          }));
+        } else {
+          const midX = (p1.x + p2.x) / 2;
+          group.appendChild(makeEl("path", {
+            d: `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`,
+            fill: "none", stroke, "stroke-width": sw
+          }));
+        }
+      }
+
+      function addCircle(group, cx, cy, r, fill, stroke, sw) {
+        group.appendChild(makeEl("circle", {
+          cx, cy, r, fill, stroke, "stroke-width": sw
         }));
       }
 
-      function applyState() {
-        if (!state.rendered) return;
-
-        document.body.classList.toggle("dim-empty", state.dimEmpty);
-        updateCollapseSymbols();
-
-        const visibleCount = updateVisibility();
-        const visibleNodes = getVisibleNodes();
-
-        updateRepeatedBadges(visibleNodes);
-        updateSpecialHighlights(visibleNodes);
-        updateSummary(visibleNodes);
-        updateMiniMap(visibleNodes);
-
-        updateStatus(
-          `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
-            state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"
-          }`
-        );
+      function addDiamond(group, cx, cy, w, h, fill, stroke, sw) {
+        group.appendChild(makeEl("polygon", {
+          points: `${cx},${cy-h/2} ${cx+w/2},${cy} ${cx},${cy+h/2} ${cx-w/2},${cy}`,
+          fill, stroke, "stroke-width": sw
+        }));
       }
 
-      function renderPedigree() {
-        updateStatus("Rendering pedigree...");
-        walkPaths();
-        computeWorldBounds();
-        computeDuplicateGroups();
-        computeBreederGroups();
-        renderDynamicToggleLists();
-        state.rendered = true;
-        applyState();
-        centerOnRoot();
-        updateStatus(`Ready • 255 boxes • 8 generations`);
+      function addLine(group, x1, y1, x2, y2, stroke, sw) {
+        group.appendChild(makeEl("line", { x1, y1, x2, y2, stroke, "stroke-width": sw }));
       }
 
-      function toggleCollapse(path) {
-        if (state.collapsedBranches.has(path)) state.collapsedBranches.delete(path);
-        else state.collapsedBranches.add(path);
-        applyState();
-        fitCurrentGenerationView();
+      function addRect(group, x, y, width, height, stroke, sw, fill = "none", rx = 0, ry = 0) {
+        group.appendChild(makeEl("rect", {
+          x, y, width, height, fill, stroke, "stroke-width": sw, rx, ry
+        }));
       }
 
-      function wirePanZoom() {
-        let dragging = false;
-        let dragPointerId = null;
-        let lastX = 0;
-        let lastY = 0;
+      function addPath(group, d, stroke, sw, fill = "none") {
+        group.appendChild(makeEl("path", { d, fill, stroke, "stroke-width": sw }));
+      }
 
-        let pinchActive = false;
-        let pinchStartDist = 0;
-        let pinchStartScale = 1;
-        let pinchWorldMid = null;
+      function addPolyline(group, points, stroke, sw, fill = "none") {
+        group.appendChild(makeEl("polyline", {
+          points,
+          fill,
+          stroke,
+          "stroke-width": sw
+        }));
+      }
 
-        const activeTouches = new Map();
+      function drawCornerFlourish(group, x, y, primary, secondary, corner) {
+        let sx = 1, sy = 1;
+        if (corner === "tr") sx = -1;
+        if (corner === "bl") sy = -1;
+        if (corner === "br") { sx = -1; sy = -1; }
 
-        function zoomAt(clientX, clientY, nextScale) {
-          const rect = svg.getBoundingClientRect();
-          const px = clientX - rect.left;
-          const py = clientY - rect.top;
+        const g = makeEl("g", { transform: `translate(${x},${y}) scale(${sx},${sy})` });
 
-          const worldX = (px - state.view.x) / state.view.scale;
-          const worldY = (py - state.view.y) / state.view.scale;
+        addPath(g, `M 0 0 C 24 0, 42 2, 58 10 C 84 22, 98 40, 102 66 C 88 62, 75 58, 64 48 C 54 40, 46 28, 42 16 C 35 36, 22 54, 0 72`, primary, 3, "none");
+        addPath(g, `M 14 14 C 30 12, 44 16, 58 24 C 72 32, 80 42, 82 58 C 72 52, 62 48, 54 40 C 44 31, 36 22, 32 14`, secondary, 2, "none");
 
-          state.view.scale = Math.max(state.view.minScale, Math.min(state.view.maxScale, nextScale));
-          state.view.x = px - worldX * state.view.scale;
-          state.view.y = py - worldY * state.view.scale;
+        addCircle(g, 22, 22, 4.5, secondary, primary, 1.5);
+        addCircle(g, 58, 24, 3.6, secondary, primary, 1.2);
+        addCircle(g, 80, 58, 3.6, secondary, primary, 1.2);
 
-          applyTransform();
-          updateMiniMap(getVisibleNodes());
+        group.appendChild(g);
+      }
+
+      function drawMedallion(group, cx, cy, r, primary, secondary) {
+        for (let i = 0; i < 16; i++) {
+          const a = (Math.PI * 2 * i) / 16;
+          const px = cx + Math.cos(a) * (r * 1.15);
+          const py = cy + Math.sin(a) * (r * 1.15);
+          addCircle(group, px, py, r * 0.18, secondary, primary, 1);
+        }
+        addCircle(group, cx, cy, r, "none", primary, 2.2);
+        addCircle(group, cx, cy, r * 0.73, secondary, primary, 1.8);
+        addDiamond(group, cx, cy, r * 0.78, r * 0.78, "none", primary, 1.2);
+        addCircle(group, cx, cy, r * 0.12, primary, primary, 1);
+      }
+
+      function drawRibbonCrest(group, cx, y, width, height, primary, secondary) {
+        const left = cx - width / 2;
+        const right = cx + width / 2;
+        const midY = y + height / 2;
+
+        group.appendChild(makeEl("path", {
+          d: `M ${left+18} ${y} L ${right-18} ${y} Q ${right} ${y} ${right} ${y+18} L ${right} ${y+height-18} Q ${right} ${y+height} ${right-18} ${y+height} L ${left+18} ${y+height} Q ${left} ${y+height} ${left} ${y+height-18} L ${left} ${y+18} Q ${left} ${y} ${left+18} ${y} Z`,
+          fill: secondary,
+          stroke: primary,
+          "stroke-width": 3
+        }));
+
+        group.appendChild(makeEl("polygon", {
+          points: `${left} ${midY} ${left-34} ${y+8} ${left-34} ${y+height-8}`,
+          fill: secondary, stroke: primary, "stroke-width": 3
+        }));
+
+        group.appendChild(makeEl("polygon", {
+          points: `${right} ${midY} ${right+34} ${y+8} ${right+34} ${y+height-8}`,
+          fill: secondary, stroke: primary, "stroke-width": 3
+        }));
+
+        addLine(group, left + 18, midY, right - 18, midY, primary, 1.5);
+        drawMedallion(group, cx, midY, 12, primary, secondary);
+      }
+
+      function drawLaurelSprig(group, x, y, primary, secondary, flipX = 1) {
+        const g = makeEl("g", { transform: `translate(${x},${y}) scale(${flipX},1)` });
+        addPath(g, `M 0 52 C 18 40, 28 26, 42 0`, primary, 2.2);
+
+        [[10, 42, 12, -20],[18, 34, 12, -16],[26, 25, 11, -12],[34, 15, 10, -8]].forEach(([lx, ly, s, rot]) => {
+          g.appendChild(makeEl("ellipse", {
+            cx: lx, cy: ly, rx: s, ry: s * 0.45,
+            fill: secondary, stroke: primary, "stroke-width": 1.5,
+            transform: `rotate(${rot} ${lx} ${ly})`
+          }));
+        });
+
+        group.appendChild(g);
+      }
+
+      function drawScallopBand(group, x, y, w, h, primary, secondary) {
+        const step = 28;
+        const r = 9;
+
+        for (let px = x + 34; px < x + w - 34; px += step) {
+          addCircle(group, px, y, r, "#fff", secondary, 1.8);
+          addCircle(group, px, y + h, r, "#fff", secondary, 1.8);
         }
 
-        svg.addEventListener("wheel", (e) => {
-          e.preventDefault();
-          const factor = e.deltaY > 0 ? 0.88 : 1.14;
-          zoomAt(e.clientX, e.clientY, state.view.scale * factor);
-        }, { passive: false });
+        for (let py = y + 34; py < y + h - 34; py += step) {
+          addCircle(group, x, py, r, "#fff", secondary, 1.8);
+          addCircle(group, x + w, py, r, "#fff", secondary, 1.8);
+        }
 
-        svg.addEventListener("pointerdown", (e) => {
-          activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        addRect(group, x + 10, y + 10, w - 20, h - 20, primary, 2.2);
+      }
 
-          if (activeTouches.size === 2) {
-            const pts = Array.from(activeTouches.values());
-            pinchActive = true;
-            dragging = false;
-            pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            pinchStartScale = state.view.scale;
-            pinchWorldMid = screenToWorld((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
-          } else if (activeTouches.size === 1) {
-            dragging = true;
-            dragPointerId = e.pointerId;
-            lastX = e.clientX;
-            lastY = e.clientY;
+      function drawRosette(group, cx, cy, r, primary, secondary) {
+        for (let i = 0; i < 12; i++) {
+          const a = (Math.PI * 2 * i) / 12;
+          const px = cx + Math.cos(a) * (r * 1.1);
+          const py = cy + Math.sin(a) * (r * 1.1);
+          addCircle(group, px, py, r * 0.34, secondary, primary, 1);
+        }
+        addCircle(group, cx, cy, r * 0.65, secondary, primary, 2);
+      }
+
+      function drawLeaf(group, x, y, scale, primary, secondary, flipX = 1) {
+        const g = makeEl("g", { transform: `translate(${x},${y}) scale(${flipX},1)` });
+        g.appendChild(makeEl("path", {
+          d: `M 0 0 C 18 -16, 36 -16, 48 0 C 36 16, 18 16, 0 0 Z`,
+          fill: secondary, stroke: primary, "stroke-width": 2,
+          transform: `scale(${scale})`
+        }));
+        g.appendChild(makeEl("path", {
+          d: `M 4 0 L 44 0`,
+          fill: "none", stroke: primary, "stroke-width": 1.6,
+          transform: `scale(${scale})`
+        }));
+        group.appendChild(g);
+      }
+
+      function drawBeadLine(group, x1, y1, x2, y2, count, r, fill, stroke, sw) {
+        for (let i = 0; i <= count; i++) {
+          const t = i / count;
+          const cx = x1 + (x2 - x1) * t;
+          const cy = y1 + (y2 - y1) * t;
+          addCircle(group, cx, cy, r, fill, stroke, sw);
+        }
+      }
+
+      function drawCornerShell(group, x, y, primary, secondary, corner) {
+        let sx = 1, sy = 1;
+        if (corner === "tr") sx = -1;
+        if (corner === "bl") sy = -1;
+        if (corner === "br") { sx = -1; sy = -1; }
+
+        const g = makeEl("g", { transform: `translate(${x},${y}) scale(${sx},${sy})` });
+
+        addPath(g, `M 0 0 Q 18 0 32 10 Q 48 22 58 40 Q 66 54 70 74`, primary, 3);
+        addPath(g, `M 8 8 Q 22 8 34 16 Q 46 26 54 40 Q 58 48 61 60`, secondary, 2);
+        addPath(g, `M 14 18 Q 24 18 33 24 Q 42 31 48 42`, secondary, 1.5);
+        addCircle(g, 18, 18, 3.5, secondary, primary, 1.1);
+        addCircle(g, 34, 26, 3, secondary, primary, 1);
+        addCircle(g, 48, 42, 2.8, secondary, primary, 1);
+
+        group.appendChild(g);
+      }
+
+      function drawFretBand(group, x, y, w, h, primary, secondary) {
+        const step = 44;
+
+        for (let px = x + 24; px < x + w - 24; px += step) {
+          addPolyline(group, `${px} ${y} ${px+10} ${y} ${px+10} ${y+10} ${px+22} ${y+10} ${px+22} ${y} ${px+32} ${y}`, primary, 2);
+          addPolyline(group, `${px} ${y+h} ${px+10} ${y+h} ${px+10} ${y+h-10} ${px+22} ${y+h-10} ${px+22} ${y+h} ${px+32} ${y+h}`, primary, 2);
+        }
+
+        for (let py = y + 24; py < y + h - 24; py += step) {
+          addPolyline(group, `${x} ${py} ${x} ${py+10} ${x+10} ${py+10} ${x+10} ${py+22} ${x} ${py+22} ${x} ${py+32}`, primary, 2);
+          addPolyline(group, `${x+w} ${py} ${x+w} ${py+10} ${x+w-10} ${py+10} ${x+w-10} ${py+22} ${x+w} ${py+22} ${x+w} ${py+32}`, primary, 2);
+        }
+
+        addRect(group, x + 10, y + 10, w - 20, h - 20, secondary, 1.7);
+      }
+
+      function drawSideVine(group, x, y1, y2, primary, secondary, flipX = 1) {
+        const g = makeEl("g", { transform: `translate(${x},0) scale(${flipX},1)` });
+
+        addPath(g, `M 0 ${y1} C 18 ${y1+30}, 18 ${y1+70}, 0 ${y1+100}
+                       C -18 ${y1+130}, -18 ${y1+170}, 0 ${y1+200}
+                       C 18 ${y1+230}, 18 ${y2-30}, 0 ${y2}`, primary, 2.4);
+
+        for (let py = y1 + 28; py < y2 - 20; py += 42) {
+          g.appendChild(makeEl("ellipse", {
+            cx: 12, cy: py, rx: 12, ry: 5.5,
+            fill: secondary, stroke: primary, "stroke-width": 1.4,
+            transform: `rotate(-28 12 ${py})`
+          }));
+          g.appendChild(makeEl("ellipse", {
+            cx: -12, cy: py + 16, rx: 12, ry: 5.5,
+            fill: secondary, stroke: primary, "stroke-width": 1.4,
+            transform: `rotate(28 -12 ${py + 16})`
+          }));
+          addCircle(g, 0, py + 8, 2.6, secondary, primary, 1);
+        }
+
+        group.appendChild(g);
+      }
+
+      function drawBannerPlate(group, cx, y, w, h, primary, secondary) {
+        const x = cx - w / 2;
+        const midY = y + h / 2;
+
+        group.appendChild(makeEl("path", {
+          d: `M ${x+20} ${y} L ${x+w-20} ${y} Q ${x+w} ${y} ${x+w} ${y+18}
+              L ${x+w} ${y+h-18} Q ${x+w} ${y+h} ${x+w-20} ${y+h}
+              L ${x+20} ${y+h} Q ${x} ${y+h} ${x} ${y+h-18}
+              L ${x} ${y+18} Q ${x} ${y} ${x+20} ${y} Z`,
+          fill: "#ffffff",
+          stroke: primary,
+          "stroke-width": 3
+        }));
+
+        group.appendChild(makeEl("polygon", {
+          points: `${x} ${midY} ${x-28} ${y+8} ${x-28} ${y+h-8}`,
+          fill: secondary, stroke: primary, "stroke-width": 2.4
+        }));
+
+        group.appendChild(makeEl("polygon", {
+          points: `${x+w} ${midY} ${x+w+28} ${y+8} ${x+w+28} ${y+h-8}`,
+          fill: secondary, stroke: primary, "stroke-width": 2.4
+        }));
+
+        addLine(group, x + 18, midY, x + w - 18, midY, secondary, 1.5);
+        addDiamond(group, cx, midY, 18, 18, secondary, primary, 1.3);
+      }
+
+      function drawPetalMedallion(group, cx, cy, r, primary, secondary) {
+        for (let i = 0; i < 8; i++) {
+          const a = (Math.PI * 2 * i) / 8;
+          const px = cx + Math.cos(a) * (r * 0.82);
+          const py = cy + Math.sin(a) * (r * 0.82);
+          group.appendChild(makeEl("ellipse", {
+            cx: px, cy: py, rx: r * 0.34, ry: r * 0.18,
+            fill: secondary, stroke: primary, "stroke-width": 1.2,
+            transform: `rotate(${(a * 180 / Math.PI)} ${px} ${py})`
+          }));
+        }
+        addCircle(group, cx, cy, r * 0.48, "#ffffff", primary, 1.8);
+        addCircle(group, cx, cy, r * 0.15, primary, primary, 1);
+      }
+
+      function drawBracketCorners(group, x, y, w, h, primary, secondary) {
+        const s = 32;
+
+        [
+          [x, y, 1, 1],
+          [x+w, y, -1, 1],
+          [x, y+h, 1, -1],
+          [x+w, y+h, -1, -1]
+        ].forEach(([cx, cy, sx, sy]) => {
+          const g = makeEl("g", { transform: `translate(${cx},${cy}) scale(${sx},${sy})` });
+          addLine(g, 0, 0, s, 0, primary, 3);
+          addLine(g, 0, 0, 0, s, primary, 3);
+          addLine(g, 12, 12, s - 4, 12, secondary, 1.5);
+          addLine(g, 12, 12, 12, s - 4, secondary, 1.5);
+          group.appendChild(g);
+        });
+      }
+
+      function drawSunburst(group, cx, cy, r, primary, secondary) {
+        for (let i = 0; i < 20; i++) {
+          const a = (Math.PI * 2 * i) / 20;
+          const x1 = cx + Math.cos(a) * (r * 0.95);
+          const y1 = cy + Math.sin(a) * (r * 0.95);
+          const x2 = cx + Math.cos(a) * (r * 1.45);
+          const y2 = cy + Math.sin(a) * (r * 1.45);
+          addLine(group, x1, y1, x2, y2, secondary, 1.2);
+        }
+        addCircle(group, cx, cy, r, "#ffffff", primary, 2.3);
+        addDiamond(group, cx, cy, r * 0.8, r * 0.8, secondary, primary, 1.2);
+        addCircle(group, cx, cy, r * 0.16, primary, primary, 1);
+      }
+
+      function drawNotchTicks(group, x, y, w, h, primary) {
+        const step = 36;
+
+        for (let px = x + 22; px < x + w - 22; px += step) {
+          addLine(group, px, y, px + 10, y + 10, primary, 1.2);
+          addLine(group, px, y + h, px + 10, y + h - 10, primary, 1.2);
+        }
+
+        for (let py = y + 22; py < y + h - 22; py += step) {
+          addLine(group, x, py, x + 10, py + 10, primary, 1.2);
+          addLine(group, x + w, py, x + w - 10, py + 10, primary, 1.2);
+        }
+      }
+
+      function drawBorder(group, meta) {
+        const style = borderStyleInput.value;
+        const primary = borderPrimaryColor.value;
+        const secondary = borderSecondaryColor.value;
+        const b = meta.border;
+        const x = b.x;
+        const y = b.y;
+        const w = b.w;
+        const h = b.h;
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+
+        group.appendChild(makeEl("rect", {
+          x: 0, y: 0, width: meta.canvas.width, height: meta.canvas.height, fill: "#ffffff"
+        }));
+
+        switch (style) {
+          case "classicDouble":
+            addRect(group, x, y, w, h, primary, 8);
+            addRect(group, x + 14, y + 14, w - 28, h - 28, secondary, 3);
+            addRect(group, x + 28, y + 28, w - 56, h - 56, primary, 1.8);
+            addRect(group, x + 42, y + 42, w - 84, h - 84, secondary, 1.1);
+            drawBeadLine(group, x + 70, y + 20, x + w - 70, y + 20, 26, 2.8, secondary, primary, 0.8);
+            drawBeadLine(group, x + 70, y + h - 20, x + w - 70, y + h - 20, 26, 2.8, secondary, primary, 0.8);
+            drawBeadLine(group, x + 20, y + 70, x + 20, y + h - 70, 18, 2.8, secondary, primary, 0.8);
+            drawBeadLine(group, x + w - 20, y + 70, x + w - 20, y + h - 70, 18, 2.8, secondary, primary, 0.8);
+            drawPetalMedallion(group, x + 54, y + 54, 15, primary, secondary);
+            drawPetalMedallion(group, x + w - 54, y + 54, 15, primary, secondary);
+            drawPetalMedallion(group, x + 54, y + h - 54, 15, primary, secondary);
+            drawPetalMedallion(group, x + w - 54, y + h - 54, 15, primary, secondary);
+            break;
+
+          case "elegantCorners":
+            addRect(group, x + 10, y + 10, w - 20, h - 20, primary, 4.5);
+            addRect(group, x + 28, y + 28, w - 56, h - 56, secondary, 2.2);
+            addRect(group, x + 44, y + 44, w - 88, h - 88, primary, 1.1);
+            drawCornerFlourish(group, x + 28, y + 28, primary, secondary, "tl");
+            drawCornerFlourish(group, x + w - 28, y + 28, primary, secondary, "tr");
+            drawCornerFlourish(group, x + 28, y + h - 28, primary, secondary, "bl");
+            drawCornerFlourish(group, x + w - 28, y + h - 28, primary, secondary, "br");
+            drawCornerShell(group, x + 72, y + 72, primary, secondary, "tl");
+            drawCornerShell(group, x + w - 72, y + 72, primary, secondary, "tr");
+            drawCornerShell(group, x + 72, y + h - 72, primary, secondary, "bl");
+            drawCornerShell(group, x + w - 72, y + h - 72, primary, secondary, "br");
+            break;
+
+          case "ribbonFrame":
+            addRect(group, x + 16, y + 18, w - 32, h - 36, primary, 5.5);
+            addRect(group, x + 34, y + 36, w - 68, h - 72, secondary, 2.5);
+            addRect(group, x + 50, y + 52, w - 100, h - 104, primary, 1.2);
+            drawRibbonCrest(group, cx, y + 18, 270, 48, primary, secondary);
+            drawBannerPlate(group, cx, y + h - 64, 250, 42, primary, secondary);
+            drawPetalMedallion(group, x + 66, y + 44, 11, primary, secondary);
+            drawPetalMedallion(group, x + w - 66, y + 44, 11, primary, secondary);
+            break;
+
+          case "royalArch":
+            addRect(group, x + 18, y + 50, w - 36, h - 66, primary, 5);
+            addRect(group, x + 36, y + 68, w - 72, h - 102, secondary, 2.2);
+            addPath(group, `M ${x+120} ${y+50} Q ${cx} ${y-46} ${x+w-120} ${y+50}`, primary, 6);
+            addPath(group, `M ${x+158} ${y+66} Q ${cx} ${y+2} ${x+w-158} ${y+66}`, secondary, 2.6);
+            drawSunburst(group, cx, y + 28, 14, primary, secondary);
+            drawLaurelSprig(group, cx - 54, y + 42, primary, secondary, -1);
+            drawLaurelSprig(group, cx + 54, y + 42, primary, secondary, 1);
+            addLine(group, x + 70, y + 50, x + 70, y + h - 18, secondary, 1.2);
+            addLine(group, x + w - 70, y + 50, x + w - 70, y + h - 18, secondary, 1.2);
+            break;
+
+          case "modernGeo":
+            addRect(group, x + 10, y + 10, w - 20, h - 20, primary, 4.5);
+            addRect(group, x + 28, y + 28, w - 56, h - 56, secondary, 2.2);
+            addRect(group, x + 42, y + 42, w - 84, h - 84, primary, 1.2);
+            drawFretBand(group, x + 18, y + 18, w - 36, h - 36, primary, secondary);
+            drawBracketCorners(group, x + 24, y + 24, w - 48, h - 48, primary, secondary);
+            addDiamond(group, cx, y + 30, 18, 18, secondary, primary, 1.2);
+            addDiamond(group, cx, y + h - 30, 18, 18, secondary, primary, 1.2);
+            break;
+
+          case "scallop":
+            drawScallopBand(group, x + 14, y + 14, w - 28, h - 28, primary, secondary);
+            addRect(group, x + 34, y + 34, w - 68, h - 68, secondary, 2.1);
+            addRect(group, x + 48, y + 48, w - 96, h - 96, primary, 1.1);
+            drawBeadLine(group, x + 54, y + 54, x + w - 54, y + 54, 22, 2.2, secondary, primary, 0.8);
+            drawBeadLine(group, x + 54, y + h - 54, x + w - 54, y + h - 54, 22, 2.2, secondary, primary, 0.8);
+            drawPetalMedallion(group, x + 54, y + 54, 10, primary, secondary);
+            drawPetalMedallion(group, x + w - 54, y + 54, 10, primary, secondary);
+            drawPetalMedallion(group, x + 54, y + h - 54, 10, primary, secondary);
+            drawPetalMedallion(group, x + w - 54, y + h - 54, 10, primary, secondary);
+            break;
+
+          case "ornateLines":
+            addRect(group, x + 16, y + 16, w - 32, h - 32, primary, 4);
+            addRect(group, x + 32, y + 32, w - 64, h - 64, secondary, 1.8);
+            addRect(group, x + 46, y + 46, w - 92, h - 92, primary, 1);
+            drawCornerFlourish(group, x + 24, y + 24, primary, secondary, "tl");
+            drawCornerFlourish(group, x + w - 24, y + 24, primary, secondary, "tr");
+            drawCornerFlourish(group, x + 24, y + h - 24, primary, secondary, "bl");
+            drawCornerFlourish(group, x + w - 24, y + h - 24, primary, secondary, "br");
+            addPath(group, `M ${x+120} ${y+26} C ${cx-180} ${y+34}, ${cx-80} ${y+8}, ${cx} ${y+26}
+                            C ${cx+80} ${y+44}, ${cx+180} ${y+18}, ${x+w-120} ${y+26}`, secondary, 2.2);
+            addPath(group, `M ${x+120} ${y+h-26} C ${cx-180} ${y+h-34}, ${cx-80} ${y+h-8}, ${cx} ${y+h-26}
+                            C ${cx+80} ${y+h-44}, ${cx+180} ${y+h-18}, ${x+w-120} ${y+h-26}`, secondary, 2.2);
+            break;
+
+          case "ticketEdge":
+            addRect(group, x + 16, y + 16, w - 32, h - 32, primary, 4.5, "none", 22, 22);
+            addRect(group, x + 34, y + 34, w - 68, h - 68, secondary, 2.1, "none", 14, 14);
+            addRect(group, x + 48, y + 48, w - 96, h - 96, primary, 1.1, "none", 8, 8);
+            drawBannerPlate(group, cx, y + 18, 240, 42, primary, secondary);
+            drawNotchTicks(group, x + 18, y + 18, w - 36, h - 36, secondary);
+            addDiamond(group, x + 52, cy, 16, 16, secondary, primary, 1.1);
+            addDiamond(group, x + w - 52, cy, 16, 16, secondary, primary, 1.1);
+            break;
+
+          case "floralLite":
+            addRect(group, x + 16, y + 16, w - 32, h - 32, primary, 4);
+            addRect(group, x + 34, y + 34, w - 68, h - 68, secondary, 2);
+            addRect(group, x + 50, y + 50, w - 100, h - 100, primary, 1.1);
+            drawSideVine(group, x + 28, y + 72, y + h - 72, primary, secondary, 1);
+            drawSideVine(group, x + w - 28, y + 72, y + h - 72, primary, secondary, -1);
+            drawLeaf(group, cx - 32, y + 34, 1.0, primary, secondary, 1);
+            drawLeaf(group, cx + 32, y + 34, 1.0, primary, secondary, -1);
+            drawPetalMedallion(group, cx, y + 34, 10, primary, secondary);
+            drawLeaf(group, cx - 32, y + h - 34, 1.0, primary, secondary, 1);
+            drawLeaf(group, cx + 32, y + h - 34, 1.0, primary, secondary, -1);
+            drawPetalMedallion(group, cx, y + h - 34, 10, primary, secondary);
+            break;
+
+          case "showFrame":
+            addRect(group, x + 10, y + 10, w - 20, h - 20, primary, 7);
+            addRect(group, x + 24, y + 24, w - 48, h - 48, secondary, 2.8);
+            addRect(group, x + 40, y + 40, w - 80, h - 80, primary, 1.2);
+            drawRibbonCrest(group, cx, y + 18, 250, 44, primary, secondary);
+            drawBannerPlate(group, cx, y + h - 60, 230, 40, primary, secondary);
+            drawRosette(group, x + 54, y + 54, 18, primary, secondary);
+            drawRosette(group, x + w - 54, y + 54, 18, primary, secondary);
+            drawRosette(group, x + 54, y + h - 54, 18, primary, secondary);
+            drawRosette(group, x + w - 54, y + h - 54, 18, primary, secondary);
+            drawSunburst(group, cx, y + 46, 11, primary, secondary);
+            break;
+        }
+      }
+
+      function getCurrentSettings() {
+        return {
+          borderStyle: borderStyleInput.value,
+          borderColorPreset: borderColorPreset.value,
+          borderPrimary: borderPrimaryColor.value,
+          borderSecondary: borderSecondaryColor.value,
+          preset: colorPreset.value,
+          mainSexColor: mainSexColorToggle.checked,
+          main: mainBoxColor.value,
+          male: maleBoxColor.value,
+          female: femaleBoxColor.value,
+          showDob: toggleShowDob.checked,
+          showEarl: toggleShowEarl.checked,
+          showCustom: toggleShowCustom.checked,
+          showWins: toggleShowWins.checked,
+          fontColor: fontColor.value,
+          fontFamily: getCurrentFont(),
+          layout: layoutOrientation.value,
+          boxWidth: Number(boxWidthInput.value),
+          boxHeight: Number(boxHeightInput.value),
+          nameFont: Number(boxNameFontSizeInput.value),
+          bodyFont: Number(boxBodyFontSizeInput.value),
+          lineStyle: lineStyleInput.value,
+          lineColor: lineColorInput.value,
+          lineThickness: Number(lineThicknessInput.value),
+          watermarkEnabled: toggleWatermark.checked,
+          watermarkOpacity: Number(watermarkOpacity.value),
+          watermarkSize: Number(watermarkSize.value),
+          rabbitPhotoEnabled: toggleRabbitPhoto.checked
+        };
+      }
+
+      function applySettings(settings, shouldRender = true) {
+        if (!settings || typeof settings !== "object") return;
+
+        if (settings.borderStyle) borderStyleInput.value = settings.borderStyle;
+        if (settings.borderColorPreset != null) borderColorPreset.value = settings.borderColorPreset;
+        if (settings.borderPrimary) borderPrimaryColor.value = settings.borderPrimary;
+        if (settings.borderSecondary) borderSecondaryColor.value = settings.borderSecondary;
+        if (settings.preset != null) colorPreset.value = settings.preset;
+        if (settings.mainSexColor != null) mainSexColorToggle.checked = !!settings.mainSexColor;
+        if (settings.main) mainBoxColor.value = settings.main;
+        if (settings.male) maleBoxColor.value = settings.male;
+        if (settings.female) femaleBoxColor.value = settings.female;
+        if (settings.showDob != null) toggleShowDob.checked = !!settings.showDob;
+        if (settings.showEarl != null) toggleShowEarl.checked = !!settings.showEarl;
+        if (settings.showCustom != null) toggleShowCustom.checked = !!settings.showCustom;
+        if (settings.showWins != null) toggleShowWins.checked = !!settings.showWins;
+        if (settings.fontColor) fontColor.value = settings.fontColor;
+        if (settings.layout) layoutOrientation.value = settings.layout;
+        if (settings.boxWidth != null) boxWidthInput.value = settings.boxWidth;
+        if (settings.boxHeight != null) boxHeightInput.value = settings.boxHeight;
+        if (settings.nameFont != null) boxNameFontSizeInput.value = settings.nameFont;
+        if (settings.bodyFont != null) boxBodyFontSizeInput.value = settings.bodyFont;
+        if (settings.lineStyle) lineStyleInput.value = settings.lineStyle;
+        if (settings.lineColor) lineColorInput.value = settings.lineColor;
+        if (settings.lineThickness != null) lineThicknessInput.value = settings.lineThickness;
+        if (settings.watermarkEnabled != null) toggleWatermark.checked = !!settings.watermarkEnabled;
+        if (settings.watermarkOpacity != null) watermarkOpacity.value = settings.watermarkOpacity;
+        if (settings.watermarkSize != null) watermarkSize.value = settings.watermarkSize;
+        if (settings.rabbitPhotoEnabled != null) toggleRabbitPhoto.checked = !!settings.rabbitPhotoEnabled;
+
+        if (settings.fontFamily) applyFont(settings.fontFamily, false);
+        if (shouldRender) render(false);
+      }
+
+      function getSavedSettingsFromUrl() {
+        const raw = getRawParam("saved");
+        if (!raw) return null;
+
+        try {
+          return JSON.parse(decodeParam(raw));
+        } catch (err) {
+          return null;
+        }
+      }
+
+      async function saveSettingsToShowTails() {
+        const settings = getCurrentSettings();
+        const email = getParam("email").trim();
+
+        if (!email) {
+          saveStatus.textContent = "Unable to save: missing email address.";
+          return;
+        }
+
+        saveStatus.textContent = "Saving settings...";
+        saveBtn.disabled = true;
+
+        try {
+          const response = await fetch(SAVE_SETTINGS_WEBHOOK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email,
+              savedPedigreeSettings: JSON.stringify(settings)
+            })
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          saveStatus.textContent = "Settings saved.";
+
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("saved", JSON.stringify(settings));
+            window.history.replaceState({}, "", url.toString());
+          } catch (err) {}
+        } catch (error) {
+          saveStatus.textContent = "Could not save settings.";
+        } finally {
+          saveBtn.disabled = false;
+        }
+      }
+
+      function render(keepZoom = true) {
+        refreshParams();
+
+        const currentState = panZoom ? {
+          pan: panZoom.getPan(),
+          zoom: panZoom.getZoom()
+        } : null;
+
+        renderNonce += 1;
+        const myNonce = renderNonce;
+
+        clearViewport();
+
+        const meta = getLayoutMeta();
+        const canvas = meta.canvas;
+        let boxW = Number(boxWidthInput.value);
+        let boxH = Number(boxHeightInput.value);
+
+        if (layoutOrientation.value === "portrait") {
+          boxW = Math.min(boxW, 280);
+          if (Number(boxWidthInput.value) !== boxW) boxWidthInput.value = boxW;
+        } else {
+          boxW = Math.min(boxW, 300);
+          if (Number(boxWidthInput.value) !== boxW) boxWidthInput.value = boxW;
+        }
+
+        const positions = getPositions(boxW, boxH);
+
+        svg.setAttribute("viewBox", `0 0 ${canvas.width} ${canvas.height}`);
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        boxWidthValue.textContent = boxW;
+        boxHeightValue.textContent = boxH;
+        boxNameFontSizeValue.textContent = boxNameFontSizeInput.value;
+        boxBodyFontSizeValue.textContent = boxBodyFontSizeInput.value;
+        lineThicknessValue.textContent = lineThicknessInput.value;
+        watermarkOpacityValue.textContent = Number(watermarkOpacity.value).toFixed(2);
+        watermarkSizeValue.textContent = watermarkSize.value;
+
+        setPrintPage();
+
+        const borderLayer = makeEl("g");
+        const watermarkLayer = makeEl("g");
+        const headerLayer = makeEl("g");
+        const lineLayer = makeEl("g");
+        const photoLayer = makeEl("g");
+        const boxLayer = makeEl("g");
+        const winsLayer = makeEl("g");
+        const footerLayer = makeEl("g");
+
+        viewport.append(borderLayer, watermarkLayer, headerLayer, lineLayer, photoLayer, boxLayer, winsLayer, footerLayer);
+
+        drawBorder(borderLayer, meta);
+
+        const logoUrl = getUrlParam("logo");
+
+        if (logoUrl && toggleWatermark.checked) {
+          const pct = Number(watermarkSize.value) / 100;
+          const wmBase = Math.min(canvas.width, canvas.height) * pct;
+          const wmX = (canvas.width - wmBase) / 2;
+          const wmY = (canvas.height - wmBase) / 2;
+
+          const wm = makeEl("image", {
+            href: logoUrl,
+            x: wmX,
+            y: wmY,
+            width: wmBase,
+            height: wmBase,
+            preserveAspectRatio: "xMidYMid meet",
+            opacity: watermarkOpacity.value
+          });
+          wm.style.pointerEvents = "none";
+          watermarkLayer.appendChild(wm);
+        }
+
+        if (logoUrl) {
+          headerLayer.appendChild(makeEl("image", {
+            href: logoUrl,
+            x: meta.header.x,
+            y: meta.header.y,
+            width: meta.header.logoSize,
+            height: meta.header.logoSize,
+            preserveAspectRatio: "xMidYMid meet"
+          }));
+        }
+
+        const hs = meta.header.textScale;
+        const headerTextX = meta.header.x + meta.header.logoSize + meta.header.textGap;
+        const headerTextY = meta.header.y + 20;
+
+        addText(headerLayer, headerTextX, headerTextY + 0, getParam("rabbitry"), { size: 24 * hs, weight: 700 });
+        addText(headerLayer, headerTextX, headerTextY + 24 * hs, getParam("street"), { size: 17 * hs, weight: 600 });
+        addText(headerLayer, headerTextX, headerTextY + 46 * hs, [getParam("city"), getParam("state"), getParam("zip")].filter(Boolean).join(" "), { size: 17 * hs, weight: 600 });
+        addText(headerLayer, headerTextX, headerTextY + 68 * hs, getParam("phone"), { size: 17 * hs, weight: 600 });
+        addText(headerLayer, headerTextX, headerTextY + 90 * hs, getParam("email"), { size: 17 * hs, weight: 600 });
+        addText(headerLayer, headerTextX, headerTextY + 118 * hs, "Breed:", { size: 17 * hs, weight: 700 });
+        addText(headerLayer, headerTextX + 68 * hs, headerTextY + 118 * hs, getParam("breed"), { size: 17 * hs, weight: 700 });
+        addText(headerLayer, headerTextX, headerTextY + 140 * hs, "DOB:", { size: 17 * hs, weight: 700 });
+        addText(headerLayer, headerTextX + 68 * hs, headerTextY + 140 * hs, getParam("dob"), { size: 17 * hs, weight: 700 });
+
+        if (toggleRabbitPhoto.checked && getUrlParam("rabbitphoto")) {
+          const main = positions.main;
+          const photoW = Math.min(boxW - 30, meta.photoSize.w);
+          const photoH = meta.photoSize.h;
+          const photoX = main.x + (boxW - photoW) / 2;
+          const photoY = main.y - photoH - meta.photoGap;
+
+          const clipId = "rabbit-photo-clip";
+          const defs = makeEl("defs");
+          const clip = makeEl("clipPath", { id: clipId });
+          clip.appendChild(makeEl("rect", {
+            x: photoX, y: photoY, width: photoW, height: photoH, rx: 10, ry: 10
+          }));
+          defs.appendChild(clip);
+          photoLayer.appendChild(defs);
+
+          photoLayer.appendChild(makeEl("rect", {
+            x: photoX, y: photoY, width: photoW, height: photoH, rx: 10, ry: 10,
+            fill: "#ffffff", stroke: "#000000", "stroke-width": 1.3
+          }));
+
+          photoLayer.appendChild(makeEl("image", {
+            href: getUrlParam("rabbitphoto"),
+            x: photoX, y: photoY, width: photoW, height: photoH,
+            preserveAspectRatio: "xMidYMid slice",
+            "clip-path": `url(#${clipId})`
+          }));
+        }
+
+        parentMap.forEach(([childId, parentId]) => {
+          drawLine(lineLayer, positions[childId], positions[parentId], boxW, boxH);
+        });
+
+        boxDefs.forEach(def => {
+          drawBox(boxLayer, winsLayer, def, positions[def.id].x, positions[def.id].y, boxW, boxH);
+        });
+
+        const footerX = meta.footer.x;
+        const footerY = meta.footer.y;
+        const sigUrl = getUrlParam("signature");
+
+        addText(footerLayer, footerX, footerY - 48, "I hereby certify that this pedigree is correct to the best of my knowledge.", { size: 13, weight: 600 });
+
+        footerLayer.appendChild(makeEl("line", {
+          x1: footerX, y1: footerY + 8, x2: footerX + 285, y2: footerY + 8,
+          stroke: "#000000", "stroke-width": 1
+        }));
+
+        if (sigUrl) {
+          footerLayer.appendChild(makeEl("image", {
+            href: sigUrl,
+            x: footerX,
+            y: footerY - 34,
+            width: 84,
+            height: 54,
+            preserveAspectRatio: "xMidYMid meet"
+          }));
+        }
+
+        addText(footerLayer, footerX, footerY + 28, getParam("owner"), { size: 14, weight: 700 });
+
+        addText(
+          footerLayer,
+          meta.canvas.width / 2,
+          meta.footer.taglineY,
+          "Pedigree built on the ShowTails LLC platform - www.showtails.com",
+          { size: 11, anchor: "middle" }
+        );
+
+        requestAnimationFrame(() => {
+          if (myNonce !== renderNonce) return;
+
+          if (!panZoom) {
+            tryInitPanZoom(keepZoom ? currentState : null);
+          } else {
+            refreshPanZoom(keepZoom ? currentState : null);
+            if (!keepZoom) fitToContainer();
+          }
+        });
+      }
+
+      async function inlineExternalImagesForExport(targetSvg) {
+        const imageNodes = Array.from(targetSvg.querySelectorAll("image"));
+        const promises = imageNodes.map((img) => {
+          const href = img.getAttribute("href") || img.getAttributeNS("http://www.w3.org/1999/xlink", "href");
+          if (!href || href.startsWith("data:")) return Promise.resolve();
+
+          return fetch(href, { mode: "cors" })
+            .then(res => {
+              if (!res.ok) throw new Error("Image fetch failed");
+              return res.blob();
+            })
+            .then(blob => new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                img.setAttribute("href", reader.result);
+                img.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", reader.result);
+                resolve();
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            }))
+            .catch(() => {});
+        });
+
+        return Promise.all(promises);
+      }
+
+      async function buildStaticExportSvg() {
+        const svgClone = svg.cloneNode(true);
+        svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svgClone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+        const vb = svg.getAttribute("viewBox");
+        if (vb) svgClone.setAttribute("viewBox", vb);
+
+        const canvas = getCanvas();
+        svgClone.setAttribute("width", String(canvas.width));
+        svgClone.setAttribute("height", String(canvas.height));
+        svgClone.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        const vp = svgClone.querySelector("#viewport");
+        if (vp) {
+          vp.removeAttribute("transform");
+          vp.style.transform = "none";
+        }
+
+        svgClone.style.transform = "none";
+        svgClone.style.background = "#ffffff";
+        svgClone.style.display = "block";
+
+        await inlineExternalImagesForExport(svgClone);
+        return svgClone;
+      }
+
+      async function buildPrintImageDataUrl() {
+        const svgClone = await buildStaticExportSvg();
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgClone);
+        const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const canvasSize = getCanvas();
+        const exportScale = 2;
+
+        return await new Promise((resolve, reject) => {
+          const img = new Image();
+
+          img.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = canvasSize.width * exportScale;
+            canvas.height = canvasSize.height * exportScale;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL("image/png"));
+          };
+
+          img.onerror = function () {
+            URL.revokeObjectURL(url);
+            reject(new Error("Unable to rasterize print image."));
+          };
+
+          img.src = url;
+        });
+      }
+
+      function getFileBaseName() {
+        return (getParam("name") || "pedigree")
+          .replace(/[^\w\-]+/g, "_")
+          .replace(/^_+|_+$/g, "") || "pedigree";
+      }
+
+      async function saveSvgFile() {
+        saveStatus.textContent = "Preparing SVG...";
+        try {
+          const serializer = new XMLSerializer();
+          const svgClone = await buildStaticExportSvg();
+          const svgString = serializer.serializeToString(svgClone);
+          const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${getFileBaseName()}.svg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          saveStatus.textContent = "SVG saved.";
+        } catch (err) {
+          saveStatus.textContent = "Unable to save SVG.";
+        }
+      }
+
+      async function saveSvgAsPng() {
+        saveStatus.textContent = "Preparing PNG...";
+        try {
+          const serializer = new XMLSerializer();
+          const svgClone = await buildStaticExportSvg();
+          const svgString = serializer.serializeToString(svgClone);
+          const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+
+          const canvasSize = getCanvas();
+          const exportScale = 2;
+
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = canvasSize.width * exportScale;
+            canvas.height = canvasSize.height * exportScale;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            URL.revokeObjectURL(url);
+
+            canvas.toBlob(function (pngBlob) {
+              if (!pngBlob) {
+                saveStatus.textContent = "Could not create PNG.";
+                return;
+              }
+
+              const a = document.createElement("a");
+              const pngUrl = URL.createObjectURL(pngBlob);
+
+              a.href = pngUrl;
+              a.download = `${getFileBaseName()}.png`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
+              saveStatus.textContent = "PNG saved.";
+            }, "image/png");
+          };
+
+          img.onerror = function () {
+            URL.revokeObjectURL(url);
+            saveStatus.textContent = "Unable to save PNG. One or more external images may be blocking export.";
+          };
+
+          img.src = url;
+        } catch (err) {
+          saveStatus.textContent = "Unable to save PNG.";
+        }
+      }
+
+      async function runPrintFlow() {
+        const status = document.getElementById("save-status");
+        if (status) status.textContent = "Preparing full-page print...";
+
+        try {
+          const isPortrait = document.getElementById("layout-orientation").value === "portrait";
+          const printImageUrl = await buildPrintImageDataUrl();
+
+          const pWin = window.open("", "_blank");
+          if (!pWin) {
+            if (status) status.textContent = "Please allow pop-ups to print.";
+            return;
           }
 
-          try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+          pWin.document.open();
+          pWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+                <title>Rabbit Pedigree Print</title>
+                <style>
+                  @page {
+                    size: ${isPortrait ? "8.5in 11in portrait" : "11in 8.5in landscape"};
+                    margin: 0;
+                  }
+
+                  html, body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: #fff;
+                    overflow: hidden;
+                  }
+
+                  body {
+                    position: fixed;
+                    inset: 0;
+                    background: #fff;
+                  }
+
+                  .print-page {
+                    position: fixed;
+                    inset: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: #fff;
+                    overflow: hidden;
+                  }
+
+                  .print-page img {
+                    display: block;
+                    width: 100vw;
+                    height: 100vh;
+                    object-fit: fill;
+                    background: #fff;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="print-page">
+                  <img src="${printImageUrl}" alt="Rabbit Pedigree Print">
+                </div>
+              </body>
+            </html>
+          `);
+          pWin.document.close();
+
+          pWin.onload = () => {
+            setTimeout(() => {
+              pWin.focus();
+              pWin.print();
+              if (status) status.textContent = "";
+            }, 700);
+          };
+        } catch (err) {
+          if (status) status.textContent = "Unable to prepare print.";
+        }
+      }
+
+      function applyPresetIfNeeded() {
+        const selected = colorPreset.value;
+        if (selected === "custom") return;
+        const preset = presets[selected];
+        if (!preset) return;
+        maleBoxColor.value = preset.male;
+        femaleBoxColor.value = preset.female;
+        mainBoxColor.value = preset.main;
+      }
+
+      function applyBorderPresetIfNeeded() {
+        const selected = borderColorPreset.value;
+        if (selected === "custom") return;
+        const preset = borderPresets[selected];
+        if (!preset) return;
+        borderPrimaryColor.value = preset.primary;
+        borderSecondaryColor.value = preset.secondary;
+      }
+
+      function wireWheelZoom() {
+        if (wheelWired) return;
+
+        container.addEventListener("wheel", (e) => {
+          if (!panZoom) return;
+          const rect = svg.getBoundingClientRect();
+          const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+          const factor = e.deltaY > 0 ? 0.9 : 1.1;
+          e.preventDefault();
+          if (isFinite(point.x) && isFinite(point.y)) {
+            panZoom.zoomAtPoint(factor, point);
+          }
+        }, { passive: false });
+
+        wheelWired = true;
+      }
+
+      function enablePointerPan() {
+        if (pointerWired) return;
+
+        let isPanning = false;
+        let start = { x: 0, y: 0 };
+
+        svg.addEventListener("pointerdown", (e) => {
+          isPanning = true;
+          start = { x: e.clientX, y: e.clientY };
+          if (svg.setPointerCapture) svg.setPointerCapture(e.pointerId);
         });
 
         svg.addEventListener("pointermove", (e) => {
-          if (activeTouches.has(e.pointerId)) {
-            activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          }
-
-          if (pinchActive && activeTouches.size === 2) {
-            const pts = Array.from(activeTouches.values());
-            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            const midX = (pts[0].x + pts[1].x) / 2;
-            const midY = (pts[0].y + pts[1].y) / 2;
-            const rect = svg.getBoundingClientRect();
-            const px = midX - rect.left;
-            const py = midY - rect.top;
-
-            state.view.scale = Math.max(state.view.minScale, Math.min(state.view.maxScale, pinchStartScale * (dist / pinchStartDist)));
-            state.view.x = px - pinchWorldMid.x * state.view.scale;
-            state.view.y = py - pinchWorldMid.y * state.view.scale;
-            applyTransform();
-            updateMiniMap(getVisibleNodes());
-            return;
-          }
-
-          if (!dragging || e.pointerId !== dragPointerId) return;
-
-          const dx = e.clientX - lastX;
-          const dy = e.clientY - lastY;
-          state.view.x += dx;
-          state.view.y += dy;
-          lastX = e.clientX;
-          lastY = e.clientY;
-
-          applyTransform();
-          updateMiniMap(getVisibleNodes());
+          if (!isPanning || !panZoom) return;
+          const dx = e.clientX - start.x;
+          const dy = e.clientY - start.y;
+          panZoom.panBy({ x: dx, y: dy });
+          start = { x: e.clientX, y: e.clientY };
         });
 
-        function endPointer(e) {
-          activeTouches.delete(e.pointerId);
-          if (activeTouches.size < 2) pinchActive = false;
-          if (e.pointerId === dragPointerId) {
-            dragging = false;
-            dragPointerId = null;
-          }
-        }
+        svg.addEventListener("pointerup", () => { isPanning = false; });
+        svg.addEventListener("pointercancel", () => { isPanning = false; });
 
-        svg.addEventListener("pointerup", endPointer);
-        svg.addEventListener("pointercancel", endPointer);
-        svg.addEventListener("pointerleave", endPointer);
-
-        miniMapSvg.addEventListener("click", (evt) => {
-          if (!state.worldBounds || state.miniMapMinimized) return;
-
-          const rect = miniMapSvg.getBoundingClientRect();
-          const rx = (evt.clientX - rect.left) / rect.width;
-          const ry = (evt.clientY - rect.top) / rect.height;
-          const targetX = state.worldBounds.minX + (rx * state.worldBounds.width);
-          const targetY = state.worldBounds.minY + (ry * state.worldBounds.height);
-
-          const s = state.view.scale;
-          state.view.x = (container.clientWidth / 2) - targetX * s;
-          state.view.y = (container.clientHeight / 2) - targetY * s;
-
-          applyTransform();
-          updateMiniMap(getVisibleNodes());
-        });
+        pointerWired = true;
       }
 
-      function wireInteractions() {
-        const controlsPanel = document.getElementById("controls-panel");
-        const togglePanelBtn = document.getElementById("toggle-panel-btn");
-        const closePanelBtn = document.getElementById("close-panel-btn");
+      function enablePinchZoom() {
+        if (pinchWired) return;
 
-        togglePanelBtn.addEventListener("click", () => controlsPanel.classList.remove("hidden"));
-        closePanelBtn.addEventListener("click", () => controlsPanel.classList.add("hidden"));
+        let pinchStart = null;
+        let startZoom = 1;
 
-        miniMapToggleBtn.addEventListener("click", () => {
-          state.miniMapMinimized = !state.miniMapMinimized;
-          miniMapCard.classList.toggle("minimized", state.miniMapMinimized);
-          miniMapToggleBtn.textContent = state.miniMapMinimized ? "+" : "−";
-          updateMiniMap(getVisibleNodes());
-        });
-
-        nodesLayer.addEventListener("click", (e) => {
-          const collapsePath = e.target.getAttribute("data-collapse-path");
-          if (collapsePath !== null) {
-            e.stopPropagation();
-            toggleCollapse(collapsePath);
-            return;
-          }
-
-          const box = e.target.closest(".box");
-          if (!box) return;
-
-          const slot = box.getAttribute("data-slot") || "";
-          box.setAttribute("stroke", "#00aaff");
-          setTimeout(() => box.setAttribute("stroke", ""), 250);
-
-          window.parent.postMessage({ pedigreeEdit: slot }, "*");
-        });
-
-        document.querySelectorAll(".gen-btn").forEach(btn => {
-          btn.addEventListener("click", () => {
-            document.querySelectorAll(".gen-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            state.visibleGenerations = Number(btn.dataset.gen);
-            applyState();
-            fitCurrentGenerationView();
-          });
-        });
-
-        document.querySelectorAll(".side-btn").forEach(btn => {
-          btn.addEventListener("click", () => {
-            document.querySelectorAll(".side-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            state.visibleSide = btn.dataset.side;
-            applyState();
-            fitCurrentGenerationView();
-          });
-        });
-
-        document.getElementById("toggle-summary").addEventListener("change", (e) => {
-          state.showSummary = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-dim-empty").addEventListener("change", (e) => {
-          state.dimEmpty = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-hide-empty").addEventListener("change", (e) => {
-          state.hideEmpty = e.target.checked;
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("toggle-badges").addEventListener("change", (e) => {
-          state.showBadges = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-registered").addEventListener("change", (e) => {
-          state.filters.registered = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-gc").addEventListener("change", (e) => {
-          state.filters.gc = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-win").addEventListener("change", (e) => {
-          state.filters.wins = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("color-mode").addEventListener("change", (e) => {
-          state.filters.colorMode = e.target.value;
-          applyState();
-        });
-
-        document.getElementById("apply-color-search-btn").addEventListener("click", () => {
-          state.filters.colorQuery = document.getElementById("color-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-color-search-btn").addEventListener("click", () => {
-          document.getElementById("color-search-input").value = "";
-          state.filters.colorQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-genetics-search-btn").addEventListener("click", () => {
-          state.filters.geneticsQuery = document.getElementById("genetics-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-genetics-search-btn").addEventListener("click", () => {
-          document.getElementById("genetics-search-input").value = "";
-          state.filters.geneticsQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-keyword-search-btn").addEventListener("click", () => {
-          state.filters.keywordQuery = document.getElementById("keyword-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-keyword-search-btn").addEventListener("click", () => {
-          document.getElementById("keyword-search-input").value = "";
-          state.filters.keywordQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-rabbitry-search-btn").addEventListener("click", () => {
-          state.filters.rabbitryQuery = document.getElementById("rabbitry-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-rabbitry-search-btn").addEventListener("click", () => {
-          document.getElementById("rabbitry-search-input").value = "";
-          state.filters.rabbitryQuery = "";
-          applyState();
-        });
-
-        const missingMap = {
-          "missing-name": "name",
-          "missing-ear": "ear",
-          "missing-color": "color",
-          "missing-weight": "weight",
-          "missing-dob": "dob",
-          "missing-reg": "reg",
-          "missing-gc": "gc",
-          "missing-genetics": "genetics",
-          "missing-rabbitry": "rabbitry"
-        };
-
-        Object.entries(missingMap).forEach(([id, key]) => {
-          document.getElementById(id).addEventListener("change", (e) => {
-            state.filters.missing[key] = e.target.checked;
-            applyState();
-          });
-        });
-
-        document.getElementById("expand-all-btn").addEventListener("click", () => {
-          state.collapsedBranches.clear();
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("collapse-sire-btn").addEventListener("click", () => {
-          state.collapsedBranches.add("s");
-          state.collapsedBranches.delete("d");
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("collapse-dam-btn").addEventListener("click", () => {
-          state.collapsedBranches.add("d");
-          state.collapsedBranches.delete("s");
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("reset-view-btn").addEventListener("click", centerOnRoot);
-
-        repeatedRabbitsToggles.addEventListener("change", (e) => {
-          const key = e.target && e.target.dataset ? e.target.dataset.duplicateKey : "";
-          if (!key) return;
-          state.duplicateSelections.set(key, !!e.target.checked);
-          applyState();
-        });
-
-        breederToggles.addEventListener("change", (e) => {
-          const key = e.target && e.target.dataset ? e.target.dataset.breederKey : "";
-          if (!key) return;
-          state.breederSelections.set(key, !!e.target.checked);
-          applyState();
-        });
-
-        [
-          "color-search-input",
-          "genetics-search-input",
-          "keyword-search-input",
-          "rabbitry-search-input"
-        ].forEach(id => {
-          document.getElementById(id).addEventListener("keydown", (e) => {
-            if (e.key !== "Enter") return;
+        svg.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 2 && panZoom) {
             e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            pinchStart = Math.hypot(dx, dy);
+            startZoom = panZoom.getZoom();
+          }
+        }, { passive: false });
 
-            if (id === "color-search-input") state.filters.colorQuery = e.target.value || "";
-            if (id === "genetics-search-input") state.filters.geneticsQuery = e.target.value || "";
-            if (id === "keyword-search-input") state.filters.keywordQuery = e.target.value || "";
-            if (id === "rabbitry-search-input") state.filters.rabbitryQuery = e.target.value || "";
+        svg.addEventListener("touchmove", (e) => {
+          if (e.touches.length === 2 && panZoom && pinchStart) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const pinchNow = Math.hypot(dx, dy);
+            const zoomRatio = pinchNow / pinchStart;
 
-            applyState();
-          });
+            const rect = svg.getBoundingClientRect();
+            const mid = {
+              x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+              y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top
+            };
+
+            panZoom.zoomAtPoint(startZoom * zoomRatio, mid);
+          }
+        }, { passive: false });
+
+        svg.addEventListener("touchend", () => {
+          pinchStart = null;
         });
+
+        pinchWired = true;
       }
+
+      function resetDefaults(shouldRender = true) {
+        borderStyleInput.value = defaults.borderStyle;
+        borderColorPreset.value = defaults.borderColorPreset;
+        borderPrimaryColor.value = defaults.borderPrimary;
+        borderSecondaryColor.value = defaults.borderSecondary;
+        colorPreset.value = defaults.preset;
+        mainSexColorToggle.checked = defaults.mainSexColor;
+        mainBoxColor.value = defaults.main;
+        maleBoxColor.value = defaults.male;
+        femaleBoxColor.value = defaults.female;
+        toggleShowDob.checked = defaults.showDob;
+        toggleShowEarl.checked = defaults.showEarl;
+        toggleShowCustom.checked = defaults.showCustom;
+        toggleShowWins.checked = defaults.showWins;
+        fontColor.value = defaults.fontColor;
+        layoutOrientation.value = defaults.layout;
+        boxWidthInput.value = defaults.boxWidth;
+        boxHeightInput.value = defaults.boxHeight;
+        boxNameFontSizeInput.value = defaults.nameFont;
+        boxBodyFontSizeInput.value = defaults.bodyFont;
+        lineStyleInput.value = defaults.lineStyle;
+        lineColorInput.value = defaults.lineColor;
+        lineThicknessInput.value = defaults.lineThickness;
+        toggleWatermark.checked = defaults.watermarkEnabled;
+        watermarkOpacity.value = defaults.watermarkOpacity;
+        watermarkSize.value = defaults.watermarkSize;
+        toggleRabbitPhoto.checked = defaults.rabbitPhotoEnabled;
+        saveStatus.textContent = "";
+        applyFont(defaults.fontFamily, false);
+
+        if (shouldRender) render(false);
+      }
+
+      menuToggle.addEventListener("click", () => {
+        pedigreeMenu.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!pedigreeMenu.contains(event.target) && event.target !== menuToggle) {
+          pedigreeMenu.classList.remove("open");
+        }
+      });
+
+      fontPickerButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fontPicker.classList.toggle("open");
+      });
+
+      fontOptions.forEach(option => {
+        option.addEventListener("click", () => {
+          applyFont(option.dataset.font, false);
+          render(true);
+          fontPicker.classList.remove("open");
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!fontPicker.contains(event.target)) {
+          fontPicker.classList.remove("open");
+        }
+      });
+
+      colorPreset.addEventListener("change", () => {
+        applyPresetIfNeeded();
+        render(true);
+      });
+
+      borderColorPreset.addEventListener("change", () => {
+        applyBorderPresetIfNeeded();
+        render(true);
+      });
+
+      [
+        borderStyleInput,
+        borderPrimaryColor,
+        borderSecondaryColor,
+        mainSexColorToggle,
+        mainBoxColor,
+        maleBoxColor,
+        femaleBoxColor,
+        toggleShowDob,
+        toggleShowEarl,
+        toggleShowCustom,
+        toggleShowWins,
+        fontColor,
+        boxWidthInput,
+        boxHeightInput,
+        boxNameFontSizeInput,
+        boxBodyFontSizeInput,
+        lineStyleInput,
+        lineColorInput,
+        lineThicknessInput,
+        toggleWatermark,
+        watermarkOpacity,
+        watermarkSize,
+        toggleRabbitPhoto
+      ].forEach(el => el.addEventListener("input", () => render(true)));
+
+      [
+        mainSexColorToggle,
+        toggleShowDob,
+        toggleShowEarl,
+        toggleShowCustom,
+        toggleShowWins,
+        toggleWatermark,
+        toggleRabbitPhoto
+      ].forEach(el => el.addEventListener("change", () => render(true)));
+
+      layoutOrientation.addEventListener("change", () => render(false));
+
+      [borderPrimaryColor, borderSecondaryColor].forEach(el => {
+        el.addEventListener("input", () => {
+          borderColorPreset.value = "custom";
+        });
+      });
+
+      [mainBoxColor, maleBoxColor, femaleBoxColor].forEach(el => {
+        el.addEventListener("input", () => {
+          colorPreset.value = "custom";
+        });
+      });
+
+      saveBtn.addEventListener("click", saveSettingsToShowTails);
+      resetStylesBtn.addEventListener("click", () => resetDefaults(true));
+      printBtn.addEventListener("click", runPrintFlow);
+      imageBtn.addEventListener("click", saveSvgAsPng);
+      svgBtn.addEventListener("click", saveSvgFile);
 
       const ro = new ResizeObserver(() => {
-        if (!state.rendered) return;
-        applyTransform();
-        updateMiniMap(getVisibleNodes());
+        if (panZoom) {
+          try {
+            panZoom.resize();
+            panZoom.updateBBox();
+          } catch (err) {
+            tryInitPanZoom();
+          }
+        } else {
+          tryInitPanZoom();
+        }
       });
       ro.observe(container);
 
-      wirePanZoom();
-      wireInteractions();
-      renderPedigree();
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          if (panZoom) {
+            try {
+              panZoom.resize();
+              panZoom.updateBBox();
+            } catch (err) {
+              tryInitPanZoom();
+            }
+          } else {
+            tryInitPanZoom();
+          }
+        }
+      });
+
+      window.addEventListener("load", () => {
+        refreshParams();
+        loadPackedParams();
+        resetDefaults(false);
+
+        const savedSettings = getSavedSettingsFromUrl();
+        if (savedSettings) {
+          applySettings(savedSettings, false);
+        }
+
+        render(false);
+      });
     })();
   </script>
 </body>
