@@ -894,10 +894,23 @@
 
     function isEmptyRabbit(data) {
       return ![
-        data.rabbitry, data.name, data.color, data.ear, data.weight,
-        data.sex, data.legs, data.reg, data.gc, data.dob,
-        data.earLength, data.genetics, data.custom, data.win1, data.win2, data.win3
-      ].some(Boolean);
+        data.rabbitry,
+        data.name,
+        data.color,
+        data.ear,
+        data.weight,
+        data.sex,
+        data.legs,
+        data.reg,
+        data.gc,
+        data.dob,
+        data.earLength,
+        data.genetics,
+        data.custom,
+        data.win1,
+        data.win2,
+        data.win3
+      ].some(value => String(value || "").trim());
     }
 
     function decodePayloadParam(payload) {
@@ -1018,10 +1031,136 @@
       };
     }
 
-    function getDisplayCustom(data) {
-      if (data.custom) return data.custom;
-      if (data.dob) return `DOB: ${data.dob}`;
-      return "";
+    function wrapTextLines(value, maxCharsPerLine) {
+      const rawLines = String(value || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n");
+
+      const output = [];
+
+      rawLines.forEach(raw => {
+        const line = raw.trim();
+        if (!line) return;
+
+        const words = line.split(/\s+/);
+        let current = "";
+
+        words.forEach(word => {
+          const test = current ? `${current} ${word}` : word;
+          if (test.length <= maxCharsPerLine) {
+            current = test;
+          } else {
+            if (current) output.push(current);
+            current = word;
+          }
+        });
+
+        if (current) output.push(current);
+      });
+
+      return output;
+    }
+
+    function appendWrappedText(group, x, y, className, value, metrics, maxWidth, extraAttrs = {}) {
+      const approxChars = Math.max(8, Math.floor(maxWidth / (metrics.textSize * 0.58)));
+      const lines = wrapTextLines(value, approxChars);
+      if (!lines.length) return { lineCount: 0, textEl: null };
+
+      const textEl = createSvgEl("text", Object.assign({
+        x,
+        y,
+        class: className
+      }, extraAttrs));
+
+      lines.forEach((line, index) => {
+        const tspan = createSvgEl("tspan", {
+          x,
+          dy: index === 0 ? 0 : metrics.lineHeight
+        });
+        tspan.textContent = line;
+        textEl.appendChild(tspan);
+      });
+
+      group.appendChild(textEl);
+      return { lineCount: lines.length, textEl };
+    }
+
+    function addFieldRow(rows, label, value) {
+      const clean = String(value || "").trim();
+      if (!clean) return;
+      rows.push(`${label}: ${clean}`);
+    }
+
+    function addMultiFieldRows(rows, label, value) {
+      const clean = String(value || "").trim();
+      if (!clean) return;
+
+      const parts = clean
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n")
+        .map(v => v.trim())
+        .filter(Boolean);
+
+      if (!parts.length) return;
+
+      if (parts.length === 1) {
+        rows.push(`${label}: ${parts[0]}`);
+        return;
+      }
+
+      rows.push(`${label}: ${parts[0]}`);
+      for (let i = 1; i < parts.length; i++) {
+        rows.push(`  ${parts[i]}`);
+      }
+    }
+
+    function getNodeDisplayRows(data, generation) {
+      const rows = [];
+
+      if (generation <= 5) {
+        addFieldRow(rows, "Color", data.color);
+        addFieldRow(rows, "Ear#", data.ear);
+        addFieldRow(rows, "Weight", data.weight);
+        addFieldRow(rows, "Sex", data.sex);
+        addFieldRow(rows, "Legs", data.legs);
+        addFieldRow(rows, "Reg#", data.reg);
+        addFieldRow(rows, "GC#", data.gc);
+        addFieldRow(rows, "DOB", data.dob);
+        addFieldRow(rows, "Ear Length", data.earLength);
+        addFieldRow(rows, "Genetics", data.genetics);
+        addMultiFieldRows(rows, "Custom", data.custom);
+        addMultiFieldRows(rows, "Win 1", data.win1);
+        addMultiFieldRows(rows, "Win 2", data.win2);
+        addMultiFieldRows(rows, "Win 3", data.win3);
+        return rows;
+      }
+
+      if (generation <= 7) {
+        addFieldRow(rows, "Color", data.color);
+        addFieldRow(rows, "Ear#", data.ear);
+        addFieldRow(rows, "Weight", data.weight);
+        addFieldRow(rows, "Reg#", data.reg);
+        addFieldRow(rows, "GC#", data.gc);
+        addFieldRow(rows, "DOB", data.dob);
+        addFieldRow(rows, "Genetics", data.genetics);
+        return rows;
+      }
+
+      addFieldRow(rows, "Ear#", data.ear);
+      addFieldRow(rows, "Color", data.color);
+      addFieldRow(rows, "GC#", data.gc);
+      return rows;
+    }
+
+    function countWrappedLinesForRows(rows, metrics, usableWidth) {
+      const approxChars = Math.max(8, Math.floor(usableWidth / (metrics.textSize * 0.58)));
+      let total = 0;
+      rows.forEach(row => {
+        total += Math.max(1, wrapTextLines(row, approxChars).length);
+      });
+      return total;
     }
 
     function getSearchableText(data) {
@@ -1078,7 +1217,7 @@
       };
 
       const BASE_BOX_WIDTH = 292;
-      const BASE_BOX_HEIGHT = 168;
+      const BASE_BOX_HEIGHT = 182;
 
       const state = {
         visibleGenerations: 8,
@@ -1170,10 +1309,11 @@
         const scale = BOX_SCALE[generation] || 0.46;
         return {
           width: BASE_BOX_WIDTH * scale,
-          height: BASE_BOX_HEIGHT * scale,
+          minHeight: BASE_BOX_HEIGHT * scale,
           nameSize: Math.max(8, 12 * scale),
           textSize: Math.max(7, 10 * scale),
           lineHeight: Math.max(9, 12 * scale),
+          titleLineHeight: Math.max(10, 13 * scale),
           pad: Math.max(6, 8 * scale),
           corner: Math.max(7, 10 * scale),
           collapseR: Math.max(8, 9 * scale)
@@ -1213,15 +1353,33 @@
         const pos = getNodePosition(path);
         const metrics = getMetrics(generation);
 
-        const x = pos.xCenter - (metrics.width / 2);
-        const y = pos.yCenter - (metrics.height / 2);
-
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
         const empty = isEmptyRabbit(data);
         const rabbitKey = buildRabbitKey(data);
         const breederMeta = getBreederMeta(data);
-        const displayCustom = getDisplayCustom(data);
+
+        const title = [data.rabbitry, data.name].filter(Boolean).join(" ") || "—";
+        const titleWidth = metrics.width - (metrics.pad * 2);
+        const titleApproxChars = Math.max(8, Math.floor(titleWidth / (metrics.nameSize * 0.56)));
+        const titleLines = wrapTextLines(title, titleApproxChars);
+
+        const rows = getNodeDisplayRows(data, generation);
+        const usableWidth = metrics.width - (metrics.pad * 2);
+        const contentLineCount = countWrappedLinesForRows(rows, metrics, usableWidth);
+
+        const titleBlockHeight = Math.max(1, titleLines.length) * metrics.titleLineHeight;
+        const contentBlockHeight = contentLineCount * metrics.lineHeight;
+        const computedHeight =
+          (metrics.pad * 2) +
+          titleBlockHeight +
+          (rows.length ? metrics.lineHeight * 0.6 : 0) +
+          contentBlockHeight +
+          (generation < MAX_GENERATIONS ? (metrics.collapseR * 2 + 6) : 0);
+
+        const boxHeight = Math.max(metrics.minHeight, computedHeight);
+        const x = pos.xCenter - (metrics.width / 2);
+        const y = pos.yCenter - (boxHeight / 2);
 
         const group = createSvgEl("g", {
           "data-path": path,
@@ -1233,7 +1391,7 @@
           x,
           y,
           width: metrics.width,
-          height: metrics.height,
+          height: boxHeight,
           rx: metrics.corner,
           ry: metrics.corner,
           class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
@@ -1245,7 +1403,7 @@
           x: x + 2,
           y: y + 2,
           width: Math.max(0, metrics.width - 4),
-          height: Math.max(0, metrics.height - 4),
+          height: Math.max(0, boxHeight - 4),
           rx: Math.max(0, metrics.corner - 2),
           ry: Math.max(0, metrics.corner - 2),
           class: "highlight-overlay"
@@ -1261,38 +1419,49 @@
         badgeText.textContent = "";
         group.appendChild(badgeText);
 
-        const title = [data.rabbitry, data.name].filter(Boolean).join(" ");
-        appendText(group, x + metrics.pad, y + metrics.pad + metrics.nameSize, "box-name", title || "—", {
+        let cursorY = y + metrics.pad + metrics.nameSize;
+
+        const titleText = createSvgEl("text", {
+          x: x + metrics.pad,
+          y: cursorY,
+          class: "box-name",
           "font-size": metrics.nameSize
         });
 
-        if (generation <= 5) {
-          appendText(group, x + metrics.pad, y + 34 * BOX_SCALE[generation], "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 48 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 48 * BOX_SCALE[generation], "box-text", `Weight: ${data.weight || ""}`, { "font-size": metrics.textSize });
+        titleLines.forEach((line, index) => {
+          const tspan = createSvgEl("tspan", {
+            x: x + metrics.pad,
+            dy: index === 0 ? 0 : metrics.titleLineHeight
+          });
+          tspan.textContent = line;
+          titleText.appendChild(tspan);
+        });
 
-          appendText(group, x + metrics.pad, y + 62 * BOX_SCALE[generation], "box-text", `Sex: ${data.sex || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 62 * BOX_SCALE[generation], "box-text", `Legs: ${data.legs || ""}`, { "font-size": metrics.textSize });
+        group.appendChild(titleText);
 
-          appendText(group, x + metrics.pad, y + 76 * BOX_SCALE[generation], "box-text", `Reg#: ${data.reg || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + (metrics.width * 0.52), y + 76 * BOX_SCALE[generation], "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
+        cursorY += Math.max(1, titleLines.length - 1) * metrics.titleLineHeight;
+        cursorY += metrics.lineHeight;
 
-          appendText(group, x + metrics.pad, y + 90 * BOX_SCALE[generation], "box-text", displayCustom || "", { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 106 * BOX_SCALE[generation], "box-text", data.win1 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 128 * BOX_SCALE[generation], "box-text", data.win2 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-          appendMultilineText(group, x + metrics.pad, y + 150 * BOX_SCALE[generation], "box-text", data.win3 || "", metrics.lineHeight, { "font-size": metrics.textSize });
-        } else if (generation <= 7) {
-          appendText(group, x + metrics.pad, y + 34 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 48 * BOX_SCALE[generation], "box-text", `Color: ${data.color || ""}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 62 * BOX_SCALE[generation], "box-text", `GC#: ${data.gc || ""}`, { "font-size": metrics.textSize });
-        } else {
-          appendText(group, x + metrics.pad, y + 30 * BOX_SCALE[generation], "box-text", `${data.name || "—"}`, { "font-size": metrics.textSize });
-          appendText(group, x + metrics.pad, y + 44 * BOX_SCALE[generation], "box-text", `Ear#: ${data.ear || ""}`, { "font-size": metrics.textSize });
-        }
+        rows.forEach(row => {
+          const result = appendWrappedText(
+            group,
+            x + metrics.pad,
+            cursorY,
+            "box-text",
+            row,
+            metrics,
+            usableWidth,
+            { "font-size": metrics.textSize }
+          );
+          if (result.lineCount > 0) {
+            cursorY += result.lineCount * metrics.lineHeight;
+          }
+        });
 
         if (generation < MAX_GENERATIONS) {
           const cx = x + metrics.width - (metrics.collapseR + 3);
-          const cy = y + metrics.height - (metrics.collapseR + 3);
+          const cy = y + boxHeight - (metrics.collapseR + 3);
+
           const btnCircle = createSvgEl("circle", {
             cx,
             cy,
@@ -1300,6 +1469,7 @@
             class: "collapse-btn",
             "data-collapse-path": path
           });
+
           const btnSymbol = createSvgEl("text", {
             x: cx,
             y: cy,
@@ -1307,6 +1477,7 @@
             "data-collapse-symbol": path
           });
           btnSymbol.textContent = "−";
+
           group.appendChild(btnCircle);
           group.appendChild(btnSymbol);
         }
@@ -1328,7 +1499,7 @@
           x,
           y,
           width: metrics.width,
-          height: metrics.height,
+          height: boxHeight,
           xCenter: pos.xCenter,
           yCenter: pos.yCenter
         });
