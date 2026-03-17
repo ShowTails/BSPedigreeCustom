@@ -913,121 +913,113 @@
       ].some(value => String(value || "").trim());
     }
 
-    function decodePayloadParam(payload) {
-      if (!payload) return {};
-      try {
-        let base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-        while (base64.length % 4) base64 += "=";
+    function decodeBase64UrlToUtf8(base64url) {
+      let base64 = String(base64url || "").replace(/-/g, "+").replace(/_/g, "/");
+      while (base64.length % 4) base64 += "=";
 
-        const binary = atob(base64);
-        const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-        const jsonText = new TextDecoder("utf-8").decode(bytes);
+      const binary = atob(base64);
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+
+    function decodePayloadParam(payload) {
+      if (!payload) return null;
+      try {
+        const jsonText = decodeBase64UrlToUtf8(payload);
         return JSON.parse(jsonText);
       } catch (err) {
-        console.error("Failed to decode payload:", err);
-        return {};
+        console.error("Failed to decode compressed pedigree payload:", err);
+        return null;
       }
     }
 
-    const PEDIGREE_PAYLOAD = decodePayloadParam(getParam("p"));
+    function slotIndexToPath(index) {
+      index = Number(index);
+      if (index === 0) return "c";
 
-    function getNodeParamName(path) {
-      return path === "" ? "c" : path;
-    }
+      let generation = 1;
+      let start = 0;
 
-    function getPackedBlock(path) {
-      return PEDIGREE_PAYLOAD[getNodeParamName(path)] || "";
-    }
-
-    function parsePackedRabbitBlock(raw) {
-      const text = String(raw || "");
-      const record = {
-        n: "",
-        r: "",
-        e: "",
-        c: "",
-        w: "",
-        w1: "",
-        w2: "",
-        w3: "",
-        re: "",
-        g: "",
-        d: "",
-        el: "",
-        ge: "",
-        cu: "",
-        l: "",
-        sx: "",
-        weight: "",
-        wins: []
-      };
-
-      if (!text.trim()) return record;
-
-      const lines = text
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n");
-
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-
-        const idx = line.indexOf(":");
-        if (idx === -1) continue;
-
-        const key = line.slice(0, idx).trim().toLowerCase();
-        const value = line.slice(idx + 1).trim();
-
-        if (key === "w") {
-          record.weight = value;
-          continue;
+      while (true) {
+        const count = Math.pow(2, generation - 1);
+        const end = start + count - 1;
+        if (index >= start && index <= end) {
+          const offset = index - start;
+          if (generation === 1) return "c";
+          const bits = offset.toString(2).padStart(generation - 1, "0");
+          return bits.replace(/0/g, "s").replace(/1/g, "d");
         }
-
-        if (key === "w1" || key === "w2" || key === "w3") {
-          if (value) record.wins.push(value);
-          record[key] = value;
-          continue;
-        }
-
-        if (key in record) {
-          record[key] = value;
-        }
+        generation += 1;
+        start = Math.pow(2, generation - 1) - 1;
       }
-
-      return record;
     }
 
-    const packedRabbitCache = new Map();
+    const PEDIGREE_PAYLOAD = decodePayloadParam(getParam("p")) || {
+      v: 1,
+      r: [],
+      c: [],
+      g: [],
+      n: []
+    };
 
-    function getPackedRabbitData(path) {
-      const key = getNodeParamName(path);
-      if (!packedRabbitCache.has(key)) {
-        packedRabbitCache.set(key, parsePackedRabbitBlock(getPackedBlock(path)));
+    const nodeMapByPath = new Map();
+
+    (function buildNodeMap() {
+      const rabbitryDict = Array.isArray(PEDIGREE_PAYLOAD.r) ? PEDIGREE_PAYLOAD.r : [];
+      const colorDict = Array.isArray(PEDIGREE_PAYLOAD.c) ? PEDIGREE_PAYLOAD.c : [];
+      const geneticsDict = Array.isArray(PEDIGREE_PAYLOAD.g) ? PEDIGREE_PAYLOAD.g : [];
+      const nodes = Array.isArray(PEDIGREE_PAYLOAD.n) ? PEDIGREE_PAYLOAD.n : [];
+
+      for (const record of nodes) {
+        if (!Array.isArray(record) || record.length < 1) continue;
+
+        const slot = Number(record[0]);
+        if (!Number.isFinite(slot)) continue;
+
+        const path = slotIndexToPath(slot);
+
+        const rabbit = {
+          name: record[1] || "",
+          rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
+          ear: record[3] || "",
+          color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
+          weight: record[5] || "",
+          reg: record[6] || "",
+          gc: record[7] || "",
+          dob: record[8] || "",
+          earLength: record[9] || "",
+          genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
+          custom: record[11] || "",
+          win1: record[12] || "",
+          legs: record[13] || "",
+          sex: record[14] || ""
+        };
+
+        nodeMapByPath.set(path, rabbit);
       }
-      return packedRabbitCache.get(key);
-    }
+    })();
 
     function getRabbitData(path) {
-      const parsed = getPackedRabbitData(path);
+      const key = path === "" ? "c" : path;
+      const rabbit = nodeMapByPath.get(key) || {};
 
       return {
-        rabbitry: escapeText(parsed.r),
-        name: escapeText(parsed.n),
-        color: escapeText(parsed.c),
-        ear: escapeText(parsed.e),
-        weight: escapeText(parsed.weight || parsed.w),
-        sex: escapeText(parsed.sx || ""),
-        legs: escapeText(parsed.l),
-        reg: escapeText(parsed.re),
-        gc: escapeText(parsed.g),
-        dob: escapeText(parsed.d),
-        earLength: escapeText(parsed.el),
-        genetics: escapeText(parsed.ge),
-        custom: escapeText(parsed.cu),
-        win1: escapeText(parsed.w1 || parsed.wins[0] || ""),
-        win2: escapeText(parsed.w2 || parsed.wins[1] || ""),
-        win3: escapeText(parsed.w3 || parsed.wins[2] || "")
+        rabbitry: escapeText(rabbit.rabbitry || ""),
+        name: escapeText(rabbit.name || ""),
+        color: escapeText(rabbit.color || ""),
+        ear: escapeText(rabbit.ear || ""),
+        weight: escapeText(rabbit.weight || ""),
+        sex: escapeText(rabbit.sex || ""),
+        legs: escapeText(rabbit.legs || ""),
+        reg: escapeText(rabbit.reg || ""),
+        gc: escapeText(rabbit.gc || ""),
+        dob: escapeText(rabbit.dob || ""),
+        earLength: escapeText(rabbit.earLength || ""),
+        genetics: escapeText(rabbit.genetics || ""),
+        custom: escapeText(rabbit.custom || ""),
+        win1: escapeText(rabbit.win1 || ""),
+        win2: "",
+        win3: ""
       };
     }
 
@@ -1339,13 +1331,6 @@
           xCenter: side === "s" ? -x : x,
           yCenter: centerY
         };
-      }
-
-      function appendText(group, x, y, className, value, attrs = {}) {
-        const t = createSvgEl("text", Object.assign({ x, y, class: className }, attrs));
-        t.textContent = value || "";
-        group.appendChild(t);
-        return t;
       }
 
       function drawNode(path) {
