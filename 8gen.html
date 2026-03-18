@@ -928,7 +928,7 @@
         const jsonText = decodeBase64UrlToUtf8(payload);
         return JSON.parse(jsonText);
       } catch (err) {
-        console.error("Failed to decode compressed pedigree payload:", err);
+        console.error("Failed to decode pedigree payload:", err);
         return null;
       }
     }
@@ -954,54 +954,155 @@
       }
     }
 
-    const PEDIGREE_PAYLOAD = decodePayloadParam(getParam("p")) || {
-      v: 1,
-      r: [],
-      c: [],
-      g: [],
-      n: []
-    };
+    function normalizePathKey(key) {
+      const k = String(key || "").trim().toLowerCase();
+      if (!k || k === "c") return "";
+      return /^[sd]+$/.test(k) ? k : null;
+    }
 
+    function parsePackedRabbitString(raw) {
+      const result = {
+        rabbitry: "",
+        name: "",
+        color: "",
+        ear: "",
+        weight: "",
+        sex: "",
+        legs: "",
+        reg: "",
+        gc: "",
+        dob: "",
+        earLength: "",
+        genetics: "",
+        custom: "",
+        win1: "",
+        win2: "",
+        win3: ""
+      };
+
+      if (typeof raw !== "string") return result;
+
+      const lines = raw
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n");
+
+      for (const line of lines) {
+        if (!line) continue;
+        const idx = line.indexOf(":");
+        if (idx < 0) continue;
+
+        const key = line.slice(0, idx).trim().toLowerCase();
+        const value = line.slice(idx + 1).trim();
+
+        switch (key) {
+          case "r":  result.rabbitry = value; break;
+          case "n":  result.name = value; break;
+          case "c":  result.color = value; break;
+          case "e":  result.ear = value; break;
+          case "w":  result.weight = value; break;
+          case "sx":
+          case "sex": result.sex = value; break;
+          case "l":  result.legs = value; break;
+          case "re": result.reg = value; break;
+          case "g":  result.gc = value; break;
+          case "d":  result.dob = value; break;
+          case "el": result.earLength = value; break;
+          case "ge": result.genetics = value; break;
+          case "cu":
+          case "custom": result.custom = value; break;
+          case "w1": result.win1 = value; break;
+          case "w2": result.win2 = value; break;
+          case "w3": result.win3 = value; break;
+        }
+      }
+
+      return result;
+    }
+
+    const PEDIGREE_PAYLOAD = decodePayloadParam(getParam("p")) || null;
     const nodeMapByPath = new Map();
 
     (function buildNodeMap() {
-      const rabbitryDict = Array.isArray(PEDIGREE_PAYLOAD.r) ? PEDIGREE_PAYLOAD.r : [];
-      const colorDict = Array.isArray(PEDIGREE_PAYLOAD.c) ? PEDIGREE_PAYLOAD.c : [];
-      const geneticsDict = Array.isArray(PEDIGREE_PAYLOAD.g) ? PEDIGREE_PAYLOAD.g : [];
-      const nodes = Array.isArray(PEDIGREE_PAYLOAD.n) ? PEDIGREE_PAYLOAD.n : [];
+      if (!PEDIGREE_PAYLOAD || typeof PEDIGREE_PAYLOAD !== "object") return;
 
-      for (const record of nodes) {
-        if (!Array.isArray(record) || record.length < 1) continue;
+      const isOldCompactFormat =
+        Array.isArray(PEDIGREE_PAYLOAD.n) &&
+        Array.isArray(PEDIGREE_PAYLOAD.r) &&
+        Array.isArray(PEDIGREE_PAYLOAD.c) &&
+        Array.isArray(PEDIGREE_PAYLOAD.g);
 
-        const slot = Number(record[0]);
-        if (!Number.isFinite(slot)) continue;
+      if (isOldCompactFormat) {
+        const rabbitryDict = PEDIGREE_PAYLOAD.r;
+        const colorDict = PEDIGREE_PAYLOAD.c;
+        const geneticsDict = PEDIGREE_PAYLOAD.g;
+        const nodes = PEDIGREE_PAYLOAD.n;
 
-        const path = slotIndexToPath(slot);
+        for (const record of nodes) {
+          if (!Array.isArray(record) || record.length < 1) continue;
 
-        const rabbit = {
-          name: record[1] || "",
-          rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
-          ear: record[3] || "",
-          color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
-          weight: record[5] || "",
-          reg: record[6] || "",
-          gc: record[7] || "",
-          dob: record[8] || "",
-          earLength: record[9] || "",
-          genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
-          custom: record[11] || "",
-          win1: record[12] || "",
-          legs: record[13] || "",
-          sex: record[14] || ""
-        };
+          const slot = Number(record[0]);
+          if (!Number.isFinite(slot)) continue;
 
-        nodeMapByPath.set(path, rabbit);
+          const pathKey = slotIndexToPath(slot);
+          const path = pathKey === "c" ? "" : pathKey;
+
+          const rabbit = {
+            name: record[1] || "",
+            rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
+            ear: record[3] || "",
+            color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
+            weight: record[5] || "",
+            reg: record[6] || "",
+            gc: record[7] || "",
+            dob: record[8] || "",
+            earLength: record[9] || "",
+            genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
+            custom: record[11] || "",
+            win1: record[12] || "",
+            legs: record[13] || "",
+            sex: record[14] || "",
+            win2: "",
+            win3: ""
+          };
+
+          nodeMapByPath.set(path, rabbit);
+        }
+
+        return;
+      }
+
+      for (const [rawKey, rawValue] of Object.entries(PEDIGREE_PAYLOAD)) {
+        const path = normalizePathKey(rawKey);
+        if (path === null) continue;
+
+        if (typeof rawValue === "string") {
+          nodeMapByPath.set(path, parsePackedRabbitString(rawValue));
+        } else if (rawValue && typeof rawValue === "object") {
+          nodeMapByPath.set(path, {
+            rabbitry: rawValue.rabbitry || rawValue.r || "",
+            name: rawValue.name || rawValue.n || "",
+            color: rawValue.color || rawValue.c || "",
+            ear: rawValue.ear || rawValue.e || "",
+            weight: rawValue.weight || rawValue.w || "",
+            sex: rawValue.sex || rawValue.sx || "",
+            legs: rawValue.legs || rawValue.l || "",
+            reg: rawValue.reg || rawValue.re || "",
+            gc: rawValue.gc || rawValue.g || "",
+            dob: rawValue.dob || rawValue.d || "",
+            earLength: rawValue.earLength || rawValue.el || "",
+            genetics: rawValue.genetics || rawValue.ge || "",
+            custom: rawValue.custom || rawValue.cu || "",
+            win1: rawValue.win1 || rawValue.w1 || "",
+            win2: rawValue.win2 || rawValue.w2 || "",
+            win3: rawValue.win3 || rawValue.w3 || ""
+          });
+        }
       }
     })();
 
     function getRabbitData(path) {
-      const key = path === "" ? "c" : path;
-      const rabbit = nodeMapByPath.get(key) || {};
+      const rabbit = nodeMapByPath.get(path) || {};
 
       return {
         rabbitry: escapeText(rabbit.rabbitry || ""),
@@ -1018,8 +1119,8 @@
         genetics: escapeText(rabbit.genetics || ""),
         custom: escapeText(rabbit.custom || ""),
         win1: escapeText(rabbit.win1 || ""),
-        win2: "",
-        win3: ""
+        win2: escapeText(rabbit.win2 || ""),
+        win3: escapeText(rabbit.win3 || "")
       };
     }
 
@@ -2424,7 +2525,7 @@
           box.setAttribute("stroke", "#00aaff");
           setTimeout(() => box.setAttribute("stroke", ""), 250);
 
-          window.parent.postMessage({ pedigreeEdit: slot }, "*");
+          window.parent.postMessage({ pedigreeEdit: slot || "c" }, "*");
         });
 
         document.querySelectorAll(".gen-btn").forEach(btn => {
