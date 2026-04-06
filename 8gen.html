@@ -762,7 +762,26 @@
   </div>
 
   <script>
-    const URL_PARAMS = new URLSearchParams(window.location.search);
+    const RAW_PARAMS = new URLSearchParams(window.location.search);
+
+    function decodeP1ToParams(p1) {
+      if (!p1) return new URLSearchParams();
+
+      try {
+        let base64 = String(p1).replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) base64 += "=";
+
+        const decoded = decodeURIComponent(escape(atob(base64)));
+        return new URLSearchParams(decoded);
+      } catch (err) {
+        console.error("Failed to decode p1:", err);
+        return new URLSearchParams();
+      }
+    }
+
+    const URL_PARAMS = RAW_PARAMS.get("p1")
+      ? decodeP1ToParams(RAW_PARAMS.get("p1"))
+      : RAW_PARAMS;
 
     function getParam(name) {
       return URL_PARAMS.get(name) || "";
@@ -1024,80 +1043,90 @@
     const nodeMapByPath = new Map();
 
     (function buildNodeMap() {
-      if (!PEDIGREE_PAYLOAD || typeof PEDIGREE_PAYLOAD !== "object") return;
 
-      const isOldCompactFormat =
-        Array.isArray(PEDIGREE_PAYLOAD.n) &&
-        Array.isArray(PEDIGREE_PAYLOAD.r) &&
-        Array.isArray(PEDIGREE_PAYLOAD.c) &&
-        Array.isArray(PEDIGREE_PAYLOAD.g);
+      // Support the newer Base64 JSON payload in ?p=
+      if (PEDIGREE_PAYLOAD && typeof PEDIGREE_PAYLOAD === "object") {
+        const isOldCompactFormat =
+          Array.isArray(PEDIGREE_PAYLOAD.n) &&
+          Array.isArray(PEDIGREE_PAYLOAD.r) &&
+          Array.isArray(PEDIGREE_PAYLOAD.c) &&
+          Array.isArray(PEDIGREE_PAYLOAD.g);
 
-      if (isOldCompactFormat) {
-        const rabbitryDict = PEDIGREE_PAYLOAD.r;
-        const colorDict = PEDIGREE_PAYLOAD.c;
-        const geneticsDict = PEDIGREE_PAYLOAD.g;
-        const nodes = PEDIGREE_PAYLOAD.n;
+        if (isOldCompactFormat) {
+          const rabbitryDict = PEDIGREE_PAYLOAD.r;
+          const colorDict = PEDIGREE_PAYLOAD.c;
+          const geneticsDict = PEDIGREE_PAYLOAD.g;
+          const nodes = PEDIGREE_PAYLOAD.n;
 
-        for (const record of nodes) {
-          if (!Array.isArray(record) || record.length < 1) continue;
+          for (const record of nodes) {
+            if (!Array.isArray(record) || record.length < 1) continue;
 
-          const slot = Number(record[0]);
-          if (!Number.isFinite(slot)) continue;
+            const slot = Number(record[0]);
+            if (!Number.isFinite(slot)) continue;
 
-          const pathKey = slotIndexToPath(slot);
-          const path = pathKey === "c" ? "" : pathKey;
+            const pathKey = slotIndexToPath(slot);
+            const path = pathKey === "c" ? "" : pathKey;
 
-          const rabbit = {
-            name: record[1] || "",
-            rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
-            ear: record[3] || "",
-            color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
-            weight: record[5] || "",
-            reg: record[6] || "",
-            gc: record[7] || "",
-            dob: record[8] || "",
-            earLength: record[9] || "",
-            genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
-            custom: record[11] || "",
-            win1: record[12] || "",
-            legs: record[13] || "",
-            sex: record[14] || "",
-            win2: "",
-            win3: ""
-          };
+            nodeMapByPath.set(path, {
+              name: record[1] || "",
+              rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
+              ear: record[3] || "",
+              color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
+              weight: record[5] || "",
+              reg: record[6] || "",
+              gc: record[7] || "",
+              dob: record[8] || "",
+              earLength: record[9] || "",
+              genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
+              custom: record[11] || "",
+              win1: record[12] || "",
+              legs: record[13] || "",
+              sex: record[14] || "",
+              win2: "",
+              win3: ""
+            });
+          }
 
-          nodeMapByPath.set(path, rabbit);
+          return;
+        }
+
+        for (const [rawKey, rawValue] of Object.entries(PEDIGREE_PAYLOAD)) {
+          const path = normalizePathKey(rawKey);
+          if (path === null) continue;
+
+          if (typeof rawValue === "string") {
+            nodeMapByPath.set(path, parsePackedRabbitString(rawValue));
+          } else if (rawValue && typeof rawValue === "object") {
+            nodeMapByPath.set(path, {
+              rabbitry: rawValue.rabbitry || rawValue.r || "",
+              name: rawValue.name || rawValue.n || "",
+              color: rawValue.color || rawValue.c || "",
+              ear: rawValue.ear || rawValue.e || "",
+              weight: rawValue.weight || rawValue.w || "",
+              sex: rawValue.sex || rawValue.sx || "",
+              legs: rawValue.legs || rawValue.l || "",
+              reg: rawValue.reg || rawValue.re || "",
+              gc: rawValue.gc || rawValue.g || "",
+              dob: rawValue.dob || rawValue.d || "",
+              earLength: rawValue.earLength || rawValue.el || "",
+              genetics: rawValue.genetics || rawValue.ge || "",
+              custom: rawValue.custom || rawValue.cu || "",
+              win1: rawValue.win1 || rawValue.w1 || "",
+              win2: rawValue.win2 || rawValue.w2 || "",
+              win3: rawValue.win3 || rawValue.w3 || ""
+            });
+          }
         }
 
         return;
       }
 
-      for (const [rawKey, rawValue] of Object.entries(PEDIGREE_PAYLOAD)) {
-        const path = normalizePathKey(rawKey);
+      // Fallback support for legacy expanded params:
+      // ?c=...&s=...&d=...&ss=... etc.
+      for (const [key, value] of URL_PARAMS.entries()) {
+        const path = normalizePathKey(key);
         if (path === null) continue;
-
-        if (typeof rawValue === "string") {
-          nodeMapByPath.set(path, parsePackedRabbitString(rawValue));
-        } else if (rawValue && typeof rawValue === "object") {
-          nodeMapByPath.set(path, {
-            rabbitry: rawValue.rabbitry || rawValue.r || "",
-            name: rawValue.name || rawValue.n || "",
-            color: rawValue.color || rawValue.c || "",
-            ear: rawValue.ear || rawValue.e || "",
-            weight: rawValue.weight || rawValue.w || "",
-            sex: rawValue.sex || rawValue.sx || "",
-            legs: rawValue.legs || rawValue.l || "",
-            reg: rawValue.reg || rawValue.re || "",
-            gc: rawValue.gc || rawValue.g || "",
-            dob: rawValue.dob || rawValue.d || "",
-            earLength: rawValue.earLength || rawValue.el || "",
-            genetics: rawValue.genetics || rawValue.ge || "",
-            custom: rawValue.custom || rawValue.cu || "",
-            win1: rawValue.win1 || rawValue.w1 || "",
-            win2: rawValue.win2 || rawValue.w2 || "",
-            win3: rawValue.win3 || rawValue.w3 || ""
-          });
-        }
+        nodeMapByPath.set(path, parsePackedRabbitString(value));
       }
     })();
 
