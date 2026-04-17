@@ -762,26 +762,7 @@
   </div>
 
   <script>
-    const RAW_PARAMS = new URLSearchParams(window.location.search);
-
-    function decodeP1ToParams(p1) {
-      if (!p1) return new URLSearchParams();
-
-      try {
-        let base64 = String(p1).replace(/-/g, "+").replace(/_/g, "/");
-        while (base64.length % 4) base64 += "=";
-
-        const decoded = decodeURIComponent(escape(atob(base64)));
-        return new URLSearchParams(decoded);
-      } catch (err) {
-        console.error("Failed to decode p1:", err);
-        return new URLSearchParams();
-      }
-    }
-
-    const URL_PARAMS = RAW_PARAMS.get("p1")
-      ? decodeP1ToParams(RAW_PARAMS.get("p1"))
-      : RAW_PARAMS;
+    const URL_PARAMS = new URLSearchParams(window.location.search);
 
     function getParam(name) {
       return URL_PARAMS.get(name) || "";
@@ -823,25 +804,6 @@
         .split("\n")
         .map(line => line.trim())
         .filter(Boolean);
-    }
-
-    function appendMultilineText(group, x, y, className, value, lineHeight = 12, extraAttrs = {}) {
-      const lines = splitPedigreeLines(value);
-      if (!lines.length) return null;
-
-      const textEl = createSvgEl("text", Object.assign({ x, y, class: className }, extraAttrs));
-
-      lines.forEach((line, index) => {
-        const tspan = createSvgEl("tspan", {
-          x,
-          dy: index === 0 ? 0 : lineHeight
-        });
-        tspan.textContent = line;
-        textEl.appendChild(tspan);
-      });
-
-      group.appendChild(textEl);
-      return textEl;
     }
 
     function normalizeBreederText(value) {
@@ -932,51 +894,11 @@
       ].some(value => String(value || "").trim());
     }
 
-    function decodeBase64UrlToUtf8(base64url) {
-      let base64 = String(base64url || "").replace(/-/g, "+").replace(/_/g, "/");
-      while (base64.length % 4) base64 += "=";
-
-      const binary = atob(base64);
-      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-      return new TextDecoder("utf-8").decode(bytes);
-    }
-
-    function decodePayloadParam(payload) {
-      if (!payload) return null;
-      try {
-        const jsonText = decodeBase64UrlToUtf8(payload);
-        return JSON.parse(jsonText);
-      } catch (err) {
-        console.error("Failed to decode pedigree payload:", err);
-        return null;
-      }
-    }
-
-    function slotIndexToPath(index) {
-      index = Number(index);
-      if (index === 0) return "c";
-
-      let generation = 1;
-      let start = 0;
-
-      while (true) {
-        const count = Math.pow(2, generation - 1);
-        const end = start + count - 1;
-        if (index >= start && index <= end) {
-          const offset = index - start;
-          if (generation === 1) return "c";
-          const bits = offset.toString(2).padStart(generation - 1, "0");
-          return bits.replace(/0/g, "s").replace(/1/g, "d");
-        }
-        generation += 1;
-        start = Math.pow(2, generation - 1) - 1;
-      }
-    }
-
     function normalizePathKey(key) {
-      const k = String(key || "").trim().toLowerCase();
+      const k = String(key || "").trim().toLowerCase().replace(/^\/+|\/+$/g, "");
       if (!k || k === "c") return "";
-      return /^[sd]+$/.test(k) ? k : null;
+      if (!/^[sd](\/[sd])*$/.test(k)) return null;
+      return k.replace(/\//g, "");
     }
 
     function parsePackedRabbitString(raw) {
@@ -1006,10 +928,19 @@
         .replace(/\r/g, "\n")
         .split("\n");
 
+      let currentWin = "win1";
+
       for (const line of lines) {
         if (!line) continue;
         const idx = line.indexOf(":");
-        if (idx < 0) continue;
+
+        if (idx < 0) {
+          const extra = line.trim();
+          if (!extra) continue;
+          if (result[currentWin]) result[currentWin] += `\n${extra}`;
+          else result[currentWin] = extra;
+          continue;
+        }
 
         const key = line.slice(0, idx).trim().toLowerCase();
         const value = line.slice(idx + 1).trim();
@@ -1030,127 +961,44 @@
           case "ge": result.genetics = value; break;
           case "cu":
           case "custom": result.custom = value; break;
-          case "w1": result.win1 = value; break;
-          case "w2": result.win2 = value; break;
-          case "w3": result.win3 = value; break;
+          case "w1": result.win1 = value; currentWin = "win1"; break;
+          case "w2": result.win2 = value; currentWin = "win2"; break;
+          case "w3": result.win3 = value; currentWin = "win3"; break;
         }
       }
 
       return result;
     }
 
-    const PEDIGREE_PAYLOAD = decodePayloadParam(getParam("p")) || null;
-    const nodeMapByPath = new Map();
-
-    (function buildNodeMap() {
-
-      // Support the newer Base64 JSON payload in ?p=
-      if (PEDIGREE_PAYLOAD && typeof PEDIGREE_PAYLOAD === "object") {
-        const isOldCompactFormat =
-          Array.isArray(PEDIGREE_PAYLOAD.n) &&
-          Array.isArray(PEDIGREE_PAYLOAD.r) &&
-          Array.isArray(PEDIGREE_PAYLOAD.c) &&
-          Array.isArray(PEDIGREE_PAYLOAD.g);
-
-        if (isOldCompactFormat) {
-          const rabbitryDict = PEDIGREE_PAYLOAD.r;
-          const colorDict = PEDIGREE_PAYLOAD.c;
-          const geneticsDict = PEDIGREE_PAYLOAD.g;
-          const nodes = PEDIGREE_PAYLOAD.n;
-
-          for (const record of nodes) {
-            if (!Array.isArray(record) || record.length < 1) continue;
-
-            const slot = Number(record[0]);
-            if (!Number.isFinite(slot)) continue;
-
-            const pathKey = slotIndexToPath(slot);
-            const path = pathKey === "c" ? "" : pathKey;
-
-            nodeMapByPath.set(path, {
-              name: record[1] || "",
-              rabbitry: (record[2] >= 0 ? rabbitryDict[record[2]] : "") || "",
-              ear: record[3] || "",
-              color: (record[4] >= 0 ? colorDict[record[4]] : "") || "",
-              weight: record[5] || "",
-              reg: record[6] || "",
-              gc: record[7] || "",
-              dob: record[8] || "",
-              earLength: record[9] || "",
-              genetics: (record[10] >= 0 ? geneticsDict[record[10]] : "") || "",
-              custom: record[11] || "",
-              win1: record[12] || "",
-              legs: record[13] || "",
-              sex: record[14] || "",
-              win2: "",
-              win3: ""
-            });
-          }
-
-          return;
-        }
-
-        for (const [rawKey, rawValue] of Object.entries(PEDIGREE_PAYLOAD)) {
-          const path = normalizePathKey(rawKey);
-          if (path === null) continue;
-
-          if (typeof rawValue === "string") {
-            nodeMapByPath.set(path, parsePackedRabbitString(rawValue));
-          } else if (rawValue && typeof rawValue === "object") {
-            nodeMapByPath.set(path, {
-              rabbitry: rawValue.rabbitry || rawValue.r || "",
-              name: rawValue.name || rawValue.n || "",
-              color: rawValue.color || rawValue.c || "",
-              ear: rawValue.ear || rawValue.e || "",
-              weight: rawValue.weight || rawValue.w || "",
-              sex: rawValue.sex || rawValue.sx || "",
-              legs: rawValue.legs || rawValue.l || "",
-              reg: rawValue.reg || rawValue.re || "",
-              gc: rawValue.gc || rawValue.g || "",
-              dob: rawValue.dob || rawValue.d || "",
-              earLength: rawValue.earLength || rawValue.el || "",
-              genetics: rawValue.genetics || rawValue.ge || "",
-              custom: rawValue.custom || rawValue.cu || "",
-              win1: rawValue.win1 || rawValue.w1 || "",
-              win2: rawValue.win2 || rawValue.w2 || "",
-              win3: rawValue.win3 || rawValue.w3 || ""
-            });
-          }
-        }
-
-        return;
+    async function loadInfoPayload(infoUrl) {
+      const response = await fetch(infoUrl, { credentials: "omit" });
+      if (!response.ok) {
+        throw new Error(`Failed to load pedigree info (${response.status})`);
       }
 
-      // Fallback support for legacy expanded params:
-      // ?c=...&s=...&d=...&ss=... etc.
-      for (const [key, value] of URL_PARAMS.entries()) {
-        const path = normalizePathKey(key);
+      const text = await response.text();
+      return parseInfoTextToNodeMap(text);
+    }
+
+    function parseInfoTextToNodeMap(text) {
+      const nodeMap = new Map();
+      const raw = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+      const sectionRegex = /---\s*([cCsSdD](?:\s*\/\s*[sSdD])*)\s*---/g;
+      const matches = Array.from(raw.matchAll(sectionRegex));
+
+      for (let i = 0; i < matches.length; i++) {
+        const match = matches[i];
+        const sectionKey = match[1];
+        const start = match.index + match[0].length;
+        const end = i + 1 < matches.length ? matches[i + 1].index : raw.length;
+        const body = raw.slice(start, end).trim();
+        const path = normalizePathKey(sectionKey);
         if (path === null) continue;
-        nodeMapByPath.set(path, parsePackedRabbitString(value));
+        nodeMap.set(path, parsePackedRabbitString(body));
       }
-    })();
 
-    function getRabbitData(path) {
-      const rabbit = nodeMapByPath.get(path) || {};
-
-      return {
-        rabbitry: escapeText(rabbit.rabbitry || ""),
-        name: escapeText(rabbit.name || ""),
-        color: escapeText(rabbit.color || ""),
-        ear: escapeText(rabbit.ear || ""),
-        weight: escapeText(rabbit.weight || ""),
-        sex: escapeText(rabbit.sex || ""),
-        legs: escapeText(rabbit.legs || ""),
-        reg: escapeText(rabbit.reg || ""),
-        gc: escapeText(rabbit.gc || ""),
-        dob: escapeText(rabbit.dob || ""),
-        earLength: escapeText(rabbit.earLength || ""),
-        genetics: escapeText(rabbit.genetics || ""),
-        custom: escapeText(rabbit.custom || ""),
-        win1: escapeText(rabbit.win1 || ""),
-        win2: escapeText(rabbit.win2 || ""),
-        win3: escapeText(rabbit.win3 || "")
-      };
+      return nodeMap;
     }
 
     function wrapTextLines(value, maxCharsPerLine) {
@@ -1306,7 +1154,7 @@
       ].join(" | "));
     }
 
-    (function () {
+    (async function () {
       const MAX_GENERATIONS = 8;
 
       const LAYOUT = {
@@ -1415,6 +1263,28 @@
 
       function updateStatus(text) {
         statusBadge.textContent = text;
+      }
+
+      function getRabbitData(path) {
+        const rabbit = state.infoNodeMap.get(path) || {};
+        return {
+          rabbitry: escapeText(rabbit.rabbitry || ""),
+          name: escapeText(rabbit.name || ""),
+          color: escapeText(rabbit.color || ""),
+          ear: escapeText(rabbit.ear || ""),
+          weight: escapeText(rabbit.weight || ""),
+          sex: escapeText(rabbit.sex || ""),
+          legs: escapeText(rabbit.legs || ""),
+          reg: escapeText(rabbit.reg || ""),
+          gc: escapeText(rabbit.gc || ""),
+          dob: escapeText(rabbit.dob || ""),
+          earLength: escapeText(rabbit.earLength || ""),
+          genetics: escapeText(rabbit.genetics || ""),
+          custom: escapeText(rabbit.custom || ""),
+          win1: escapeText(rabbit.win1 || ""),
+          win2: escapeText(rabbit.win2 || ""),
+          win3: escapeText(rabbit.win3 || "")
+        };
       }
 
       function getNodeSide(path) {
@@ -2746,7 +2616,15 @@
 
       wirePanZoom();
       wireInteractions();
-      renderPedigree();
+
+      try {
+        const infoUrl = getParam("Info");
+        state.infoNodeMap = infoUrl ? await loadInfoPayload(infoUrl) : new Map();
+        renderPedigree();
+      } catch (err) {
+        console.error(err);
+        updateStatus(`Failed to load pedigree info: ${err.message}`);
+      }
     })();
   </script>
 </body>
