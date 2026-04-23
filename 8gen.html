@@ -970,12 +970,6 @@
       return result;
     }
 
-    const API_CONFIG = {
-      pedigreeEndpoint: "https://www.showtails.com/api/pedigree-8gen",
-      pedidQueryParam: "PEDID",
-      responseField: "the8GenInfo"
-    };
-
     async function loadInfoPayload(infoUrl) {
       const response = await fetch(infoUrl, { credentials: "omit" });
       if (!response.ok) {
@@ -984,79 +978,6 @@
 
       const text = await response.text();
       return parseInfoTextToNodeMap(text);
-    }
-
-    function extractInfoTextFromApiResponse(payload) {
-      const field = API_CONFIG.responseField;
-
-      if (typeof payload === "string") return payload;
-      if (!payload || typeof payload !== "object") return "";
-
-      if (typeof payload[field] === "string") return payload[field];
-      if (typeof payload.info === "string") return payload.info;
-      if (typeof payload.the8GenInfo === "string") return payload.the8GenInfo;
-
-      if (payload.row && typeof payload.row === "object") {
-        if (typeof payload.row[field] === "string") return payload.row[field];
-        if (typeof payload.row.the8GenInfo === "string") return payload.row.the8GenInfo;
-      }
-
-      if (Array.isArray(payload.rows)) {
-        const match = payload.rows.find(row => row && typeof row === "object" && (typeof row[field] === "string" || typeof row.the8GenInfo === "string"));
-        if (match) return match[field] || match.the8GenInfo || "";
-      }
-
-      if (Array.isArray(payload)) {
-        const match = payload.find(row => row && typeof row === "object" && (typeof row[field] === "string" || typeof row.the8GenInfo === "string"));
-        if (match) return match[field] || match.the8GenInfo || "";
-      }
-
-      return "";
-    }
-
-    async function loadInfoPayloadFromPedid(pedid) {
-      const endpoint = API_CONFIG.pedigreeEndpoint;
-      if (!endpoint) throw new Error("Missing API endpoint configuration");
-      if (!pedid) throw new Error("Missing PEDID parameter");
-
-      const url = new URL(endpoint);
-      url.searchParams.set(API_CONFIG.pedidQueryParam, pedid);
-
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        credentials: "omit",
-        headers: {
-          "Accept": "application/json, text/plain;q=0.9, */*;q=0.8"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load pedigree data (${response.status})`);
-      }
-
-      const contentType = (response.headers.get("content-type") || "").toLowerCase();
-
-      if (contentType.includes("application/json")) {
-        const payload = await response.json();
-        const infoText = extractInfoTextFromApiResponse(payload);
-        if (!infoText) throw new Error(`API response did not include ${API_CONFIG.responseField}`);
-        return parseInfoTextToNodeMap(infoText);
-      }
-
-      const rawText = await response.text();
-
-      if (rawText.trim().startsWith("---")) {
-        return parseInfoTextToNodeMap(rawText);
-      }
-
-      try {
-        const payload = JSON.parse(rawText);
-        const infoText = extractInfoTextFromApiResponse(payload);
-        if (!infoText) throw new Error(`API response did not include ${API_CONFIG.responseField}`);
-        return parseInfoTextToNodeMap(infoText);
-      } catch (err) {
-        throw new Error("API returned unsupported response format");
-      }
     }
 
     function parseInfoTextToNodeMap(text) {
@@ -1079,6 +1000,80 @@
 
       return nodeMap;
     }
+
+    const API_CONFIG = {
+      pedigreeEndpoint: "https://www.showtails.com/api/pedigree-8gen",
+      pedidQueryParam: "PEDID",
+      responseField: "the8GenInfo"
+    };
+
+    function extractInfoTextFromApiResponse(payload) {
+      function isPedigreeText(value) {
+        return typeof value === "string" && /---\s*c\s*---/i.test(value);
+      }
+
+      function dig(value, seen = new Set()) {
+        if (value == null) return "";
+
+        if (typeof value === "string") {
+          return isPedigreeText(value) ? value : "";
+        }
+
+        if (typeof value !== "object") return "";
+        if (seen.has(value)) return "";
+        seen.add(value);
+
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            const found = dig(item, seen);
+            if (found) return found;
+          }
+          return "";
+        }
+
+        if (typeof value[API_CONFIG.responseField] === "string" && value[API_CONFIG.responseField].trim()) {
+          return value[API_CONFIG.responseField];
+        }
+
+        for (const key of Object.keys(value)) {
+          const found = dig(value[key], seen);
+          if (found) return found;
+        }
+
+        return "";
+      }
+
+      return dig(payload);
+    }
+
+    async function loadInfoPayloadFromPedid(pedid) {
+      const apiUrl = `${API_CONFIG.pedigreeEndpoint}?${encodeURIComponent(API_CONFIG.pedidQueryParam)}=${encodeURIComponent(pedid)}`;
+
+      const response = await fetch(apiUrl, { credentials: "omit" });
+      if (!response.ok) {
+        throw new Error(`Failed to load pedigree API (${response.status})`);
+      }
+
+      const rawText = await response.text();
+
+      let payload;
+      try {
+        payload = JSON.parse(rawText);
+      } catch (err) {
+        console.error("PEDID API raw response (non-JSON):", rawText);
+        throw new Error("API did not return valid JSON");
+      }
+
+      console.log("PEDID API payload:", payload);
+
+      const infoText = extractInfoTextFromApiResponse(payload);
+      if (!infoText) {
+        throw new Error("API returned JSON, but no the8GenInfo text was found");
+      }
+
+      return parseInfoTextToNodeMap(infoText);
+    }
+
 
     function wrapTextLines(value, maxCharsPerLine) {
       const rawLines = String(value || "")
@@ -1277,6 +1272,7 @@
         showBadges: true,
         collapsedBranches: new Set(),
         nodesByPath: new Map(),
+        infoNodeMap: new Map(),
         duplicateGroups: new Map(),
         breederGroups: new Map(),
         duplicateSelections: new Map(),
@@ -2701,10 +2697,10 @@
         const infoUrl = getParam("Info");
 
         if (pedid) {
-          updateStatus(`Loading pedigree ${pedid}...`);
+          updateStatus(`Loading pedigree from PEDID ${pedid}...`);
           state.infoNodeMap = await loadInfoPayloadFromPedid(pedid);
         } else if (infoUrl) {
-          updateStatus("Loading pedigree info...");
+          updateStatus("Loading pedigree from Info URL...");
           state.infoNodeMap = await loadInfoPayload(infoUrl);
         } else {
           state.infoNodeMap = new Map();
