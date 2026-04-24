@@ -1001,79 +1001,23 @@
       return nodeMap;
     }
 
-    const API_CONFIG = {
-      pedigreeEndpoint: "https://www.showtails.com/api/pedigree-8gen",
-      pedidQueryParam: "PEDID",
-      responseField: "the8GenInfo"
+    const PUBLIC_INFO_CONFIG = {
+      baseUrl: "https://showtailspedigreeinfo.glide.page/dl/da19fa/s/11283c/r/"
     };
 
-    function extractInfoTextFromApiResponse(payload) {
-      function isPedigreeText(value) {
-        return typeof value === "string" && /---\s*c\s*---/i.test(value);
-      }
-
-      function dig(value, seen = new Set()) {
-        if (value == null) return "";
-
-        if (typeof value === "string") {
-          return isPedigreeText(value) ? value : "";
-        }
-
-        if (typeof value !== "object") return "";
-        if (seen.has(value)) return "";
-        seen.add(value);
-
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            const found = dig(item, seen);
-            if (found) return found;
-          }
-          return "";
-        }
-
-        if (typeof value[API_CONFIG.responseField] === "string" && value[API_CONFIG.responseField].trim()) {
-          return value[API_CONFIG.responseField];
-        }
-
-        for (const key of Object.keys(value)) {
-          const found = dig(value[key], seen);
-          if (found) return found;
-        }
-
-        return "";
-      }
-
-      return dig(payload);
+    function buildPublicInfoUrlFromPedid(pedid) {
+      const cleanPedid = String(pedid || "").trim();
+      if (!cleanPedid) return "";
+      return PUBLIC_INFO_CONFIG.baseUrl + encodeURIComponent(cleanPedid);
     }
 
     async function loadInfoPayloadFromPedid(pedid) {
-      const apiUrl = `${API_CONFIG.pedigreeEndpoint}?${encodeURIComponent(API_CONFIG.pedidQueryParam)}=${encodeURIComponent(pedid)}`;
+      const infoUrl = buildPublicInfoUrlFromPedid(pedid);
+      if (!infoUrl) throw new Error("Missing PEDID");
 
-      const response = await fetch(apiUrl, { credentials: "omit" });
-      if (!response.ok) {
-        throw new Error(`Failed to load pedigree API (${response.status})`);
-      }
-
-      const rawText = await response.text();
-
-      let payload;
-      try {
-        payload = JSON.parse(rawText);
-      } catch (err) {
-        console.error("PEDID API raw response (non-JSON):", rawText);
-        throw new Error("API did not return valid JSON");
-      }
-
-      console.log("PEDID API payload:", payload);
-
-      const infoText = extractInfoTextFromApiResponse(payload);
-      if (!infoText) {
-        throw new Error("API returned JSON, but no the8GenInfo text was found");
-      }
-
-      return parseInfoTextToNodeMap(infoText);
+      console.log("PEDID public info URL:", infoUrl);
+      return loadInfoPayload(infoUrl);
     }
-
 
     function wrapTextLines(value, maxCharsPerLine) {
       const rawLines = String(value || "")
