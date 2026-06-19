@@ -443,21 +443,49 @@
       return nodeMap;
     }
 
+    function normalizeRowsResult(rows){
+      if (Array.isArray(rows)) return rows;
+      if (rows && Array.isArray(rows.rows)) return rows.rows;
+      if (rows && Array.isArray(rows.data)) return rows.data;
+      if (rows && Array.isArray(rows.items)) return rows.items;
+      return [];
+    }
+
     async function loadPedigreeFromGlide(pedid){
       const cleanPedid = String(pedid || "").trim();
       if (!cleanPedid) throw new Error("Missing PEDID");
 
-      const rows = await rabbitPedigreesTable.get({
-        where: {
-          childRabbitId: cleanPedid
-        }
-      });
+      let rows;
+      let queryError = null;
 
-      const list = Array.isArray(rows) ? rows : (rows && rows.rows) ? rows.rows : [];
+      try {
+        // Glide Tables SDK uses a function-style server-side query/filter.
+        // The previous object form caused: "n is not a function".
+        rows = await rabbitPedigreesTable.get(row => row.childRabbitId === cleanPedid);
+      } catch (err) {
+        queryError = err;
+        console.warn("Glide filtered get failed; falling back to full get().", err);
+
+        // Fallback keeps the viewer working if the SDK/account does not support filtered get().
+        rows = await rabbitPedigreesTable.get();
+      }
+
+      const list = normalizeRowsResult(rows);
       const row = list.find(r => String(r.childRabbitId || "").trim() === cleanPedid) || list[0];
 
-      if (!row) throw new Error(`No pedigree found for PEDID ${cleanPedid}`);
-      if (!row.the8GenInfo) throw new Error(`Pedigree row found, but the8GenInfo is empty for PEDID ${cleanPedid}`);
+      if (!row) {
+        const extra = queryError ? ` Filter error: ${queryError.message}` : "";
+        throw new Error(`No pedigree found for PEDID ${cleanPedid}.${extra}`);
+      }
+
+      if (!row.the8GenInfo) {
+        throw new Error(`Pedigree row found, but the8GenInfo is empty for PEDID ${cleanPedid}`);
+      }
+
+      console.log("Loaded pedigree row:", {
+        childRabbitId: row.childRabbitId,
+        infoLength: String(row.the8GenInfo || "").length
+      });
 
       return parseInfoTextToNodeMap(row.the8GenInfo);
     }
