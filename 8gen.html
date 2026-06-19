@@ -443,11 +443,58 @@
       return nodeMap;
     }
 
-    function normalizeRowsResult(rows){
-      if (Array.isArray(rows)) return rows;
-      if (rows && Array.isArray(rows.rows)) return rows.rows;
-      if (rows && Array.isArray(rows.data)) return rows.data;
-      if (rows && Array.isArray(rows.items)) return rows.items;
+    function unwrapGlideValue(value){
+      if (value === null || value === undefined) return "";
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+      if (typeof value === "object") {
+        if (value.value !== undefined) return unwrapGlideValue(value.value);
+        if (value.displayValue !== undefined) return unwrapGlideValue(value.displayValue);
+        if (value.text !== undefined) return unwrapGlideValue(value.text);
+        if (value.content !== undefined) return unwrapGlideValue(value.content);
+      }
+      return "";
+    }
+
+    function readGlideCell(row, keys){
+      if (!row) return "";
+
+      for (const key of keys){
+        if (row[key] !== undefined) return unwrapGlideValue(row[key]);
+      }
+
+      const containers = [row.data, row.values, row.cells, row.columns, row._values, row._data];
+      for (const container of containers){
+        if (!container) continue;
+        for (const key of keys){
+          if (container[key] !== undefined) return unwrapGlideValue(container[key]);
+        }
+      }
+
+      if (typeof row.get === "function") {
+        for (const key of keys){
+          try {
+            const v = row.get(key);
+            if (v !== undefined && v !== null && String(unwrapGlideValue(v)).trim()) return unwrapGlideValue(v);
+          } catch (err) {}
+        }
+      }
+
+      return "";
+    }
+
+    function getRowPedid(row){
+      return readGlideCell(row, ["childRabbitId", "FlSJj"]);
+    }
+
+    function getRowEightGenInfo(row){
+      return readGlideCell(row, ["the8GenInfo", "ktZf7"]);
+    }
+
+    function normalizeRows(result){
+      if (Array.isArray(result)) return result;
+      if (result && Array.isArray(result.rows)) return result.rows;
+      if (result && Array.isArray(result.data)) return result.data;
+      if (result && Array.isArray(result.items)) return result.items;
       return [];
     }
 
@@ -455,39 +502,46 @@
       const cleanPedid = String(pedid || "").trim();
       if (!cleanPedid) throw new Error("Missing PEDID");
 
-      let rows;
-      let queryError = null;
+      let rows = [];
+      let filteredLookupError = null;
 
       try {
-        // Glide Tables SDK uses a function-style server-side query/filter.
-        // The previous object form caused: "n is not a function".
-        rows = await rabbitPedigreesTable.get(row => row.childRabbitId === cleanPedid);
+        // Preferred: server-side / SDK-supported filtered lookup.
+        rows = normalizeRows(await rabbitPedigreesTable.get(row => String(row.childRabbitId || row.FlSJj || "").trim() === cleanPedid));
       } catch (err) {
-        queryError = err;
-        console.warn("Glide filtered get failed; falling back to full get().", err);
-
-        // Fallback keeps the viewer working if the SDK/account does not support filtered get().
-        rows = await rabbitPedigreesTable.get();
+        filteredLookupError = err;
+        console.warn("Filtered Glide lookup failed; falling back to full get().", err);
       }
 
-      const list = normalizeRowsResult(rows);
-      const row = list.find(r => String(r.childRabbitId || "").trim() === cleanPedid) || list[0];
+      if (!rows.length) {
+        const allRows = normalizeRows(await rabbitPedigreesTable.get());
+        rows = allRows.filter(row => String(getRowPedid(row)).trim() === cleanPedid);
 
+        if (!rows.length && allRows.length) {
+          console.warn("No exact PEDID match after fallback. First row keys:", Object.keys(allRows[0] || {}), allRows[0]);
+        }
+      }
+
+      const row = rows[0];
       if (!row) {
-        const extra = queryError ? ` Filter error: ${queryError.message}` : "";
+        const extra = filteredLookupError ? ` Filtered lookup error: ${filteredLookupError.message}` : "";
         throw new Error(`No pedigree found for PEDID ${cleanPedid}.${extra}`);
       }
 
-      if (!row.the8GenInfo) {
-        throw new Error(`Pedigree row found, but the8GenInfo is empty for PEDID ${cleanPedid}`);
-      }
-
-      console.log("Loaded pedigree row:", {
-        childRabbitId: row.childRabbitId,
-        infoLength: String(row.the8GenInfo || "").length
+      const info = getRowEightGenInfo(row);
+      console.log("Glide pedigree row loaded", {
+        pedid: cleanPedid,
+        rowKeys: Object.keys(row || {}),
+        childRabbitId: getRowPedid(row),
+        infoLength: String(info || "").length,
+        infoPreview: String(info || "").slice(0, 80)
       });
 
-      return parseInfoTextToNodeMap(row.the8GenInfo);
+      if (!String(info || "").trim()) {
+        throw new Error(`Pedigree row found, but the Gen 8 Info column is empty or could not be read for PEDID ${cleanPedid}. Check browser console for rowKeys.`);
+      }
+
+      return parseInfoTextToNodeMap(info);
     }
 
     async function loadInfoPayload(infoUrl){
