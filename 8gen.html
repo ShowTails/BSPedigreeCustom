@@ -14,550 +14,235 @@
       --male:#cce5ff;
       --female:#f8d7da;
       --empty:#bdbdbd;
-
-      --hl-duplicate:#ff2d2d;
-      --hl-breeder:#ffd400;
-      --hl-registered:#2f6fed;
-      --hl-gc:#d4aa00;
-      --hl-win:#2ca24f;
-      --hl-color:#8b5cf6;
-      --hl-genetics:#14b8a6;
-      --hl-missing:#f59e0b;
-      --hl-keyword:#7c3aed;
-      --hl-rabbitry:#0ea5a4;
+      --duplicate:#ff2d2d;
     }
 
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #fff;
-      font-family: Arial, sans-serif;
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#fff;
+      font-family:Arial, sans-serif;
     }
 
-    #pedigree-container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #fff;
-      touch-action: none;
+    #pedigree-container{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      background:#fff;
+      touch-action:none;
     }
 
-    svg {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #fff;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+    svg{
+      display:block;
+      width:100%;
+      height:100%;
+      background:#fff;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
     }
 
-    .line {
-      stroke: #555;
-      stroke-width: 1.4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    .line{
+      stroke:#555;
+      stroke-width:1.4;
+      fill:none;
+      vector-effect:non-scaling-stroke;
+      stroke-linecap:round;
+      stroke-linejoin:round;
     }
 
-    .box {
-      stroke: #000;
-      stroke-width: 1.2;
-      vector-effect: non-scaling-stroke;
-      cursor: pointer;
+    .box{
+      stroke:#000;
+      stroke-width:1.2;
+      vector-effect:non-scaling-stroke;
+      cursor:pointer;
     }
 
-    .male { fill: var(--male); }
-    .female { fill: var(--female); }
+    .male{ fill:var(--male); }
+    .female{ fill:var(--female); }
 
-    .empty-box {
-      stroke: var(--empty) !important;
-      stroke-dasharray: 4 3;
+    .empty-box{
+      stroke:var(--empty) !important;
+      stroke-dasharray:4 3;
     }
 
-    .dim-empty .node.empty .box {
-      opacity: 0.42;
+    .dim-empty .node.empty .box{ opacity:0.42; }
+    .hidden-node{ display:none; }
+
+    .box-name{
+      font-weight:bold;
+      fill:#000;
+      pointer-events:none;
     }
 
-    .hidden-node {
-      display: none;
+    .box-text{
+      fill:#000;
+      pointer-events:none;
     }
 
-    .collapsed > .box {
-      stroke: var(--accent) !important;
-      stroke-width: 2 !important;
+    .box-badge{
+      font-size:10px;
+      font-weight:bold;
+      fill:#234a57;
+      pointer-events:none;
     }
 
-    .highlight-overlay {
-      pointer-events: none;
-      display: none;
-      opacity: 0;
+    .duplicate .box{
+      stroke:var(--duplicate) !important;
+      stroke-width:2.8 !important;
+      animation:flashDuplicateStroke 1s ease-in-out infinite;
     }
 
-    .flash-duplicate .highlight-overlay,
-    .flash-breeder .highlight-overlay,
-    .flash-registered .highlight-overlay,
-    .flash-gc .highlight-overlay,
-    .flash-win .highlight-overlay,
-    .flash-color .highlight-overlay,
-    .flash-genetics .highlight-overlay,
-    .flash-missing .highlight-overlay,
-    .flash-keyword .highlight-overlay,
-    .flash-rabbitry .highlight-overlay {
-      display: block;
-    }
-
-    .flash-duplicate .highlight-overlay { fill: rgba(255, 45, 45, 0.34); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-breeder .highlight-overlay   { fill: rgba(255, 212, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-registered .highlight-overlay{ fill: rgba(47, 111, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-gc .highlight-overlay        { fill: rgba(212, 170, 0, 0.30); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-win .highlight-overlay       { fill: rgba(44, 162, 79, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-color .highlight-overlay     { fill: rgba(139, 92, 246, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-genetics .highlight-overlay  { fill: rgba(20, 184, 166, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-missing .highlight-overlay   { fill: rgba(245, 158, 11, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-keyword .highlight-overlay   { fill: rgba(124, 58, 237, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-    .flash-rabbitry .highlight-overlay  { fill: rgba(14, 165, 164, 0.28); animation: pulseFill 1s ease-in-out infinite; }
-
-    .flash-duplicate .box { stroke: var(--hl-duplicate) !important; stroke-width: 2.8 !important; animation: flashDuplicateStroke 1s ease-in-out infinite; }
-    .flash-breeder:not(.flash-duplicate) .box { stroke: var(--hl-breeder) !important; stroke-width: 2.6 !important; animation: flashBreederStroke 1s ease-in-out infinite; }
-    .flash-registered:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-registered) !important; stroke-width: 2.6 !important; animation: flashRegisteredStroke 1s ease-in-out infinite; }
-    .flash-gc:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-gc) !important; stroke-width: 2.6 !important; animation: flashGCStroke 1s ease-in-out infinite; }
-    .flash-win:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-win) !important; stroke-width: 2.6 !important; animation: flashWinStroke 1s ease-in-out infinite; }
-    .flash-color:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-color) !important; stroke-width: 2.6 !important; animation: flashColorStroke 1s ease-in-out infinite; }
-    .flash-genetics:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-genetics) !important; stroke-width: 2.6 !important; animation: flashGeneticsStroke 1s ease-in-out infinite; }
-    .flash-missing:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-missing) !important; stroke-width: 2.6 !important; animation: flashMissingStroke 1s ease-in-out infinite; }
-    .flash-keyword:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-keyword) !important; stroke-width: 2.6 !important; animation: flashKeywordStroke 1s ease-in-out infinite; }
-    .flash-rabbitry:not(.flash-duplicate):not(.flash-breeder) .box { stroke: var(--hl-rabbitry) !important; stroke-width: 2.6 !important; animation: flashRabbitryStroke 1s ease-in-out infinite; }
-
-    @keyframes flashDuplicateStroke { 0%,100% { stroke:#ff2d2d; stroke-opacity:1; } 50% { stroke:#860000; stroke-opacity:0.5; } }
-    @keyframes flashBreederStroke   { 0%,100% { stroke:#ffd400; stroke-opacity:1; } 50% { stroke:#8f7600; stroke-opacity:0.5; } }
-    @keyframes flashRegisteredStroke{ 0%,100% { stroke:#2f6fed; stroke-opacity:1; } 50% { stroke:#163f93; stroke-opacity:0.5; } }
-    @keyframes flashGCStroke        { 0%,100% { stroke:#d4aa00; stroke-opacity:1; } 50% { stroke:#7c6200; stroke-opacity:0.5; } }
-    @keyframes flashWinStroke       { 0%,100% { stroke:#2ca24f; stroke-opacity:1; } 50% { stroke:#1d6a33; stroke-opacity:0.5; } }
-    @keyframes flashColorStroke     { 0%,100% { stroke:#8b5cf6; stroke-opacity:1; } 50% { stroke:#4e2ea8; stroke-opacity:0.5; } }
-    @keyframes flashGeneticsStroke  { 0%,100% { stroke:#14b8a6; stroke-opacity:1; } 50% { stroke:#0c6a60; stroke-opacity:0.5; } }
-    @keyframes flashMissingStroke   { 0%,100% { stroke:#f59e0b; stroke-opacity:1; } 50% { stroke:#a76406; stroke-opacity:0.5; } }
-    @keyframes flashKeywordStroke   { 0%,100% { stroke:#7c3aed; stroke-opacity:1; } 50% { stroke:#4a2390; stroke-opacity:0.5; } }
-    @keyframes flashRabbitryStroke  { 0%,100% { stroke:#0ea5a4; stroke-opacity:1; } 50% { stroke:#0a6464; stroke-opacity:0.5; } }
-
-    @keyframes pulseFill {
-      0%,100% { fill-opacity:0.36; }
-      50% { fill-opacity:0.10; }
-    }
-
-    .duplicate-connector {
-      stroke: #ff2d2d;
-      stroke-width: 4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      animation: flashDuplicateStroke 1s ease-in-out infinite;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      pointer-events: none;
-    }
-
-    .breeder-connector {
-      stroke: #ffd400;
-      stroke-width: 4;
-      fill: none;
-      vector-effect: non-scaling-stroke;
-      animation: flashBreederStroke 1s ease-in-out infinite;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      pointer-events: none;
-    }
-
-    .box-name {
-      font-weight: bold;
-      fill: #000;
-      pointer-events: none;
-    }
-
-    .box-text {
-      fill: #000;
-      pointer-events: none;
-    }
-
-    .box-badge {
-      font-size: 10px;
-      font-weight: bold;
-      fill: #234a57;
-      pointer-events: none;
-    }
-
-    .collapse-btn {
-      fill: #fff;
-      stroke: var(--accent);
-      stroke-width: 1.2;
-      vector-effect: non-scaling-stroke;
-      cursor: pointer;
-    }
-
-    .collapse-symbol {
-      font-size: 12px;
-      font-weight: bold;
-      fill: var(--accent);
-      text-anchor: middle;
-      dominant-baseline: middle;
-      pointer-events: none;
+    @keyframes flashDuplicateStroke{
+      0%,100%{ stroke:#ff2d2d; stroke-opacity:1; }
+      50%{ stroke:#860000; stroke-opacity:.5; }
     }
 
     #toggle-panel-btn,
-    #reset-view-btn {
-      position: absolute;
-      top: 10px;
-      z-index: 20;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 7px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    #reset-view-btn{
+      position:absolute;
+      top:10px;
+      z-index:20;
+      padding:8px 14px;
+      border:none;
+      border-radius:7px;
+      color:#fff;
+      cursor:pointer;
+      font-size:14px;
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
     }
 
-    #toggle-panel-btn {
-      left: 10px;
-      background: #234a57;
+    #toggle-panel-btn{ left:10px; background:#234a57; }
+    #reset-view-btn{ right:10px; background:#4a4a4a; }
+
+    #controls-panel{
+      position:absolute;
+      top:10px;
+      left:10px;
+      width:340px;
+      max-height:calc(100vh - 20px);
+      overflow:auto;
+      background:var(--panel-bg);
+      border:1px solid var(--panel-border);
+      border-radius:10px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+      z-index:21;
+      padding:12px;
+      color:var(--panel-text);
+      transition:transform .22s ease, opacity .22s ease;
+      transform:translateX(0);
+      opacity:1;
+      box-sizing:border-box;
     }
 
-    #reset-view-btn {
-      right: 10px;
-      background: #4a4a4a;
+    #controls-panel.hidden{
+      transform:translateX(-110%);
+      opacity:0;
+      pointer-events:none;
     }
 
-    #controls-panel {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 340px;
-      max-height: calc(100vh - 20px);
-      overflow: auto;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 21;
-      padding: 12px 12px 10px 12px;
-      color: var(--panel-text);
-      transition: transform 0.22s ease, opacity 0.22s ease;
-      transform: translateX(0);
-      opacity: 1;
-      box-sizing: border-box;
+    #panel-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
     }
 
-    #controls-panel.hidden {
-      transform: translateX(-110%);
-      opacity: 0;
-      pointer-events: none;
+    #panel-header h2{ margin:0; font-size:18px; }
+
+    #close-panel-btn{
+      border:1px solid #b9c4ca;
+      background:#fff;
+      color:#234a57;
+      border-radius:6px;
+      width:30px;
+      height:30px;
+      cursor:pointer;
+      font-size:16px;
+      line-height:1;
     }
 
-    #panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+    #controls-panel h3{
+      margin:12px 0 6px;
+      font-size:14px;
+      color:#234a57;
     }
 
-    #panel-header h2 {
-      margin: 0;
-      font-size: 18px;
+    .control-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:8px;
     }
 
-    #close-panel-btn {
-      border: 1px solid #b9c4ca;
-      background: #fff;
-      color: #234a57;
-      border-radius: 6px;
-      width: 30px;
-      height: 30px;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      flex: 0 0 auto;
+    .btn{
+      border:1px solid #b9c4ca;
+      background:#fff;
+      color:#234a57;
+      border-radius:7px;
+      padding:6px 10px;
+      cursor:pointer;
+      font-size:13px;
     }
 
-    #controls-panel h3 {
-      margin: 12px 0 6px 0;
-      font-size: 14px;
-      color: #234a57;
+    .btn.active{
+      background:#234a57;
+      color:#fff;
+      border-color:#234a57;
     }
 
-    .control-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
+    .toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin:6px 0;
+      font-size:13px;
+      color:#234a57;
     }
 
-    .btn {
-      border: 1px solid #b9c4ca;
-      background: #fff;
-      color: #234a57;
-      border-radius: 7px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .btn.active {
-      background: #234a57;
-      color: #fff;
-      border-color: #234a57;
-    }
-
-    .btn.small {
-      font-size: 12px;
-      padding: 5px 8px;
-    }
-
-    .toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 6px 0;
-      font-size: 13px;
-      color: #234a57;
-    }
-
-    .toggle input {
-      transform: scale(1.1);
-      cursor: pointer;
-    }
-
-    .sub-card,
     #summary-card,
-    #duplicates-card,
-    #repeated-rabbits-card,
-    #breeder-card {
-      border: 1px solid #d8d8d8;
-      border-radius: 8px;
-      padding: 8px;
-      background: #fcfcfc;
-      margin-top: 8px;
+    #duplicates-card{
+      border:1px solid #d8d8d8;
+      border-radius:8px;
+      padding:8px;
+      background:#fcfcfc;
+      margin-top:8px;
     }
 
-    .sub-card .summary-line,
-    #summary-card .summary-line,
-    #duplicates-card .summary-line,
-    #repeated-rabbits-card .summary-line,
-    #breeder-card .summary-line {
-      font-size: 12px;
-      margin: 4px 0;
-      color: #234a57;
+    .summary-line{
+      font-size:12px;
+      margin:4px 0;
+      color:#234a57;
     }
 
-    .input-row {
-      display: flex;
-      gap: 6px;
-      margin: 6px 0;
+    #duplicate-list{
+      margin:6px 0 0 18px;
+      padding:0;
+      font-size:12px;
+      color:#234a57;
     }
 
-    .input-row input,
-    .input-row select {
-      flex: 1 1 auto;
-      min-width: 0;
-      border: 1px solid #cdd7dc;
-      border-radius: 7px;
-      padding: 7px 8px;
-      font-size: 13px;
-      color: #234a57;
-      background: #fff;
-      box-sizing: border-box;
-    }
-
-    .subtle-note {
-      font-size: 11px;
-      color: #5b6f78;
-      line-height: 1.35;
-    }
-
-    #risk-badge {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      border: 1px solid #c8d3d9;
-      background: #eef4f6;
-      color: #234a57;
-    }
-
-    #duplicate-list {
-      margin: 6px 0 0 18px;
-      padding: 0;
-      font-size: 12px;
-      color: #234a57;
-    }
-
-    #duplicate-list li {
-      margin: 3px 0;
-    }
-
-    .dynamic-toggle-list {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .dynamic-toggle-item {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 6px 8px;
-      border: 1px solid #e2e7ea;
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    .dynamic-toggle-item .label-wrap {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .dynamic-toggle-item .main-label {
-      font-size: 12px;
-      font-weight: bold;
-      color: #234a57;
-      word-break: break-word;
-      line-height: 1.3;
-    }
-
-    .dynamic-toggle-item .sub-label {
-      font-size: 11px;
-      color: #5b6f78;
-      margin-top: 2px;
-      line-height: 1.25;
-    }
-
-    .dynamic-toggle-item input {
-      margin-top: 2px;
-      transform: scale(1.05);
-      cursor: pointer;
-      flex: 0 0 auto;
-    }
-
-    #mini-map-card {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      width: 220px;
-      background: rgba(255,255,255,0.97);
-      border: 1px solid #d8d8d8;
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      z-index: 19;
-      padding: 8px;
-      box-sizing: border-box;
-      transition: width 0.22s ease;
-    }
-
-    #mini-map-card.minimized {
-      width: 136px;
-    }
-
-    #mini-map-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    #mini-map-title {
-      font-size: 12px;
-      font-weight: bold;
-      color: #234a57;
-    }
-
-    #mini-map-toggle-btn {
-      border: 1px solid #b9c4ca;
-      background: #fff;
-      color: #234a57;
-      border-radius: 6px;
-      width: 28px;
-      height: 28px;
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      padding: 0;
-    }
-
-    #mini-map-body {
-      height: 240px;
-      transition: height 0.22s ease, opacity 0.22s ease;
-    }
-
-    #mini-map-card.minimized #mini-map-body {
-      height: 0;
-      opacity: 0;
-      overflow: hidden;
-    }
-
-    #mini-map-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #fbfcfd;
-      border-radius: 8px;
-      border: 1px solid #e0e7ea;
-      cursor: pointer;
-    }
-
-    .mini-node {
-      fill: #bcc9cf;
-      stroke: none;
-    }
-
-    .mini-node.duplicate-selected { fill: #ff2d2d; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.breeder-selected { fill: #e3b900; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.registered-selected { fill: #2f6fed; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.gc-selected { fill: #d4aa00; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.win-selected { fill: #2ca24f; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.color-selected { fill: #8b5cf6; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.genetics-selected { fill: #14b8a6; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.missing-selected { fill: #f59e0b; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.keyword-selected { fill: #7c3aed; animation: miniPulse 1s ease-in-out infinite; }
-    .mini-node.rabbitry-selected { fill: #0ea5a4; animation: miniPulse 1s ease-in-out infinite; }
-
-    .mini-viewport {
-      fill: rgba(47,111,237,0.08);
-      stroke: #2f6fed;
-      stroke-width: 26;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-
-    @keyframes miniPulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-
-    #status-badge {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      z-index: 18;
-      background: rgba(255,255,255,0.96);
-      border: 1px solid #d8d8d8;
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 12px;
-      color: #234a57;
-      max-width: calc(100vw - 260px);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    #status-badge{
+      position:absolute;
+      bottom:10px;
+      left:10px;
+      z-index:18;
+      background:rgba(255,255,255,.96);
+      border:1px solid #d8d8d8;
+      border-radius:8px;
+      padding:7px 10px;
+      font-size:12px;
+      color:#234a57;
+      max-width:calc(100vw - 260px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
   </style>
 </head>
@@ -587,7 +272,7 @@
 
       <h3>General Tools</h3>
       <div class="toggle">
-        <label for="toggle-summary">Show closeness summary</label>
+        <label for="toggle-summary">Show summary</label>
         <input id="toggle-summary" type="checkbox" checked />
       </div>
       <div class="toggle">
@@ -595,120 +280,12 @@
         <input id="toggle-dim-empty" type="checkbox" checked />
       </div>
       <div class="toggle">
-        <label for="toggle-hide-empty">Hide empty boxes past selected generation rules</label>
+        <label for="toggle-hide-empty">Hide empty boxes</label>
         <input id="toggle-hide-empty" type="checkbox" />
       </div>
       <div class="toggle">
-        <label for="toggle-badges">Show repeated count badges</label>
-        <input id="toggle-badges" type="checkbox" checked />
-      </div>
-
-      <h3>Highlight Filters</h3>
-      <div class="toggle">
-        <label for="toggle-registered">Registered rabbits</label>
-        <input id="toggle-registered" type="checkbox" />
-      </div>
-      <div class="toggle">
-        <label for="toggle-gc">GC rabbits</label>
-        <input id="toggle-gc" type="checkbox" />
-      </div>
-      <div class="toggle">
-        <label for="toggle-win">Winning record rabbits</label>
-        <input id="toggle-win" type="checkbox" />
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Color Comparison</strong></div>
-        <div class="input-row">
-          <select id="color-mode">
-            <option value="contains">Contains keyword</option>
-            <option value="exact">Exact color</option>
-          </select>
-        </div>
-        <div class="input-row">
-          <input id="color-search-input" type="text" placeholder="Otter, Broken, Blue, Black Otter..." />
-          <button class="btn small" id="apply-color-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-color-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Matches against the rabbit color field and flashes matches in purple.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Genetics Marker Search</strong></div>
-        <div class="input-row">
-          <input id="genetics-search-input" type="text" placeholder="En, dd, a(t), ee..." />
-          <button class="btn small" id="apply-genetics-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-genetics-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches the genetics field and flashes matches in teal.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Rabbitry Search</strong></div>
-        <div class="input-row">
-          <input id="rabbitry-search-input" type="text" placeholder="Pitchin Hills, Bonne, Swade..." />
-          <button class="btn small" id="apply-rabbitry-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-rabbitry-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches rabbitry/breeder text and flashes matches in teal-blue.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Keyword Search</strong></div>
-        <div class="input-row">
-          <input id="keyword-search-input" type="text" placeholder="Search any data in any box..." />
-          <button class="btn small" id="apply-keyword-search-btn" type="button">Apply</button>
-          <button class="btn small" id="clear-keyword-search-btn" type="button">Clear</button>
-        </div>
-        <div class="subtle-note">Searches all text fields in each rabbit box and flashes matches in purple.</div>
-      </div>
-
-      <div class="sub-card">
-        <div class="summary-line"><strong>Missing Data</strong></div>
-        <div class="toggle">
-          <label for="missing-name">Missing Name</label>
-          <input id="missing-name" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-ear">Missing Ear#</label>
-          <input id="missing-ear" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-color">Missing Color</label>
-          <input id="missing-color" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-weight">Missing Weight</label>
-          <input id="missing-weight" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-dob">Missing DOB</label>
-          <input id="missing-dob" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-reg">Missing Registration</label>
-          <input id="missing-reg" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-gc">Missing GC#</label>
-          <input id="missing-gc" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-genetics">Missing Genetics</label>
-          <input id="missing-genetics" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <label for="missing-rabbitry">Missing Rabbitry</label>
-          <input id="missing-rabbitry" type="checkbox" />
-        </div>
-        <div class="subtle-note">Any box missing one or more checked fields will flash in orange.</div>
-      </div>
-
-      <h3>Branch Actions</h3>
-      <div class="control-row">
-        <button class="btn small" id="expand-all-btn">Expand All Branches</button>
-        <button class="btn small" id="collapse-sire-btn">Collapse Sire Branch</button>
-        <button class="btn small" id="collapse-dam-btn">Collapse Dam Branch</button>
+        <label for="toggle-duplicates">Flash repeated rabbits</label>
+        <input id="toggle-duplicates" type="checkbox" />
       </div>
 
       <div id="summary-card">
@@ -716,36 +293,12 @@
         <div class="summary-line" id="summary-duplicates">Repeated ancestors: 0</div>
         <div class="summary-line" id="summary-closest">Closest repeated generation: None</div>
         <div class="summary-line" id="summary-visible">Visible boxes: 0</div>
-        <div class="summary-line" id="summary-filter-matches">Active filter matches: 0</div>
-        <div id="risk-badge">Closeness: None</div>
       </div>
 
       <div id="duplicates-card">
         <div class="summary-line"><strong>Repeated Ancestors</strong></div>
         <div class="summary-line" id="duplicates-help">No repeated ancestors detected.</div>
         <ul id="duplicate-list"></ul>
-      </div>
-
-      <div id="repeated-rabbits-card">
-        <div class="summary-line"><strong>Repeated Rabbit Finder</strong></div>
-        <div class="summary-line" id="repeated-rabbits-help">No repeated rabbits detected.</div>
-        <div id="repeated-rabbits-toggles" class="dynamic-toggle-list"></div>
-      </div>
-
-      <div id="breeder-card">
-        <div class="summary-line"><strong>Same Breeder Finder</strong></div>
-        <div class="summary-line" id="breeder-help">No breeder matches detected.</div>
-        <div id="breeder-toggles" class="dynamic-toggle-list"></div>
-      </div>
-    </div>
-
-    <div id="mini-map-card">
-      <div id="mini-map-header">
-        <div id="mini-map-title">Mini Map</div>
-        <button id="mini-map-toggle-btn" type="button">−</button>
-      </div>
-      <div id="mini-map-body">
-        <svg id="mini-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
     </div>
 
@@ -755,40 +308,39 @@
     <svg id="pedigree-svg">
       <g id="viewport">
         <g id="lines-layer"></g>
-        <g id="highlight-layer"></g>
         <g id="nodes-layer"></g>
       </g>
     </svg>
   </div>
 
-  <script>
+  <script type="module">
+    import * as glide from "https://esm.sh/@glideapps/tables";
+
     const URL_PARAMS = new URLSearchParams(window.location.search);
 
-    function getParam(name) {
-      return URL_PARAMS.get(name) || "";
-    }
-
-    function escapeText(value) {
-      return String(value ?? "");
-    }
-
-    function normalizeValue(value) {
-      return String(value || "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ");
-    }
-
-    function createSvgEl(tag, attrs = {}) {
-      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-      for (const [key, value] of Object.entries(attrs)) {
-        el.setAttribute(key, value);
+    const rabbitPedigreesTable = glide.table({
+      token: "49dd5a59-6f0f-475f-9367-84b23c65d690",
+      app: "8lcj30iX3DO7vjRtX1XK",
+      table: "native-table-8e2dd118-8e06-40fa-a9de-2b78afe253b9",
+      columns: {
+        childRabbitId: { type: "string", name: "FlSJj" },
+        owner: { type: "email-address", name: "9DUGU" },
+        the8GenInfo: { type: "string", name: "ktZf7" }
       }
+    });
+
+    function getParam(name){ return URL_PARAMS.get(name) || ""; }
+    function escapeText(value){ return String(value ?? ""); }
+    function normalizeValue(value){ return String(value || "").toLowerCase().trim().replace(/\s+/g, " "); }
+
+    function createSvgEl(tag, attrs = {}){
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
       return el;
     }
 
-    function inferSexClass(path, explicitSex) {
-      if (explicitSex) {
+    function inferSexClass(path, explicitSex){
+      if (explicitSex){
         const s = explicitSex.toLowerCase();
         if (s.startsWith("m") || s === "buck" || s === "sire") return "male";
         if (s.startsWith("f") || s === "doe" || s === "dam") return "female";
@@ -797,144 +349,45 @@
       return path.endsWith("s") ? "male" : "female";
     }
 
-    function splitPedigreeLines(value) {
-      return String(value || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n")
-        .map(line => line.trim())
-        .filter(Boolean);
-    }
-
-    function normalizeBreederText(value) {
-      return String(value || "")
-        .toLowerCase()
-        .replace(/&/g, " and ")
-        .replace(/['’]s\b/g, "")
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    function tokenizeName(value) {
-      return normalizeBreederText(value)
-        .split(" ")
-        .map(token => token.trim())
-        .filter(Boolean);
-    }
-
-    function displayPrefixFromName(name) {
-      const rawTokens = String(name || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .split(" ")
-        .filter(Boolean);
-
-      if (!rawTokens.length) return "";
-      return rawTokens.slice(0, Math.min(2, rawTokens.length)).join(" ");
-    }
-
-    function getBreederMeta(data) {
-      const aliases = new Set();
-      const rabbitryNorm = normalizeBreederText(data.rabbitry);
-      const rabbitryDisplay = String(data.rabbitry || "").trim();
-      const titleWords = new Set(["grch", "gch", "gc", "ch", "grand", "champion", "sr", "jr"]);
-
-      let nameTokens = tokenizeName(data.name);
-      while (nameTokens.length && titleWords.has(nameTokens[0])) {
-        nameTokens.shift();
-      }
-
-      if (rabbitryNorm) aliases.add(rabbitryNorm);
-      if (nameTokens.length >= 3) aliases.add(nameTokens.slice(0, 3).join(" "));
-      if (nameTokens.length >= 2) aliases.add(nameTokens.slice(0, 2).join(" "));
-      if (!rabbitryNorm && nameTokens.length >= 1) aliases.add(nameTokens[0]);
-
-      const display = rabbitryDisplay || displayPrefixFromName(data.name) || "Unknown Breeder";
-
-      return {
-        aliases: Array.from(aliases).filter(Boolean),
-        display
-      };
-    }
-
-    function titleCaseWords(value) {
-      return String(value || "")
-        .split(" ")
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
-    }
-
-    function buildRabbitKey(data) {
+    function buildRabbitKey(data){
       const name = normalizeValue(data.name);
       const ear = normalizeValue(data.ear);
       if (!name && !ear) return "";
       return `${name}||${ear}`;
     }
 
-    function isEmptyRabbit(data) {
+    function isEmptyRabbit(data){
       return ![
-        data.rabbitry,
-        data.name,
-        data.color,
-        data.ear,
-        data.weight,
-        data.sex,
-        data.legs,
-        data.reg,
-        data.gc,
-        data.dob,
-        data.earLength,
-        data.genetics,
-        data.custom,
-        data.win1,
-        data.win2,
-        data.win3
+        data.rabbitry, data.name, data.color, data.ear, data.weight, data.sex,
+        data.legs, data.reg, data.gc, data.dob, data.earLength, data.genetics,
+        data.custom, data.win1, data.win2, data.win3
       ].some(value => String(value || "").trim());
     }
 
-    function normalizePathKey(key) {
+    function normalizePathKey(key){
       const k = String(key || "").trim().toLowerCase().replace(/^\/+|\/+$/g, "");
       if (!k || k === "c") return "";
       if (!/^[sd](\/[sd])*$/.test(k)) return null;
       return k.replace(/\//g, "");
     }
 
-    function parsePackedRabbitString(raw) {
+    function parsePackedRabbitString(raw){
       const result = {
-        rabbitry: "",
-        name: "",
-        color: "",
-        ear: "",
-        weight: "",
-        sex: "",
-        legs: "",
-        reg: "",
-        gc: "",
-        dob: "",
-        earLength: "",
-        genetics: "",
-        custom: "",
-        win1: "",
-        win2: "",
-        win3: ""
+        rabbitry:"", name:"", color:"", ear:"", weight:"", sex:"", legs:"",
+        reg:"", gc:"", dob:"", earLength:"", genetics:"", custom:"",
+        win1:"", win2:"", win3:""
       };
 
       if (typeof raw !== "string") return result;
 
-      const lines = raw
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n");
-
+      const lines = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
       let currentWin = "win1";
 
-      for (const line of lines) {
+      for (const line of lines){
         if (!line) continue;
         const idx = line.indexOf(":");
 
-        if (idx < 0) {
+        if (idx < 0){
           const extra = line.trim();
           if (!extra) continue;
           if (result[currentWin]) result[currentWin] += `\n${extra}`;
@@ -945,18 +398,18 @@
         const key = line.slice(0, idx).trim().toLowerCase();
         const value = line.slice(idx + 1).trim();
 
-        switch (key) {
-          case "r":  result.rabbitry = value; break;
-          case "n":  result.name = value; break;
-          case "c":  result.color = value; break;
-          case "e":  result.ear = value; break;
-          case "w":  result.weight = value; break;
+        switch (key){
+          case "r": result.rabbitry = value; break;
+          case "n": result.name = value; break;
+          case "c": result.color = value; break;
+          case "e": result.ear = value; break;
+          case "w": result.weight = value; break;
           case "sx":
           case "sex": result.sex = value; break;
-          case "l":  result.legs = value; break;
+          case "l": result.legs = value; break;
           case "re": result.reg = value; break;
-          case "g":  result.gc = value; break;
-          case "d":  result.dob = value; break;
+          case "g": result.gc = value; break;
+          case "d": result.dob = value; break;
           case "el": result.earLength = value; break;
           case "ge": result.genetics = value; break;
           case "cu":
@@ -970,24 +423,13 @@
       return result;
     }
 
-    async function loadInfoPayload(infoUrl) {
-      const response = await fetch(infoUrl, { credentials: "omit" });
-      if (!response.ok) {
-        throw new Error(`Failed to load pedigree info (${response.status})`);
-      }
-
-      const text = await response.text();
-      return parseInfoTextToNodeMap(text);
-    }
-
-    function parseInfoTextToNodeMap(text) {
+    function parseInfoTextToNodeMap(text){
       const nodeMap = new Map();
       const raw = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
       const sectionRegex = /---\s*([cCsSdD](?:\s*\/\s*[sSdD])*)\s*---/g;
       const matches = Array.from(raw.matchAll(sectionRegex));
 
-      for (let i = 0; i < matches.length; i++) {
+      for (let i = 0; i < matches.length; i++){
         const match = matches[i];
         const sectionKey = match[1];
         const start = match.index + match[0].length;
@@ -1001,113 +443,76 @@
       return nodeMap;
     }
 
-    const PUBLIC_INFO_CONFIG = {
-      baseUrl: "https://showtailspedigreeinfo.glide.page/dl/da19fa/s/11283c/r/"
-    };
-
-    function buildPublicInfoUrlFromPedid(pedid) {
+    async function loadPedigreeFromGlide(pedid){
       const cleanPedid = String(pedid || "").trim();
-      if (!cleanPedid) return "";
-      return PUBLIC_INFO_CONFIG.baseUrl + encodeURIComponent(cleanPedid);
+      if (!cleanPedid) throw new Error("Missing PEDID");
+
+      const rows = await rabbitPedigreesTable.get({
+        where: {
+          childRabbitId: cleanPedid
+        }
+      });
+
+      const list = Array.isArray(rows) ? rows : (rows && rows.rows) ? rows.rows : [];
+      const row = list.find(r => String(r.childRabbitId || "").trim() === cleanPedid) || list[0];
+
+      if (!row) throw new Error(`No pedigree found for PEDID ${cleanPedid}`);
+      if (!row.the8GenInfo) throw new Error(`Pedigree row found, but the8GenInfo is empty for PEDID ${cleanPedid}`);
+
+      return parseInfoTextToNodeMap(row.the8GenInfo);
     }
 
-    async function loadInfoPayloadFromPedid(pedid) {
-      const infoUrl = buildPublicInfoUrlFromPedid(pedid);
-      if (!infoUrl) throw new Error("Missing PEDID");
-
-      console.log("PEDID public info URL:", infoUrl);
-      return loadInfoPayload(infoUrl);
+    async function loadInfoPayload(infoUrl){
+      const response = await fetch(infoUrl, { credentials:"omit" });
+      if (!response.ok) throw new Error(`Failed to load pedigree info (${response.status})`);
+      const text = await response.text();
+      return parseInfoTextToNodeMap(text);
     }
 
-    function wrapTextLines(value, maxCharsPerLine) {
-      const rawLines = String(value || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n");
-
+    function wrapTextLines(value, maxCharsPerLine){
+      const rawLines = String(value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
       const output = [];
-
       rawLines.forEach(raw => {
         const line = raw.trim();
         if (!line) return;
-
         const words = line.split(/\s+/);
         let current = "";
-
         words.forEach(word => {
           const test = current ? `${current} ${word}` : word;
-          if (test.length <= maxCharsPerLine) {
-            current = test;
-          } else {
+          if (test.length <= maxCharsPerLine) current = test;
+          else {
             if (current) output.push(current);
             current = word;
           }
         });
-
         if (current) output.push(current);
       });
-
       return output;
     }
 
-    function appendWrappedText(group, x, y, className, value, metrics, maxWidth, extraAttrs = {}) {
-      const approxChars = Math.max(8, Math.floor(maxWidth / (metrics.textSize * 0.58)));
+    function appendWrappedText(group, x, y, className, value, metrics, maxWidth, extraAttrs = {}){
+      const approxChars = Math.max(8, Math.floor(maxWidth / (metrics.textSize * .58)));
       const lines = wrapTextLines(value, approxChars);
-      if (!lines.length) return { lineCount: 0, textEl: null };
+      if (!lines.length) return { lineCount:0, textEl:null };
 
-      const textEl = createSvgEl("text", Object.assign({
-        x,
-        y,
-        class: className
-      }, extraAttrs));
-
+      const textEl = createSvgEl("text", Object.assign({ x, y, class:className }, extraAttrs));
       lines.forEach((line, index) => {
-        const tspan = createSvgEl("tspan", {
-          x,
-          dy: index === 0 ? 0 : metrics.lineHeight
-        });
+        const tspan = createSvgEl("tspan", { x, dy:index === 0 ? 0 : metrics.lineHeight });
         tspan.textContent = line;
         textEl.appendChild(tspan);
       });
-
       group.appendChild(textEl);
-      return { lineCount: lines.length, textEl };
+      return { lineCount:lines.length, textEl };
     }
 
-    function addFieldRow(rows, label, value) {
+    function addFieldRow(rows, label, value){
       const clean = String(value || "").trim();
-      if (!clean) return;
-      rows.push(`${label}: ${clean}`);
+      if (clean) rows.push(`${label}: ${clean}`);
     }
 
-    function addMultiFieldRows(rows, label, value) {
-      const clean = String(value || "").trim();
-      if (!clean) return;
-
-      const parts = clean
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n")
-        .map(v => v.trim())
-        .filter(Boolean);
-
-      if (!parts.length) return;
-
-      if (parts.length === 1) {
-        rows.push(`${label}: ${parts[0]}`);
-        return;
-      }
-
-      rows.push(`${label}: ${parts[0]}`);
-      for (let i = 1; i < parts.length; i++) {
-        rows.push(`  ${parts[i]}`);
-      }
-    }
-
-    function getNodeDisplayRows(data, generation) {
+    function getNodeDisplayRows(data, generation){
       const rows = [];
-
-      if (generation <= 5) {
+      if (generation <= 5){
         addFieldRow(rows, "Color", data.color);
         addFieldRow(rows, "Ear#", data.ear);
         addFieldRow(rows, "Weight", data.weight);
@@ -1118,14 +523,13 @@
         addFieldRow(rows, "DOB", data.dob);
         addFieldRow(rows, "Ear Length", data.earLength);
         addFieldRow(rows, "Genetics", data.genetics);
-        addMultiFieldRows(rows, "Custom", data.custom);
-        addMultiFieldRows(rows, "Win 1", data.win1);
-        addMultiFieldRows(rows, "Win 2", data.win2);
-        addMultiFieldRows(rows, "Win 3", data.win3);
+        addFieldRow(rows, "Custom", data.custom);
+        addFieldRow(rows, "Win 1", data.win1);
+        addFieldRow(rows, "Win 2", data.win2);
+        addFieldRow(rows, "Win 3", data.win3);
         return rows;
       }
-
-      if (generation <= 7) {
+      if (generation <= 7){
         addFieldRow(rows, "Color", data.color);
         addFieldRow(rows, "Ear#", data.ear);
         addFieldRow(rows, "Weight", data.weight);
@@ -1135,976 +539,301 @@
         addFieldRow(rows, "Genetics", data.genetics);
         return rows;
       }
-
       addFieldRow(rows, "Ear#", data.ear);
       addFieldRow(rows, "Color", data.color);
       addFieldRow(rows, "GC#", data.gc);
       return rows;
     }
 
-    function countWrappedLinesForRows(rows, metrics, usableWidth) {
-      const approxChars = Math.max(8, Math.floor(usableWidth / (metrics.textSize * 0.58)));
+    function countWrappedLinesForRows(rows, metrics, usableWidth){
+      const approxChars = Math.max(8, Math.floor(usableWidth / (metrics.textSize * .58)));
       let total = 0;
-      rows.forEach(row => {
-        total += Math.max(1, wrapTextLines(row, approxChars).length);
-      });
+      rows.forEach(row => total += Math.max(1, wrapTextLines(row, approxChars).length));
       return total;
     }
 
-    function getSearchableText(data) {
-      return normalizeValue([
-        data.rabbitry,
-        data.name,
-        data.color,
-        data.ear,
-        data.weight,
-        data.sex,
-        data.legs,
-        data.reg,
-        data.gc,
-        data.dob,
-        data.earLength,
-        data.genetics,
-        data.custom,
-        data.win1,
-        data.win2,
-        data.win3
-      ].join(" | "));
-    }
-
-    (async function () {
+    (async function(){
       const MAX_GENERATIONS = 8;
-
       const LAYOUT = {
-        rootX: 0,
-        rootY: 0,
-        sideColumnX: {
-          2: 580,
-          3: 1170,
-          4: 1810,
-          5: 2510,
-          6: 3280,
-          7: 4110,
-          8: 5010
-        },
-        leafGap: 126,
-        branchGap: 26,
-        padding: 120,
-        focusPadding: 260
+        rootX:0,
+        rootY:0,
+        sideColumnX:{ 2:580, 3:1170, 4:1810, 5:2510, 6:3280, 7:4110, 8:5010 },
+        leafGap:126,
+        branchGap:26,
+        padding:120,
+        focusPadding:260
       };
-
-      const BOX_SCALE = {
-        1: 1.00,
-        2: 0.98,
-        3: 0.92,
-        4: 0.84,
-        5: 0.74,
-        6: 0.64,
-        7: 0.54,
-        8: 0.46
-      };
-
+      const BOX_SCALE = { 1:1, 2:.98, 3:.92, 4:.84, 5:.74, 6:.64, 7:.54, 8:.46 };
       const BASE_BOX_WIDTH = 292;
       const BASE_BOX_HEIGHT = 182;
 
       const state = {
-        visibleGenerations: 8,
-        visibleSide: "all",
-        showSummary: true,
-        dimEmpty: true,
-        hideEmpty: false,
-        showBadges: true,
-        collapsedBranches: new Set(),
-        nodesByPath: new Map(),
-        infoNodeMap: new Map(),
-        duplicateGroups: new Map(),
-        breederGroups: new Map(),
-        duplicateSelections: new Map(),
-        breederSelections: new Map(),
-        rendered: false,
-        miniMapMinimized: false,
-        worldBounds: null,
-        view: { x: 0, y: 0, scale: 0.12, minScale: 0.03, maxScale: 16 },
-
-        filters: {
-          registered: false,
-          gc: false,
-          wins: false,
-          colorMode: "contains",
-          colorQuery: "",
-          geneticsQuery: "",
-          keywordQuery: "",
-          rabbitryQuery: "",
-          missing: {
-            name: false,
-            ear: false,
-            color: false,
-            weight: false,
-            dob: false,
-            reg: false,
-            gc: false,
-            genetics: false,
-            rabbitry: false
-          }
-        }
+        visibleGenerations:8,
+        visibleSide:"all",
+        showSummary:true,
+        dimEmpty:true,
+        hideEmpty:false,
+        flashDuplicates:false,
+        nodesByPath:new Map(),
+        infoNodeMap:new Map(),
+        duplicateGroups:new Map(),
+        rendered:false,
+        worldBounds:null,
+        view:{ x:0, y:0, scale:.12, minScale:.03, maxScale:16 }
       };
 
       const container = document.getElementById("pedigree-container");
       const svg = document.getElementById("pedigree-svg");
       const viewport = document.getElementById("viewport");
       const linesLayer = document.getElementById("lines-layer");
-      const highlightLayer = document.getElementById("highlight-layer");
       const nodesLayer = document.getElementById("nodes-layer");
       const statusBadge = document.getElementById("status-badge");
-
       const summaryCard = document.getElementById("summary-card");
       const duplicatesCard = document.getElementById("duplicates-card");
-      const repeatedRabbitsCard = document.getElementById("repeated-rabbits-card");
-      const breederCard = document.getElementById("breeder-card");
-
       const summaryDuplicates = document.getElementById("summary-duplicates");
       const summaryClosest = document.getElementById("summary-closest");
       const summaryVisible = document.getElementById("summary-visible");
-      const summaryFilterMatches = document.getElementById("summary-filter-matches");
-      const riskBadge = document.getElementById("risk-badge");
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
 
-      const repeatedRabbitsHelp = document.getElementById("repeated-rabbits-help");
-      const repeatedRabbitsToggles = document.getElementById("repeated-rabbits-toggles");
+      function updateStatus(text){ statusBadge.textContent = text; }
 
-      const breederHelp = document.getElementById("breeder-help");
-      const breederToggles = document.getElementById("breeder-toggles");
-
-      const miniMapSvg = document.getElementById("mini-map-svg");
-      const miniMapCard = document.getElementById("mini-map-card");
-      const miniMapToggleBtn = document.getElementById("mini-map-toggle-btn");
-
-      function updateStatus(text) {
-        statusBadge.textContent = text;
-      }
-
-      function getRabbitData(path) {
+      function getRabbitData(path){
         const rabbit = state.infoNodeMap.get(path) || {};
         return {
-          rabbitry: escapeText(rabbit.rabbitry || ""),
-          name: escapeText(rabbit.name || ""),
-          color: escapeText(rabbit.color || ""),
-          ear: escapeText(rabbit.ear || ""),
-          weight: escapeText(rabbit.weight || ""),
-          sex: escapeText(rabbit.sex || ""),
-          legs: escapeText(rabbit.legs || ""),
-          reg: escapeText(rabbit.reg || ""),
-          gc: escapeText(rabbit.gc || ""),
-          dob: escapeText(rabbit.dob || ""),
-          earLength: escapeText(rabbit.earLength || ""),
-          genetics: escapeText(rabbit.genetics || ""),
-          custom: escapeText(rabbit.custom || ""),
-          win1: escapeText(rabbit.win1 || ""),
-          win2: escapeText(rabbit.win2 || ""),
-          win3: escapeText(rabbit.win3 || "")
+          rabbitry:escapeText(rabbit.rabbitry || ""),
+          name:escapeText(rabbit.name || ""),
+          color:escapeText(rabbit.color || ""),
+          ear:escapeText(rabbit.ear || ""),
+          weight:escapeText(rabbit.weight || ""),
+          sex:escapeText(rabbit.sex || ""),
+          legs:escapeText(rabbit.legs || ""),
+          reg:escapeText(rabbit.reg || ""),
+          gc:escapeText(rabbit.gc || ""),
+          dob:escapeText(rabbit.dob || ""),
+          earLength:escapeText(rabbit.earLength || ""),
+          genetics:escapeText(rabbit.genetics || ""),
+          custom:escapeText(rabbit.custom || ""),
+          win1:escapeText(rabbit.win1 || ""),
+          win2:escapeText(rabbit.win2 || ""),
+          win3:escapeText(rabbit.win3 || "")
         };
       }
 
-      function getNodeSide(path) {
-        if (!path) return "root";
-        return path[0] === "s" ? "s" : "d";
-      }
-
-      function getOrderWithinSide(path) {
+      function getNodeSide(path){ if (!path) return "root"; return path[0] === "s" ? "s" : "d"; }
+      function getOrderWithinSide(path){
         const bits = path.slice(1).replace(/s/g, "0").replace(/d/g, "1");
         return bits ? parseInt(bits, 2) : 0;
       }
-
-      function getMetrics(generation) {
-        const scale = BOX_SCALE[generation] || 0.46;
+      function getMetrics(generation){
+        const scale = BOX_SCALE[generation] || .46;
         return {
-          width: BASE_BOX_WIDTH * scale,
-          minHeight: BASE_BOX_HEIGHT * scale,
-          nameSize: Math.max(8, 12 * scale),
-          textSize: Math.max(7, 10 * scale),
-          lineHeight: Math.max(9, 12 * scale),
-          titleLineHeight: Math.max(10, 13 * scale),
-          pad: Math.max(6, 8 * scale),
-          corner: Math.max(7, 10 * scale),
-          collapseR: Math.max(8, 9 * scale)
+          width:BASE_BOX_WIDTH * scale,
+          minHeight:BASE_BOX_HEIGHT * scale,
+          nameSize:Math.max(8, 12 * scale),
+          textSize:Math.max(7, 10 * scale),
+          lineHeight:Math.max(9, 12 * scale),
+          titleLineHeight:Math.max(10, 13 * scale),
+          pad:Math.max(6, 8 * scale),
+          corner:Math.max(7, 10 * scale)
         };
       }
-
-      function getNodePosition(path) {
+      function getNodePosition(path){
         const generation = path.length + 1;
-
-        if (generation === 1) {
-          return { xCenter: LAYOUT.rootX, yCenter: LAYOUT.rootY };
-        }
-
+        if (generation === 1) return { xCenter:LAYOUT.rootX, yCenter:LAYOUT.rootY };
         const side = getNodeSide(path);
         const nodesInBand = Math.pow(2, generation - 2);
         const order = getOrderWithinSide(path);
         const bandHeight = Math.pow(2, 7 - (generation - 1)) * LAYOUT.leafGap;
         const top = -((nodesInBand * bandHeight) / 2);
         const centerY = top + (order * bandHeight) + (bandHeight / 2);
-
         const x = LAYOUT.sideColumnX[generation] || LAYOUT.sideColumnX[8];
-        return {
-          xCenter: side === "s" ? -x : x,
-          yCenter: centerY
-        };
+        return { xCenter: side === "s" ? -x : x, yCenter:centerY };
       }
 
-      function drawNode(path) {
+      function drawNode(path){
         const generation = path.length + 1;
         const pos = getNodePosition(path);
         const metrics = getMetrics(generation);
-
         const data = getRabbitData(path);
         const sexClass = inferSexClass(path, data.sex);
         const empty = isEmptyRabbit(data);
         const rabbitKey = buildRabbitKey(data);
-        const breederMeta = getBreederMeta(data);
-
         const title = [data.rabbitry, data.name].filter(Boolean).join(" ") || "—";
-        const titleWidth = metrics.width - (metrics.pad * 2);
-        const titleApproxChars = Math.max(8, Math.floor(titleWidth / (metrics.nameSize * 0.56)));
+        const titleWidth = metrics.width - metrics.pad * 2;
+        const titleApproxChars = Math.max(8, Math.floor(titleWidth / (metrics.nameSize * .56)));
         const titleLines = wrapTextLines(title, titleApproxChars);
-
         const rows = getNodeDisplayRows(data, generation);
-        const usableWidth = metrics.width - (metrics.pad * 2);
+        const usableWidth = metrics.width - metrics.pad * 2;
         const contentLineCount = countWrappedLinesForRows(rows, metrics, usableWidth);
-
         const titleBlockHeight = Math.max(1, titleLines.length) * metrics.titleLineHeight;
         const contentBlockHeight = contentLineCount * metrics.lineHeight;
-        const computedHeight =
-          (metrics.pad * 2) +
-          titleBlockHeight +
-          (rows.length ? metrics.lineHeight * 0.6 : 0) +
-          contentBlockHeight +
-          (generation < MAX_GENERATIONS ? (metrics.collapseR * 2 + 6) : 0);
+        const boxHeight = Math.max(metrics.minHeight, metrics.pad * 2 + titleBlockHeight + (rows.length ? metrics.lineHeight * .6 : 0) + contentBlockHeight);
+        const x = pos.xCenter - metrics.width / 2;
+        const y = pos.yCenter - boxHeight / 2;
 
-        const boxHeight = Math.max(metrics.minHeight, computedHeight);
-        const x = pos.xCenter - (metrics.width / 2);
-        const y = pos.yCenter - (boxHeight / 2);
-
-        const group = createSvgEl("g", {
-          "data-path": path,
-          "data-generation": String(generation),
-          class: `node ${empty ? "empty" : ""}`
-        });
-
-        const rect = createSvgEl("rect", {
-          x,
-          y,
-          width: metrics.width,
-          height: boxHeight,
-          rx: metrics.corner,
-          ry: metrics.corner,
-          class: `box ${sexClass} ${empty ? "empty-box" : ""}`,
-          "data-slot": path
-        });
+        const group = createSvgEl("g", { "data-path":path, "data-generation":String(generation), class:`node ${empty ? "empty" : ""}` });
+        const rect = createSvgEl("rect", { x, y, width:metrics.width, height:boxHeight, rx:metrics.corner, ry:metrics.corner, class:`box ${sexClass} ${empty ? "empty-box" : ""}`, "data-slot":path });
         group.appendChild(rect);
 
-        const overlay = createSvgEl("rect", {
-          x: x + 2,
-          y: y + 2,
-          width: Math.max(0, metrics.width - 4),
-          height: Math.max(0, boxHeight - 4),
-          rx: Math.max(0, metrics.corner - 2),
-          ry: Math.max(0, metrics.corner - 2),
-          class: "highlight-overlay"
-        });
-        group.appendChild(overlay);
-
-        const badgeText = createSvgEl("text", {
-          x: x + metrics.width - metrics.pad,
-          y: y + (metrics.pad + metrics.nameSize),
-          class: "box-badge",
-          "text-anchor": "end"
-        });
-        badgeText.textContent = "";
+        const badgeText = createSvgEl("text", { x:x + metrics.width - metrics.pad, y:y + metrics.pad + metrics.nameSize, class:"box-badge", "text-anchor":"end" });
         group.appendChild(badgeText);
 
         let cursorY = y + metrics.pad + metrics.nameSize;
-
-        const titleText = createSvgEl("text", {
-          x: x + metrics.pad,
-          y: cursorY,
-          class: "box-name",
-          "font-size": metrics.nameSize
-        });
-
+        const titleText = createSvgEl("text", { x:x + metrics.pad, y:cursorY, class:"box-name", "font-size":metrics.nameSize });
         titleLines.forEach((line, index) => {
-          const tspan = createSvgEl("tspan", {
-            x: x + metrics.pad,
-            dy: index === 0 ? 0 : metrics.titleLineHeight
-          });
+          const tspan = createSvgEl("tspan", { x:x + metrics.pad, dy:index === 0 ? 0 : metrics.titleLineHeight });
           tspan.textContent = line;
           titleText.appendChild(tspan);
         });
-
         group.appendChild(titleText);
 
         cursorY += Math.max(1, titleLines.length - 1) * metrics.titleLineHeight;
         cursorY += metrics.lineHeight;
-
         rows.forEach(row => {
-          const result = appendWrappedText(
-            group,
-            x + metrics.pad,
-            cursorY,
-            "box-text",
-            row,
-            metrics,
-            usableWidth,
-            { "font-size": metrics.textSize }
-          );
-          if (result.lineCount > 0) {
-            cursorY += result.lineCount * metrics.lineHeight;
-          }
+          const result = appendWrappedText(group, x + metrics.pad, cursorY, "box-text", row, metrics, usableWidth, { "font-size":metrics.textSize });
+          if (result.lineCount > 0) cursorY += result.lineCount * metrics.lineHeight;
         });
-
-        if (generation < MAX_GENERATIONS) {
-          const cx = x + metrics.width - (metrics.collapseR + 3);
-          const cy = y + boxHeight - (metrics.collapseR + 3);
-
-          const btnCircle = createSvgEl("circle", {
-            cx,
-            cy,
-            r: metrics.collapseR,
-            class: "collapse-btn",
-            "data-collapse-path": path
-          });
-
-          const btnSymbol = createSvgEl("text", {
-            x: cx,
-            y: cy,
-            class: "collapse-symbol",
-            "data-collapse-symbol": path
-          });
-          btnSymbol.textContent = "−";
-
-          group.appendChild(btnCircle);
-          group.appendChild(btnSymbol);
-        }
 
         nodesLayer.appendChild(group);
-
-        state.nodesByPath.set(path, {
-          path,
-          generation,
-          group,
-          rect,
-          overlay,
-          badgeText,
-          data,
-          rabbitKey,
-          breederMeta,
-          empty,
-          searchableText: getSearchableText(data),
-          x,
-          y,
-          width: metrics.width,
-          height: boxHeight,
-          xCenter: pos.xCenter,
-          yCenter: pos.yCenter
-        });
+        state.nodesByPath.set(path, { path, generation, group, rect, badgeText, data, rabbitKey, empty, x, y, width:metrics.width, height:boxHeight, xCenter:pos.xCenter, yCenter:pos.yCenter });
       }
 
-      function walkPaths() {
+      function walkPaths(){
         const queue = [""];
-        while (queue.length) {
+        while (queue.length){
           const path = queue.shift();
           drawNode(path);
           const generation = path.length + 1;
-          if (generation < MAX_GENERATIONS) {
+          if (generation < MAX_GENERATIONS){
             queue.push(path + "s");
             queue.push(path + "d");
           }
         }
       }
 
-      function computeWorldBounds() {
+      function computeWorldBounds(){
         const nodes = Array.from(state.nodesByPath.values());
         const minX = Math.min(...nodes.map(n => n.x)) - LAYOUT.padding;
         const minY = Math.min(...nodes.map(n => n.y)) - LAYOUT.padding;
         const maxX = Math.max(...nodes.map(n => n.x + n.width)) + LAYOUT.padding;
         const maxY = Math.max(...nodes.map(n => n.y + n.height)) + LAYOUT.padding;
-        state.worldBounds = { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+        state.worldBounds = { minX, minY, maxX, maxY, width:maxX - minX, height:maxY - minY };
       }
 
-      function computeDuplicateGroups() {
+      function computeDuplicateGroups(){
         state.duplicateGroups.clear();
-
-        for (const node of state.nodesByPath.values()) {
+        for (const node of state.nodesByPath.values()){
           if (!node.rabbitKey) continue;
           if (!state.duplicateGroups.has(node.rabbitKey)) state.duplicateGroups.set(node.rabbitKey, []);
           state.duplicateGroups.get(node.rabbitKey).push(node);
         }
-
-        for (const [key, nodes] of Array.from(state.duplicateGroups.entries())) {
-          if (nodes.length < 2) {
-            state.duplicateGroups.delete(key);
-            state.duplicateSelections.delete(key);
-          } else if (!state.duplicateSelections.has(key)) {
-            state.duplicateSelections.set(key, false);
-          }
+        for (const [key, nodes] of Array.from(state.duplicateGroups.entries())){
+          if (nodes.length < 2) state.duplicateGroups.delete(key);
         }
       }
 
-      function computeBreederGroups() {
-        state.breederGroups.clear();
-        const groups = [];
-
-        for (const node of state.nodesByPath.values()) {
-          if (node.empty) continue;
-          const aliases = new Set((node.breederMeta && node.breederMeta.aliases) || []);
-          if (!aliases.size) continue;
-
-          let foundGroup = null;
-
-          for (const group of groups) {
-            let intersects = false;
-            for (const alias of aliases) {
-              if (group.aliases.has(alias)) {
-                intersects = true;
-                break;
-              }
-            }
-            if (intersects) {
-              foundGroup = group;
-              break;
-            }
-          }
-
-          if (!foundGroup) {
-            foundGroup = { aliases: new Set(), nodes: [], displays: new Map() };
-            groups.push(foundGroup);
-          }
-
-          for (const alias of aliases) foundGroup.aliases.add(alias);
-          foundGroup.nodes.push(node);
-
-          const display = (node.breederMeta && node.breederMeta.display) || "Unknown Breeder";
-          foundGroup.displays.set(display, (foundGroup.displays.get(display) || 0) + 1);
-        }
-
-        groups.forEach(group => {
-          if (group.nodes.length < 2) return;
-
-          const aliasList = Array.from(group.aliases).filter(Boolean).sort((a, b) => b.length - a.length || a.localeCompare(b));
-          const preferredAlias = aliasList[0] || "unknown breeder";
-
-          const displayList = Array.from(group.displays.entries())
-            .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]));
-          const preferredDisplay = displayList.length ? displayList[0][0] : titleCaseWords(preferredAlias);
-
-          const id = preferredAlias;
-
-          state.breederGroups.set(id, {
-            id,
-            label: preferredDisplay,
-            aliases: aliasList,
-            nodes: group.nodes
-          });
-
-          if (!state.breederSelections.has(id)) {
-            state.breederSelections.set(id, false);
-          }
-        });
-
-        for (const key of Array.from(state.breederSelections.keys())) {
-          if (!state.breederGroups.has(key)) state.breederSelections.delete(key);
-        }
-      }
-
-      function isPathCollapsedByAncestor(path) {
-        for (const collapsedPath of state.collapsedBranches) {
-          if (collapsedPath && path.startsWith(collapsedPath) && path.length > collapsedPath.length) return true;
-        }
-        return false;
-      }
-
-      function isNodeVisible(path, node) {
+      function isNodeVisible(path, node){
         if (node.generation > state.visibleGenerations) return false;
         if (state.visibleSide === "s" && path && !path.startsWith("s")) return false;
         if (state.visibleSide === "d" && path && !path.startsWith("d")) return false;
         if (state.hideEmpty && node.empty && node.generation > 1) return false;
-        if (isPathCollapsedByAncestor(path)) return false;
         return true;
       }
 
-      function getVisibleNodes() {
+      function getVisibleNodes(){
         const arr = [];
-        for (const [path, node] of state.nodesByPath.entries()) {
-          if (isNodeVisible(path, node)) arr.push(node);
-        }
+        for (const [path, node] of state.nodesByPath.entries()) if (isNodeVisible(path, node)) arr.push(node);
         return arr;
       }
 
-      function clearLayer(layer) {
-        while (layer.firstChild) layer.removeChild(layer.firstChild);
-      }
+      function clearLayer(layer){ while (layer.firstChild) layer.removeChild(layer.firstChild); }
+      function getConnectorAnchor(node, side){ return side === "left" ? { x:node.x - 6, y:node.yCenter } : { x:node.x + node.width + 6, y:node.yCenter }; }
+      function drawPath(d, cls){ return createSvgEl("path", { d, class:cls }); }
 
-      function getConnectorAnchor(node, side) {
-        return side === "left"
-          ? { x: node.x - 6, y: node.yCenter }
-          : { x: node.x + node.width + 6, y: node.yCenter };
-      }
-
-      function drawPath(d, cls, parentData) {
-        return createSvgEl("path", Object.assign({ d, class: cls }, parentData || {}));
-      }
-
-      function rebuildVisibleBranchLines() {
+      function rebuildVisibleBranchLines(){
         clearLayer(linesLayer);
-
         const root = state.nodesByPath.get("");
         if (!root || !isNodeVisible("", root)) return;
 
-        const sire = state.nodesByPath.get("s");
-        const dam = state.nodesByPath.get("d");
-
-        function drawParentChild(parentNode, childNode) {
+        function drawParentChild(parentNode, childNode){
           const side = getNodeSide(childNode.path);
-          const parentAnchor = side === "s"
-            ? getConnectorAnchor(parentNode, "left")
-            : getConnectorAnchor(parentNode, "right");
-          const childAnchor = side === "s"
-            ? getConnectorAnchor(childNode, "right")
-            : getConnectorAnchor(childNode, "left");
-
-          const branchX = side === "s"
-            ? Math.max(childAnchor.x, parentAnchor.x - 30)
-            : Math.min(childAnchor.x, parentAnchor.x + 30);
-
-          const d = `
-            M ${parentAnchor.x} ${parentAnchor.y}
-            L ${branchX} ${parentAnchor.y}
-            L ${branchX} ${childAnchor.y}
-            L ${childAnchor.x} ${childAnchor.y}
-          `;
+          const parentAnchor = side === "s" ? getConnectorAnchor(parentNode, "left") : getConnectorAnchor(parentNode, "right");
+          const childAnchor = side === "s" ? getConnectorAnchor(childNode, "right") : getConnectorAnchor(childNode, "left");
+          const branchX = side === "s" ? Math.max(childAnchor.x, parentAnchor.x - 30) : Math.min(childAnchor.x, parentAnchor.x + 30);
+          const d = `M ${parentAnchor.x} ${parentAnchor.y} L ${branchX} ${parentAnchor.y} L ${branchX} ${childAnchor.y} L ${childAnchor.x} ${childAnchor.y}`;
           linesLayer.appendChild(drawPath(d, "line"));
         }
 
-        function drawParentTwoChildren(parentNode, childS, childD) {
+        function drawParentTwoChildren(parentNode, childS, childD){
           const side = getNodeSide(childS.path);
-          const parentAnchor = side === "s"
-            ? getConnectorAnchor(parentNode, "left")
-            : getConnectorAnchor(parentNode, "right");
+          const parentAnchor = side === "s" ? getConnectorAnchor(parentNode, "left") : getConnectorAnchor(parentNode, "right");
           const a1 = side === "s" ? getConnectorAnchor(childS, "right") : getConnectorAnchor(childS, "left");
           const a2 = side === "s" ? getConnectorAnchor(childD, "right") : getConnectorAnchor(childD, "left");
-
           const top = a1.y < a2.y ? a1 : a2;
           const bottom = a1.y < a2.y ? a2 : a1;
-
-          const branchX = side === "s"
-            ? Math.max(a1.x, a2.x) + LAYOUT.branchGap
-            : Math.min(a1.x, a2.x) - LAYOUT.branchGap;
-
-          const d = `
-            M ${parentAnchor.x} ${parentAnchor.y}
-            L ${branchX} ${parentAnchor.y}
-            L ${branchX} ${top.y}
-            M ${branchX} ${top.y}
-            L ${top.x} ${top.y}
-            M ${branchX} ${bottom.y}
-            L ${bottom.x} ${bottom.y}
-            M ${branchX} ${top.y}
-            L ${branchX} ${bottom.y}
-          `;
+          const branchX = side === "s" ? Math.max(a1.x, a2.x) + LAYOUT.branchGap : Math.min(a1.x, a2.x) - LAYOUT.branchGap;
+          const d = `M ${parentAnchor.x} ${parentAnchor.y} L ${branchX} ${parentAnchor.y} L ${branchX} ${top.y} M ${branchX} ${top.y} L ${top.x} ${top.y} M ${branchX} ${bottom.y} L ${bottom.x} ${bottom.y} M ${branchX} ${top.y} L ${branchX} ${bottom.y}`;
           linesLayer.appendChild(drawPath(d, "line"));
         }
 
-        if (sire && isNodeVisible("s", sire)) drawParentChild(root, sire);
-        if (dam && isNodeVisible("d", dam)) drawParentChild(root, dam);
-
-        for (const [path, parentNode] of state.nodesByPath.entries()) {
-          if (!path) continue;
+        for (const [path, parentNode] of state.nodesByPath.entries()){
           if (parentNode.generation >= MAX_GENERATIONS) continue;
           if (!isNodeVisible(path, parentNode)) continue;
-
           const childS = state.nodesByPath.get(path + "s");
           const childD = state.nodesByPath.get(path + "d");
-
           const showS = !!childS && isNodeVisible(childS.path, childS);
           const showD = !!childD && isNodeVisible(childD.path, childD);
-
-          if (showS && showD) {
-            drawParentTwoChildren(parentNode, childS, childD);
-          } else if (showS) {
-            drawParentChild(parentNode, childS);
-          } else if (showD) {
-            drawParentChild(parentNode, childD);
-          }
+          if (showS && showD) drawParentTwoChildren(parentNode, childS, childD);
+          else if (showS) drawParentChild(parentNode, childS);
+          else if (showD) drawParentChild(parentNode, childD);
         }
       }
 
-      function updateCollapseSymbols() {
-        for (const [path, node] of state.nodesByPath.entries()) {
-          const symbol = node.group.querySelector("[data-collapse-symbol]");
-          if (!symbol) continue;
-          symbol.textContent = state.collapsedBranches.has(path) ? "+" : "−";
-          node.group.classList.toggle("collapsed", state.collapsedBranches.has(path));
-        }
-      }
-
-      function updateRepeatedBadges(visibleNodes) {
-        for (const node of state.nodesByPath.values()) node.badgeText.textContent = "";
-        if (!state.showBadges) return;
-
-        const visibleSet = new Set(visibleNodes.map(n => n.path));
-        for (const group of state.duplicateGroups.values()) {
-          const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => node.badgeText.textContent = `×${visibleGroup.length}`);
-          }
-        }
-      }
-
-      function clearHighlightLayer() {
-        clearLayer(highlightLayer);
-      }
-
-      function drawConnectorBus(nodes, cssClass, laneOffset, sidePreference) {
-        if (!nodes || nodes.length < 2) return;
-
-        const sorted = nodes.slice().sort((a, b) => a.yCenter - b.yCenter);
-
-        const anchors = sorted.map(node => {
-          if (sidePreference === "left") return getConnectorAnchor(node, "left");
-          if (sidePreference === "right") return getConnectorAnchor(node, "right");
-          return getNodeSide(node.path) === "s"
-            ? getConnectorAnchor(node, "left")
-            : getConnectorAnchor(node, "right");
-        });
-
-        let busX;
-        let resolvedSide = sidePreference;
-
-        if (resolvedSide === "left") {
-          busX = Math.min(...anchors.map(a => a.x)) - laneOffset;
-        } else if (resolvedSide === "right") {
-          busX = Math.max(...anchors.map(a => a.x)) + laneOffset;
-        } else {
-          const sireCount = sorted.filter(n => getNodeSide(n.path) === "s").length;
-          const damCount = sorted.length - sireCount;
-          resolvedSide = sireCount >= damCount ? "left" : "right";
-          busX = resolvedSide === "left"
-            ? Math.min(...anchors.map(a => a.x)) - laneOffset
-            : Math.max(...anchors.map(a => a.x)) + laneOffset;
-        }
-
-        highlightLayer.appendChild(createSvgEl("path", {
-          d: `M ${busX} ${anchors[0].y} L ${busX} ${anchors[anchors.length - 1].y}`,
-          class: cssClass
-        }));
-
-        anchors.forEach(anchor => {
-          highlightLayer.appendChild(createSvgEl("path", {
-            d: resolvedSide === "left"
-              ? `M ${anchor.x} ${anchor.y} L ${busX + 10} ${anchor.y} L ${busX} ${anchor.y}`
-              : `M ${anchor.x} ${anchor.y} L ${busX - 10} ${anchor.y} L ${busX} ${anchor.y}`,
-            class: cssClass
-          }));
-
-          highlightLayer.appendChild(createSvgEl("circle", {
-            cx: busX,
-            cy: anchor.y,
-            r: 4.5,
-            class: cssClass
-          }));
-        });
-      }
-
-      function nodeHasWinData(node) {
-        return !!(node.data.win1 || node.data.win2 || node.data.win3);
-      }
-
-      function getMissingChecks() {
-        return Object.values(state.filters.missing).some(Boolean);
-      }
-
-      function nodeMatchesMissing(node) {
-        const m = state.filters.missing;
-        const d = node.data;
-        return (
-          (m.name && !d.name) ||
-          (m.ear && !d.ear) ||
-          (m.color && !d.color) ||
-          (m.weight && !d.weight) ||
-          (m.dob && !d.dob) ||
-          (m.reg && !d.reg) ||
-          (m.gc && !d.gc) ||
-          (m.genetics && !d.genetics) ||
-          (m.rabbitry && !d.rabbitry)
-        );
-      }
-
-      function nodeMatchesColor(node) {
-        const query = normalizeValue(state.filters.colorQuery);
-        if (!query) return false;
-        const color = normalizeValue(node.data.color);
-        if (!color) return false;
-        if (state.filters.colorMode === "exact") return color === query;
-        return color.includes(query);
-      }
-
-      function nodeMatchesGenetics(node) {
-        const query = normalizeValue(state.filters.geneticsQuery);
-        if (!query) return false;
-        return normalizeValue(node.data.genetics).includes(query);
-      }
-
-      function nodeMatchesKeyword(node) {
-        const query = normalizeValue(state.filters.keywordQuery);
-        if (!query) return false;
-        return node.searchableText.includes(query);
-      }
-
-      function nodeMatchesRabbitry(node) {
-        const query = normalizeValue(state.filters.rabbitryQuery);
-        if (!query) return false;
-        return normalizeValue(node.data.rabbitry).includes(query) ||
-               normalizeValue(node.breederMeta.display).includes(query);
-      }
-
-      function getActiveFilterMatches(visibleNodes) {
-        let count = 0;
-        visibleNodes.forEach(node => {
-          if (state.filters.registered && node.data.reg) count++;
-          else if (state.filters.gc && node.data.gc) count++;
-          else if (state.filters.wins && nodeHasWinData(node)) count++;
-          else if (nodeMatchesColor(node)) count++;
-          else if (nodeMatchesGenetics(node)) count++;
-          else if (nodeMatchesKeyword(node)) count++;
-          else if (nodeMatchesRabbitry(node)) count++;
-          else if (getMissingChecks() && nodeMatchesMissing(node)) count++;
-        });
-        return count;
-      }
-
-      function updateSpecialHighlights(visibleNodes) {
-        const visibleSet = new Set(visibleNodes.map(node => node.path));
-
-        for (const node of state.nodesByPath.values()) {
-          node.group.classList.remove(
-            "flash-duplicate",
-            "flash-breeder",
-            "flash-registered",
-            "flash-gc",
-            "flash-win",
-            "flash-color",
-            "flash-genetics",
-            "flash-missing",
-            "flash-keyword",
-            "flash-rabbitry"
-          );
-        }
-
-        clearHighlightLayer();
-
-        let leftLane = 28;
-        let rightLane = 28;
-
-        for (const [rabbitKey, enabled] of state.duplicateSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.duplicateGroups.get(rabbitKey) || [];
-          const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => node.group.classList.add("flash-duplicate"));
-            const sireCount = visibleGroup.filter(n => getNodeSide(n.path) === "s").length;
-            const damCount = visibleGroup.filter(n => getNodeSide(n.path) === "d").length;
-            const pref = sireCount >= damCount ? "left" : "right";
-            drawConnectorBus(visibleGroup, "duplicate-connector", pref === "left" ? leftLane : rightLane, pref);
-            if (pref === "left") leftLane += 22; else rightLane += 22;
-          }
-        }
-
-        for (const [breederId, enabled] of state.breederSelections.entries()) {
-          if (!enabled) continue;
-          const group = state.breederGroups.get(breederId);
-          if (!group) continue;
-          const visibleGroup = group.nodes.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
-            visibleGroup.forEach(node => {
-              if (!node.group.classList.contains("flash-duplicate")) node.group.classList.add("flash-breeder");
-            });
-            const sireCount = visibleGroup.filter(n => getNodeSide(n.path) === "s").length;
-            const damCount = visibleGroup.filter(n => getNodeSide(n.path) === "d").length;
-            const pref = sireCount >= damCount ? "left" : "right";
-            drawConnectorBus(visibleGroup, "breeder-connector", pref === "left" ? leftLane : rightLane, pref);
-            if (pref === "left") leftLane += 22; else rightLane += 22;
-          }
-        }
-
-        visibleNodes.forEach(node => {
-          if (state.filters.registered && node.data.reg) node.group.classList.add("flash-registered");
-          if (state.filters.gc && node.data.gc) node.group.classList.add("flash-gc");
-          if (state.filters.wins && nodeHasWinData(node)) node.group.classList.add("flash-win");
-          if (nodeMatchesColor(node)) node.group.classList.add("flash-color");
-          if (nodeMatchesGenetics(node)) node.group.classList.add("flash-genetics");
-          if (getMissingChecks() && nodeMatchesMissing(node)) node.group.classList.add("flash-missing");
-          if (nodeMatchesKeyword(node)) node.group.classList.add("flash-keyword");
-          if (nodeMatchesRabbitry(node)) node.group.classList.add("flash-rabbitry");
-        });
-      }
-
-      function calculateCloseness(visibleNodes) {
+      function calculateCloseness(visibleNodes){
         const visibleSet = new Set(visibleNodes.map(n => n.path));
         let repeatedAncestors = 0;
         let closestGeneration = null;
         const duplicateItems = [];
-
-        for (const group of state.duplicateGroups.values()) {
+        for (const group of state.duplicateGroups.values()){
           const visibleGroup = group.filter(node => visibleSet.has(node.path));
-          if (visibleGroup.length > 1) {
+          if (visibleGroup.length > 1){
             repeatedAncestors++;
             const nearest = Math.min(...visibleGroup.map(node => node.generation));
             if (closestGeneration === null || nearest < closestGeneration) closestGeneration = nearest;
-
             const first = visibleGroup[0];
-            duplicateItems.push({
-              key: first.rabbitKey,
-              label: `${first.data.name || "Unnamed"} (${first.data.ear || "No Ear#"})`,
-              count: visibleGroup.length,
-              closest: nearest
+            duplicateItems.push({ key:first.rabbitKey, label:`${first.data.name || "Unnamed"} (${first.data.ear || "No Ear#"})`, count:visibleGroup.length, closest:nearest });
+          }
+        }
+        duplicateItems.sort((a,b) => a.closest - b.closest || b.count - a.count || a.label.localeCompare(b.label));
+        return { repeatedAncestors, closestGeneration, duplicateItems };
+      }
+
+      function updateDuplicateHighlights(visibleNodes){
+        const visibleSet = new Set(visibleNodes.map(n => n.path));
+        for (const node of state.nodesByPath.values()){
+          node.group.classList.remove("duplicate");
+          node.badgeText.textContent = "";
+        }
+        for (const group of state.duplicateGroups.values()){
+          const visibleGroup = group.filter(node => visibleSet.has(node.path));
+          if (visibleGroup.length > 1){
+            visibleGroup.forEach(node => {
+              node.badgeText.textContent = `×${visibleGroup.length}`;
+              if (state.flashDuplicates) node.group.classList.add("duplicate");
             });
           }
         }
-
-        duplicateItems.sort((a, b) => a.closest - b.closest || b.count - a.count || a.label.localeCompare(b.label));
-
-        let risk = "None";
-        if (closestGeneration === null) risk = "None";
-        else if (closestGeneration <= 3) risk = "Very High";
-        else if (closestGeneration === 4) risk = "High";
-        else if (closestGeneration === 5) risk = "Moderate";
-        else risk = "Low";
-
-        return { repeatedAncestors, closestGeneration, risk, duplicateItems };
       }
 
-      function renderDynamicToggleLists() {
-        const duplicateEntries = Array.from(state.duplicateGroups.entries())
-          .map(([key, nodes]) => {
-            const nearest = Math.min(...nodes.map(node => node.generation));
-            const first = nodes[0];
-            return {
-              key,
-              label: first.data.name || "Unnamed",
-              ear: first.data.ear || "No Ear#",
-              count: nodes.length,
-              nearest
-            };
-          })
-          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
-
-        repeatedRabbitsToggles.innerHTML = "";
-        if (!duplicateEntries.length) {
-          repeatedRabbitsHelp.textContent = "No repeated rabbits detected.";
-        } else {
-          repeatedRabbitsHelp.textContent = "Turn on a rabbit below to flash every matching occurrence in red.";
-          duplicateEntries.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "dynamic-toggle-item";
-
-            const labelWrap = document.createElement("div");
-            labelWrap.className = "label-wrap";
-
-            const main = document.createElement("div");
-            main.className = "main-label";
-            main.textContent = item.label;
-
-            const sub = document.createElement("div");
-            sub.className = "sub-label";
-            sub.textContent = `Ear#: ${item.ear} • appears ${item.count} times • nearest gen ${item.nearest}`;
-
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.checked = !!state.duplicateSelections.get(item.key);
-            input.dataset.duplicateKey = item.key;
-
-            labelWrap.appendChild(main);
-            labelWrap.appendChild(sub);
-            row.appendChild(labelWrap);
-            row.appendChild(input);
-            repeatedRabbitsToggles.appendChild(row);
-          });
-        }
-
-        const breederEntries = Array.from(state.breederGroups.values())
-          .map(group => {
-            const nearest = Math.min(...group.nodes.map(node => node.generation));
-            const distinctRabbits = new Set(group.nodes.map(node => node.rabbitKey || node.path)).size;
-            return {
-              id: group.id,
-              label: group.label,
-              count: group.nodes.length,
-              nearest,
-              distinctRabbits
-            };
-          })
-          .sort((a, b) => a.nearest - b.nearest || b.count - a.count || a.label.localeCompare(b.label));
-
-        breederToggles.innerHTML = "";
-        if (!breederEntries.length) {
-          breederHelp.textContent = "No breeder matches detected.";
-        } else {
-          breederHelp.textContent = "Turn on a breeder below to flash matching rabbits in yellow.";
-          breederEntries.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "dynamic-toggle-item";
-
-            const labelWrap = document.createElement("div");
-            labelWrap.className = "label-wrap";
-
-            const main = document.createElement("div");
-            main.className = "main-label";
-            main.textContent = item.label;
-
-            const sub = document.createElement("div");
-            sub.className = "sub-label";
-            sub.textContent = `${item.count} box(es) matched • ${item.distinctRabbits} rabbit(s) • nearest gen ${item.nearest}`;
-
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.checked = !!state.breederSelections.get(item.id);
-            input.dataset.breederKey = item.id;
-
-            labelWrap.appendChild(main);
-            labelWrap.appendChild(sub);
-            row.appendChild(labelWrap);
-            row.appendChild(input);
-            breederToggles.appendChild(row);
-          });
-        }
-      }
-
-      function updateSummary(visibleNodes) {
+      function updateSummary(visibleNodes){
         const result = calculateCloseness(visibleNodes);
-
         summaryDuplicates.textContent = `Repeated ancestors: ${result.repeatedAncestors}`;
         summaryClosest.textContent = `Closest repeated generation: ${result.closestGeneration || "None"}`;
         summaryVisible.textContent = `Visible boxes: ${visibleNodes.length}`;
-        summaryFilterMatches.textContent = `Active filter matches: ${getActiveFilterMatches(visibleNodes)}`;
-        riskBadge.textContent = `Closeness: ${result.risk}`;
-
-        const riskStyles = {
-          "None": { bg: "#eef4f6", color: "#234a57", border: "#c8d3d9" },
-          "Low": { bg: "#eef7ee", color: "#245b2a", border: "#bfd8c2" },
-          "Moderate": { bg: "#fff8e8", color: "#8a5b00", border: "#ead39b" },
-          "High": { bg: "#fff0e8", color: "#a34d00", border: "#e4b490" },
-          "Very High": { bg: "#fdeaea", color: "#9b1c1c", border: "#e4aaaa" }
-        };
-
-        const style = riskStyles[result.risk] || riskStyles["None"];
-        riskBadge.style.background = style.bg;
-        riskBadge.style.color = style.color;
-        riskBadge.style.borderColor = style.border;
-
         duplicateList.innerHTML = "";
-        if (!result.duplicateItems.length) {
-          duplicatesHelp.textContent = "No repeated ancestors detected.";
-        } else {
+        if (!result.duplicateItems.length) duplicatesHelp.textContent = "No repeated ancestors detected.";
+        else {
           duplicatesHelp.textContent = `${result.duplicateItems.length} repeated ancestor group(s) detected.`;
           result.duplicateItems.slice(0, 20).forEach(item => {
             const li = document.createElement("li");
@@ -2112,337 +841,137 @@
             duplicateList.appendChild(li);
           });
         }
-
-        const summaryDisplay = state.showSummary ? "block" : "none";
-        summaryCard.style.display = summaryDisplay;
-        duplicatesCard.style.display = summaryDisplay;
-        repeatedRabbitsCard.style.display = summaryDisplay;
-        breederCard.style.display = summaryDisplay;
+        const display = state.showSummary ? "block" : "none";
+        summaryCard.style.display = display;
+        duplicatesCard.style.display = display;
       }
 
-      function updateVisibility() {
+      function updateVisibility(){
         let visibleCount = 0;
-
-        for (const [path, node] of state.nodesByPath.entries()) {
+        for (const [path, node] of state.nodesByPath.entries()){
           const visible = isNodeVisible(path, node);
           node.group.classList.toggle("hidden-node", !visible);
           if (visible) visibleCount++;
         }
-
         rebuildVisibleBranchLines();
         return visibleCount;
       }
 
-      function applyTransform() {
-        viewport.setAttribute("transform", `translate(${state.view.x}, ${state.view.y}) scale(${state.view.scale})`);
-      }
+      function applyTransform(){ viewport.setAttribute("transform", `translate(${state.view.x}, ${state.view.y}) scale(${state.view.scale})`); }
 
-      function screenToWorld(clientX, clientY) {
-        const rect = svg.getBoundingClientRect();
-        return {
-          x: (clientX - rect.left - state.view.x) / state.view.scale,
-          y: (clientY - rect.top - state.view.y) / state.view.scale
-        };
-      }
-
-      function getVisibleBounds() {
+      function getVisibleBounds(){
         const nodes = getVisibleNodes();
-        if (!nodes.length) {
+        if (!nodes.length){
           const root = state.nodesByPath.get("");
-          return {
-            minX: root.x - 60,
-            minY: root.y - 60,
-            maxX: root.x + root.width + 60,
-            maxY: root.y + root.height + 60
-          };
+          return { minX:root.x - 60, minY:root.y - 60, maxX:root.x + root.width + 60, maxY:root.y + root.height + 60 };
         }
         return {
-          minX: Math.min(...nodes.map(n => n.x)) - 80,
-          minY: Math.min(...nodes.map(n => n.y)) - 80,
-          maxX: Math.max(...nodes.map(n => n.x + n.width)) + 80,
-          maxY: Math.max(...nodes.map(n => n.y + n.height)) + 80
+          minX:Math.min(...nodes.map(n => n.x)) - 80,
+          minY:Math.min(...nodes.map(n => n.y)) - 80,
+          maxX:Math.max(...nodes.map(n => n.x + n.width)) + 80,
+          maxY:Math.max(...nodes.map(n => n.y + n.height)) + 80
         };
       }
 
-      function getRootFocusBounds() {
-        const paths = ["", "s", "d"];
-        const nodes = paths.map(p => state.nodesByPath.get(p)).filter(Boolean);
+      function getRootFocusBounds(){
+        const nodes = ["", "s", "d"].map(p => state.nodesByPath.get(p)).filter(Boolean);
         return {
-          minX: Math.min(...nodes.map(n => n.x)) - LAYOUT.focusPadding,
-          minY: Math.min(...nodes.map(n => n.y)) - LAYOUT.focusPadding,
-          maxX: Math.max(...nodes.map(n => n.x + n.width)) + LAYOUT.focusPadding,
-          maxY: Math.max(...nodes.map(n => n.y + n.height)) + LAYOUT.focusPadding
+          minX:Math.min(...nodes.map(n => n.x)) - LAYOUT.focusPadding,
+          minY:Math.min(...nodes.map(n => n.y)) - LAYOUT.focusPadding,
+          maxX:Math.max(...nodes.map(n => n.x + n.width)) + LAYOUT.focusPadding,
+          maxY:Math.max(...nodes.map(n => n.y + n.height)) + LAYOUT.focusPadding
         };
       }
 
-      function fitBounds(bounds, maxScaleOverride) {
+      function fitBounds(bounds, maxScaleOverride){
         const width = bounds.maxX - bounds.minX;
         const height = bounds.maxY - bounds.minY;
         const cw = container.clientWidth;
         const ch = container.clientHeight;
-
-        const scaleX = cw / width;
-        const scaleY = ch / height;
-        let scale = Math.min(scaleX, scaleY) * 0.94;
+        let scale = Math.min(cw / width, ch / height) * .94;
         scale = Math.max(state.view.minScale, Math.min(maxScaleOverride || state.view.maxScale, scale));
-
         state.view.scale = scale;
-        state.view.x = (cw / 2) - ((bounds.minX + bounds.maxX) / 2) * scale;
-        state.view.y = (ch / 2) - ((bounds.minY + bounds.maxY) / 2) * scale;
-
+        state.view.x = cw / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
+        state.view.y = ch / 2 - ((bounds.minY + bounds.maxY) / 2) * scale;
         applyTransform();
-        updateMiniMap(getVisibleNodes());
       }
 
-      function centerOnRoot() {
-        fitBounds(getRootFocusBounds(), 5);
-      }
+      function centerOnRoot(){ fitBounds(getRootFocusBounds(), 5); }
+      function fitCurrentGenerationView(){ fitBounds(getVisibleBounds()); }
 
-      function fitCurrentGenerationView() {
-        fitBounds(getVisibleBounds());
-      }
-
-      function updateMiniMap(visibleNodes) {
-        miniMapSvg.innerHTML = "";
-        if (state.miniMapMinimized || !state.worldBounds) return;
-
-        const b = state.worldBounds;
-        miniMapSvg.setAttribute("viewBox", `${b.minX} ${b.minY} ${b.width} ${b.height}`);
-
-        visibleNodes.forEach(node => {
-          const miniRect = createSvgEl("rect", {
-            x: node.x,
-            y: node.y,
-            width: node.width,
-            height: node.height,
-            rx: 10,
-            ry: 10,
-            class: "mini-node"
-          });
-
-          if (node.group.classList.contains("flash-duplicate")) miniRect.classList.add("duplicate-selected");
-          else if (node.group.classList.contains("flash-breeder")) miniRect.classList.add("breeder-selected");
-          else if (node.group.classList.contains("flash-keyword")) miniRect.classList.add("keyword-selected");
-          else if (node.group.classList.contains("flash-color")) miniRect.classList.add("color-selected");
-          else if (node.group.classList.contains("flash-genetics")) miniRect.classList.add("genetics-selected");
-          else if (node.group.classList.contains("flash-rabbitry")) miniRect.classList.add("rabbitry-selected");
-          else if (node.group.classList.contains("flash-missing")) miniRect.classList.add("missing-selected");
-          else if (node.group.classList.contains("flash-win")) miniRect.classList.add("win-selected");
-          else if (node.group.classList.contains("flash-gc")) miniRect.classList.add("gc-selected");
-          else if (node.group.classList.contains("flash-registered")) miniRect.classList.add("registered-selected");
-
-          miniMapSvg.appendChild(miniRect);
-        });
-
-        const rect = svg.getBoundingClientRect();
-        const worldView = {
-          x: (-state.view.x) / state.view.scale,
-          y: (-state.view.y) / state.view.scale,
-          width: rect.width / state.view.scale,
-          height: rect.height / state.view.scale
-        };
-
-        miniMapSvg.appendChild(createSvgEl("rect", {
-          x: worldView.x,
-          y: worldView.y,
-          width: worldView.width,
-          height: worldView.height,
-          class: "mini-viewport"
-        }));
-      }
-
-      function applyState() {
+      function applyState(){
         if (!state.rendered) return;
-
         document.body.classList.toggle("dim-empty", state.dimEmpty);
-        updateCollapseSymbols();
-
         const visibleCount = updateVisibility();
         const visibleNodes = getVisibleNodes();
-
-        updateRepeatedBadges(visibleNodes);
-        updateSpecialHighlights(visibleNodes);
+        updateDuplicateHighlights(visibleNodes);
         updateSummary(visibleNodes);
-        updateMiniMap(visibleNodes);
-
-        updateStatus(
-          `Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${
-            state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"
-          }`
-        );
+        updateStatus(`Ready • Visible: ${visibleCount} • Gen: ${state.visibleGenerations} • Side: ${state.visibleSide === "all" ? "All" : state.visibleSide === "s" ? "Sire" : "Dam"}`);
       }
 
-      function renderPedigree() {
+      function renderPedigree(){
         updateStatus("Rendering pedigree...");
         walkPaths();
         computeWorldBounds();
         computeDuplicateGroups();
-        computeBreederGroups();
-        renderDynamicToggleLists();
         state.rendered = true;
         applyState();
         centerOnRoot();
         updateStatus(`Ready • ${state.nodesByPath.size} boxes • 8 generations`);
       }
 
-      function toggleCollapse(path) {
-        if (state.collapsedBranches.has(path)) state.collapsedBranches.delete(path);
-        else state.collapsedBranches.add(path);
-        applyState();
-        fitCurrentGenerationView();
-      }
-
-      function wirePanZoom() {
+      function wirePanZoom(){
         let dragging = false;
-        let dragPointerId = null;
         let lastX = 0;
         let lastY = 0;
-
-        let pinchActive = false;
-        let pinchStartDist = 0;
-        let pinchStartScale = 1;
-        let pinchWorldMid = null;
-
-        const activeTouches = new Map();
-
-        function zoomAt(clientX, clientY, nextScale) {
+        function zoomAt(clientX, clientY, nextScale){
           const rect = svg.getBoundingClientRect();
           const px = clientX - rect.left;
           const py = clientY - rect.top;
-
           const worldX = (px - state.view.x) / state.view.scale;
           const worldY = (py - state.view.y) / state.view.scale;
-
           state.view.scale = Math.max(state.view.minScale, Math.min(state.view.maxScale, nextScale));
           state.view.x = px - worldX * state.view.scale;
           state.view.y = py - worldY * state.view.scale;
-
           applyTransform();
-          updateMiniMap(getVisibleNodes());
         }
-
-        svg.addEventListener("wheel", (e) => {
+        svg.addEventListener("wheel", e => {
           e.preventDefault();
-          const factor = e.deltaY > 0 ? 0.88 : 1.14;
+          const factor = e.deltaY > 0 ? .88 : 1.14;
           zoomAt(e.clientX, e.clientY, state.view.scale * factor);
-        }, { passive: false });
-
-        svg.addEventListener("pointerdown", (e) => {
-          activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-          if (activeTouches.size === 2) {
-            const pts = Array.from(activeTouches.values());
-            pinchActive = true;
-            dragging = false;
-            pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            pinchStartScale = state.view.scale;
-            pinchWorldMid = screenToWorld((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
-          } else if (activeTouches.size === 1) {
-            dragging = true;
-            dragPointerId = e.pointerId;
-            lastX = e.clientX;
-            lastY = e.clientY;
-          }
-
-          try { svg.setPointerCapture(e.pointerId); } catch (err) {}
-        });
-
-        svg.addEventListener("pointermove", (e) => {
-          if (activeTouches.has(e.pointerId)) {
-            activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          }
-
-          if (pinchActive && activeTouches.size === 2) {
-            const pts = Array.from(activeTouches.values());
-            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            const midX = (pts[0].x + pts[1].x) / 2;
-            const midY = (pts[0].y + pts[1].y) / 2;
-            const rect = svg.getBoundingClientRect();
-            const px = midX - rect.left;
-            const py = midY - rect.top;
-
-            state.view.scale = Math.max(state.view.minScale, Math.min(state.view.maxScale, pinchStartScale * (dist / pinchStartDist)));
-            state.view.x = px - pinchWorldMid.x * state.view.scale;
-            state.view.y = py - pinchWorldMid.y * state.view.scale;
-            applyTransform();
-            updateMiniMap(getVisibleNodes());
-            return;
-          }
-
-          if (!dragging || e.pointerId !== dragPointerId) return;
-
-          const dx = e.clientX - lastX;
-          const dy = e.clientY - lastY;
-          state.view.x += dx;
-          state.view.y += dy;
+        }, { passive:false });
+        svg.addEventListener("pointerdown", e => {
+          dragging = true;
           lastX = e.clientX;
           lastY = e.clientY;
-
-          applyTransform();
-          updateMiniMap(getVisibleNodes());
+          try { svg.setPointerCapture(e.pointerId); } catch (err) {}
         });
-
-        function endPointer(e) {
-          activeTouches.delete(e.pointerId);
-          if (activeTouches.size < 2) pinchActive = false;
-          if (e.pointerId === dragPointerId) {
-            dragging = false;
-            dragPointerId = null;
-          }
-        }
-
-        svg.addEventListener("pointerup", endPointer);
-        svg.addEventListener("pointercancel", endPointer);
-        svg.addEventListener("pointerleave", endPointer);
-
-        miniMapSvg.addEventListener("click", (evt) => {
-          if (!state.worldBounds || state.miniMapMinimized) return;
-
-          const rect = miniMapSvg.getBoundingClientRect();
-          const rx = (evt.clientX - rect.left) / rect.width;
-          const ry = (evt.clientY - rect.top) / rect.height;
-          const targetX = state.worldBounds.minX + (rx * state.worldBounds.width);
-          const targetY = state.worldBounds.minY + (ry * state.worldBounds.height);
-
-          const s = state.view.scale;
-          state.view.x = (container.clientWidth / 2) - targetX * s;
-          state.view.y = (container.clientHeight / 2) - targetY * s;
-
+        svg.addEventListener("pointermove", e => {
+          if (!dragging) return;
+          state.view.x += e.clientX - lastX;
+          state.view.y += e.clientY - lastY;
+          lastX = e.clientX;
+          lastY = e.clientY;
           applyTransform();
-          updateMiniMap(getVisibleNodes());
         });
+        function endDrag(){ dragging = false; }
+        svg.addEventListener("pointerup", endDrag);
+        svg.addEventListener("pointercancel", endDrag);
+        svg.addEventListener("pointerleave", endDrag);
       }
 
-      function wireInteractions() {
+      function wireInteractions(){
         const controlsPanel = document.getElementById("controls-panel");
-        const togglePanelBtn = document.getElementById("toggle-panel-btn");
-        const closePanelBtn = document.getElementById("close-panel-btn");
+        document.getElementById("toggle-panel-btn").addEventListener("click", () => controlsPanel.classList.remove("hidden"));
+        document.getElementById("close-panel-btn").addEventListener("click", () => controlsPanel.classList.add("hidden"));
+        document.getElementById("reset-view-btn").addEventListener("click", centerOnRoot);
 
-        togglePanelBtn.addEventListener("click", () => controlsPanel.classList.remove("hidden"));
-        closePanelBtn.addEventListener("click", () => controlsPanel.classList.add("hidden"));
-
-        miniMapToggleBtn.addEventListener("click", () => {
-          state.miniMapMinimized = !state.miniMapMinimized;
-          miniMapCard.classList.toggle("minimized", state.miniMapMinimized);
-          miniMapToggleBtn.textContent = state.miniMapMinimized ? "+" : "−";
-          updateMiniMap(getVisibleNodes());
-        });
-
-        nodesLayer.addEventListener("click", (e) => {
-          const collapsePath = e.target.getAttribute("data-collapse-path");
-          if (collapsePath !== null) {
-            e.stopPropagation();
-            toggleCollapse(collapsePath);
-            return;
-          }
-
+        nodesLayer.addEventListener("click", e => {
           const box = e.target.closest(".box");
           if (!box) return;
-
           const slot = box.getAttribute("data-slot") || "";
           box.setAttribute("stroke", "#00aaff");
           setTimeout(() => box.setAttribute("stroke", ""), 250);
-
           window.parent.postMessage({ pedigreeEdit: slot || "c" }, "*");
         });
 
@@ -2466,173 +995,14 @@
           });
         });
 
-        document.getElementById("toggle-summary").addEventListener("change", (e) => {
-          state.showSummary = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-dim-empty").addEventListener("change", (e) => {
-          state.dimEmpty = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-hide-empty").addEventListener("change", (e) => {
-          state.hideEmpty = e.target.checked;
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("toggle-badges").addEventListener("change", (e) => {
-          state.showBadges = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-registered").addEventListener("change", (e) => {
-          state.filters.registered = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-gc").addEventListener("change", (e) => {
-          state.filters.gc = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("toggle-win").addEventListener("change", (e) => {
-          state.filters.wins = e.target.checked;
-          applyState();
-        });
-
-        document.getElementById("color-mode").addEventListener("change", (e) => {
-          state.filters.colorMode = e.target.value;
-          applyState();
-        });
-
-        document.getElementById("apply-color-search-btn").addEventListener("click", () => {
-          state.filters.colorQuery = document.getElementById("color-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-color-search-btn").addEventListener("click", () => {
-          document.getElementById("color-search-input").value = "";
-          state.filters.colorQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-genetics-search-btn").addEventListener("click", () => {
-          state.filters.geneticsQuery = document.getElementById("genetics-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-genetics-search-btn").addEventListener("click", () => {
-          document.getElementById("genetics-search-input").value = "";
-          state.filters.geneticsQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-keyword-search-btn").addEventListener("click", () => {
-          state.filters.keywordQuery = document.getElementById("keyword-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-keyword-search-btn").addEventListener("click", () => {
-          document.getElementById("keyword-search-input").value = "";
-          state.filters.keywordQuery = "";
-          applyState();
-        });
-
-        document.getElementById("apply-rabbitry-search-btn").addEventListener("click", () => {
-          state.filters.rabbitryQuery = document.getElementById("rabbitry-search-input").value || "";
-          applyState();
-        });
-
-        document.getElementById("clear-rabbitry-search-btn").addEventListener("click", () => {
-          document.getElementById("rabbitry-search-input").value = "";
-          state.filters.rabbitryQuery = "";
-          applyState();
-        });
-
-        const missingMap = {
-          "missing-name": "name",
-          "missing-ear": "ear",
-          "missing-color": "color",
-          "missing-weight": "weight",
-          "missing-dob": "dob",
-          "missing-reg": "reg",
-          "missing-gc": "gc",
-          "missing-genetics": "genetics",
-          "missing-rabbitry": "rabbitry"
-        };
-
-        Object.entries(missingMap).forEach(([id, key]) => {
-          document.getElementById(id).addEventListener("change", (e) => {
-            state.filters.missing[key] = e.target.checked;
-            applyState();
-          });
-        });
-
-        document.getElementById("expand-all-btn").addEventListener("click", () => {
-          state.collapsedBranches.clear();
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("collapse-sire-btn").addEventListener("click", () => {
-          state.collapsedBranches.add("s");
-          state.collapsedBranches.delete("d");
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("collapse-dam-btn").addEventListener("click", () => {
-          state.collapsedBranches.add("d");
-          state.collapsedBranches.delete("s");
-          applyState();
-          fitCurrentGenerationView();
-        });
-
-        document.getElementById("reset-view-btn").addEventListener("click", centerOnRoot);
-
-        repeatedRabbitsToggles.addEventListener("change", (e) => {
-          const key = e.target && e.target.dataset ? e.target.dataset.duplicateKey : "";
-          if (!key) return;
-          state.duplicateSelections.set(key, !!e.target.checked);
-          applyState();
-        });
-
-        breederToggles.addEventListener("change", (e) => {
-          const key = e.target && e.target.dataset ? e.target.dataset.breederKey : "";
-          if (!key) return;
-          state.breederSelections.set(key, !!e.target.checked);
-          applyState();
-        });
-
-        [
-          "color-search-input",
-          "genetics-search-input",
-          "keyword-search-input",
-          "rabbitry-search-input"
-        ].forEach(id => {
-          document.getElementById(id).addEventListener("keydown", (e) => {
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-
-            if (id === "color-search-input") state.filters.colorQuery = e.target.value || "";
-            if (id === "genetics-search-input") state.filters.geneticsQuery = e.target.value || "";
-            if (id === "keyword-search-input") state.filters.keywordQuery = e.target.value || "";
-            if (id === "rabbitry-search-input") state.filters.rabbitryQuery = e.target.value || "";
-
-            applyState();
-          });
-        });
+        document.getElementById("toggle-summary").addEventListener("change", e => { state.showSummary = e.target.checked; applyState(); });
+        document.getElementById("toggle-dim-empty").addEventListener("change", e => { state.dimEmpty = e.target.checked; applyState(); });
+        document.getElementById("toggle-hide-empty").addEventListener("change", e => { state.hideEmpty = e.target.checked; applyState(); fitCurrentGenerationView(); });
+        document.getElementById("toggle-duplicates").addEventListener("change", e => { state.flashDuplicates = e.target.checked; applyState(); });
       }
 
-      const ro = new ResizeObserver(() => {
-        if (!state.rendered) return;
-        applyTransform();
-        updateMiniMap(getVisibleNodes());
-      });
+      const ro = new ResizeObserver(() => { if (state.rendered) applyTransform(); });
       ro.observe(container);
-
       wirePanZoom();
       wireInteractions();
 
@@ -2640,10 +1010,10 @@
         const pedid = getParam("PEDID");
         const infoUrl = getParam("Info");
 
-        if (pedid) {
-          updateStatus(`Loading pedigree from PEDID ${pedid}...`);
-          state.infoNodeMap = await loadInfoPayloadFromPedid(pedid);
-        } else if (infoUrl) {
+        if (pedid){
+          updateStatus(`Loading pedigree from Glide API for PEDID ${pedid}...`);
+          state.infoNodeMap = await loadPedigreeFromGlide(pedid);
+        } else if (infoUrl){
           updateStatus("Loading pedigree from Info URL...");
           state.infoNodeMap = await loadInfoPayload(infoUrl);
         } else {
@@ -2651,7 +1021,7 @@
         }
 
         renderPedigree();
-      } catch (err) {
+      } catch (err){
         console.error(err);
         updateStatus(`Failed to load pedigree info: ${err.message}`);
       }
