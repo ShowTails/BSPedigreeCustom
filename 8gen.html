@@ -233,16 +233,25 @@
       bottom:10px;
       left:10px;
       z-index:18;
-      background:rgba(255,255,255,.96);
+      background:rgba(255,255,255,.97);
       border:1px solid #d8d8d8;
       border-radius:8px;
-      padding:7px 10px;
+      padding:9px 12px;
       font-size:12px;
+      line-height:1.35;
       color:#234a57;
-      max-width:calc(100vw - 260px);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      width:min(760px, calc(100vw - 240px));
+      max-height:34vh;
+      white-space:pre-wrap;
+      overflow:auto;
+      text-overflow:clip;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+    }
+
+    #status-badge.error{
+      border-color:#d88989;
+      background:#fff7f7;
+      color:#7a1f1f;
     }
   </style>
 </head>
@@ -443,156 +452,139 @@
       return nodeMap;
     }
 
-    function unwrapGlideValue(value){
-      if (value === null || value === undefined) return "";
-      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
-      if (typeof value === "object") {
-        if (value.value !== undefined) return unwrapGlideValue(value.value);
-        if (value.displayValue !== undefined) return unwrapGlideValue(value.displayValue);
-        if (value.text !== undefined) return unwrapGlideValue(value.text);
-        if (value.content !== undefined) return unwrapGlideValue(value.content);
+    function normalizeRowsResult(rows){
+      if (Array.isArray(rows)) return rows;
+      if (rows && Array.isArray(rows.rows)) return rows.rows;
+      if (rows && Array.isArray(rows.data)) return rows.data;
+      if (rows && Array.isArray(rows.items)) return rows.items;
+      if (rows && typeof rows === "object") {
+        const values = Object.values(rows);
+        if (values.length && values.every(v => v && typeof v === "object" && !Array.isArray(v))) return values;
       }
-      return "";
+      return [];
     }
 
-    function readGlideCell(row, keys){
-      if (!row) return "";
-
-      for (const key of keys){
-        if (row[key] !== undefined) return unwrapGlideValue(row[key]);
-      }
-
-      const containers = [row.data, row.values, row.cells, row.columns, row._values, row._data];
-      for (const container of containers){
-        if (!container) continue;
-        for (const key of keys){
-          if (container[key] !== undefined) return unwrapGlideValue(container[key]);
+    function unwrapGlideValue(value){
+      if (value == null) return "";
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+      if (Array.isArray(value)) return value.map(unwrapGlideValue).filter(Boolean).join("\n");
+      if (typeof value === "object") {
+        const preferred = ["value", "displayValue", "text", "data", "content", "raw", "stringValue"];
+        for (const key of preferred) {
+          if (value[key] != null) {
+            const unwrapped = unwrapGlideValue(value[key]);
+            if (unwrapped) return unwrapped;
+          }
         }
       }
-
-      if (typeof row.get === "function") {
-        for (const key of keys){
-          try {
-            const v = row.get(key);
-            if (v !== undefined && v !== null && String(unwrapGlideValue(v)).trim()) return unwrapGlideValue(v);
-          } catch (err) {}
-        }
-      }
-
       return "";
     }
 
     function getRowPedid(row){
-      return readGlideCell(row, ["childRabbitId", "FlSJj"]);
+      if (!row) return "";
+      return unwrapGlideValue(
+        row.childRabbitId ??
+        row.FlSJj ??
+        row.values?.childRabbitId ??
+        row.values?.FlSJj ??
+        row.columns?.childRabbitId ??
+        row.columns?.FlSJj ??
+        row.cells?.childRabbitId ??
+        row.cells?.FlSJj
+      ).trim();
     }
 
     function getRowEightGenInfo(row){
-      return readGlideCell(row, ["the8GenInfo", "ktZf7"]);
+      if (!row) return "";
+      return unwrapGlideValue(
+        row.the8GenInfo ??
+        row.ktZf7 ??
+        row.values?.the8GenInfo ??
+        row.values?.ktZf7 ??
+        row.columns?.the8GenInfo ??
+        row.columns?.ktZf7 ??
+        row.cells?.the8GenInfo ??
+        row.cells?.ktZf7
+      );
     }
 
-    function normalizeRows(result){
-      if (Array.isArray(result)) return result;
-      if (result && Array.isArray(result.rows)) return result.rows;
-      if (result && Array.isArray(result.data)) return result.data;
-      if (result && Array.isArray(result.items)) return result.items;
-      return [];
-    }
-
-    function normalizeId(value){
-      return String(value || "").trim();
-    }
-
-    function idsMatch(rowId, requestedId){
-      const a = normalizeId(rowId);
-      const b = normalizeId(requestedId);
-      if (!a || !b) return false;
-      if (a === b) return true;
-      if (a.toLowerCase() === b.toLowerCase()) return true;
-
-      // Safety net for cases where the visible status text/link only contains part of the PEDID.
-      // Only used after exact matching fails.
-      if (a.length >= 8 && b.length >= 8) {
-        return a.startsWith(b) || b.startsWith(a);
-      }
-
-      return false;
+    function summarizeRowsForDebug(rows, limit = 5){
+      return rows.slice(0, limit).map((row, index) => {
+        const keys = Object.keys(row || {}).slice(0, 12).join(", ");
+        const pedid = getRowPedid(row) || "[blank]";
+        const infoLength = String(getRowEightGenInfo(row) || "").length;
+        return `#${index + 1} PEDID=${pedid} | Gen8 length=${infoLength} | keys=${keys}`;
+      }).join("\n");
     }
 
     async function loadPedigreeFromGlide(pedid){
-      const cleanPedid = normalizeId(pedid);
+      const cleanPedid = String(pedid || "").trim();
       if (!cleanPedid) throw new Error("Missing PEDID");
 
-      let rows = [];
+      let filteredRows = [];
       let allRows = [];
-      let filteredLookupError = null;
+      let queryError = null;
 
       try {
-        // Preferred: Glide SDK filtered lookup. Some SDK builds support this; some do not.
-        rows = normalizeRows(await rabbitPedigreesTable.get(row => {
-          const rowId = row.childRabbitId || row.FlSJj || getRowPedid(row);
-          return normalizeId(rowId) === cleanPedid;
+        filteredRows = normalizeRowsResult(await rabbitPedigreesTable.get(row => {
+          const rowPedid = String(row.childRabbitId || row.FlSJj || "").trim();
+          return rowPedid === cleanPedid;
         }));
       } catch (err) {
-        filteredLookupError = err;
-        console.warn("Filtered Glide lookup failed; falling back to full get().", err);
+        queryError = err;
+        console.warn("Glide filtered get failed; falling back to full get().", err);
       }
 
-      if (!rows.length) {
-        allRows = normalizeRows(await rabbitPedigreesTable.get());
-
-        // First pass: exact match only.
-        rows = allRows.filter(row => normalizeId(getRowPedid(row)) === cleanPedid);
-
-        // Second pass: case-insensitive exact match.
-        if (!rows.length) {
-          rows = allRows.filter(row => normalizeId(getRowPedid(row)).toLowerCase() === cleanPedid.toLowerCase());
-        }
-
-        // Third pass: partial/stem match, useful if the PEDID was shortened in the incoming URL.
-        // This only proceeds automatically if exactly one row matches.
-        if (!rows.length) {
-          const looseMatches = allRows.filter(row => idsMatch(getRowPedid(row), cleanPedid));
-          if (looseMatches.length === 1) {
-            rows = looseMatches;
-            console.warn("Using single loose PEDID match", {
-              requestedPedid: cleanPedid,
-              matchedPedid: getRowPedid(rows[0])
-            });
-          } else if (looseMatches.length > 1) {
-            throw new Error(`Multiple pedigree rows matched partial PEDID ${cleanPedid}. Use the full PEDID in the ShowTails link.`);
-          }
-        }
-
-        if (!rows.length) {
-          const sampleIds = allRows.slice(0, 10).map(row => getRowPedid(row)).filter(Boolean);
-          console.warn("No PEDID match after fallback.", {
-            requestedPedid: cleanPedid,
-            totalRows: allRows.length,
-            samplePedids: sampleIds,
-            firstRowKeys: Object.keys(allRows[0] || {}),
-            firstRow: allRows[0]
-          });
-        }
+      try {
+        allRows = normalizeRowsResult(await rabbitPedigreesTable.get());
+      } catch (err) {
+        if (!filteredRows.length) throw err;
+        console.warn("Glide full get failed, but filtered rows were returned.", err);
       }
 
-      const row = rows[0];
-      if (!row) {
-        const extra = filteredLookupError ? ` Filtered lookup error: ${filteredLookupError.message}` : "";
-        throw new Error(`No pedigree found for PEDID ${cleanPedid}.${extra} Check browser console for samplePedids.`);
-      }
+      const candidateRows = filteredRows.length ? filteredRows : allRows;
+      const exact = candidateRows.find(row => getRowPedid(row) === cleanPedid);
+      const caseInsensitive = candidateRows.find(row => getRowPedid(row).toLowerCase() === cleanPedid.toLowerCase());
+      const partialMatches = candidateRows.filter(row => {
+        const rowPedid = getRowPedid(row);
+        return rowPedid && (rowPedid.includes(cleanPedid) || cleanPedid.includes(rowPedid));
+      });
 
-      const actualPedid = getRowPedid(row);
-      const info = getRowEightGenInfo(row);
-      console.log("Glide pedigree row loaded", {
+      const row = exact || caseInsensitive || (partialMatches.length === 1 ? partialMatches[0] : null);
+
+      console.log("Glide pedigree debug", {
         requestedPedid: cleanPedid,
-        actualPedid,
+        filteredCount: filteredRows.length,
+        allCount: allRows.length,
+        queryError: queryError ? queryError.message : null,
+        sampleRows: (allRows.length ? allRows : filteredRows).slice(0, 5),
+        sampleSummary: summarizeRowsForDebug(allRows.length ? allRows : filteredRows)
+      });
+
+      if (!row) {
+        const sample = summarizeRowsForDebug(allRows.length ? allRows : filteredRows) || "No rows returned from Glide.";
+        const extra = queryError ? `\nFiltered lookup error: ${queryError.message}` : "";
+        throw new Error(
+          `No pedigree found for PEDID ${cleanPedid}.\n` +
+          `Filtered rows returned: ${filteredRows.length}. Full rows returned: ${allRows.length}.\n` +
+          `Sample rows:\n${sample}${extra}`
+        );
+      }
+
+      const info = getRowEightGenInfo(row);
+      console.log("Loaded pedigree row:", {
+        requestedPedid: cleanPedid,
+        matchedPedid: getRowPedid(row),
         rowKeys: Object.keys(row || {}),
         infoLength: String(info || "").length,
         infoPreview: String(info || "").slice(0, 120)
       });
 
       if (!String(info || "").trim()) {
-        throw new Error(`Pedigree row found for ${actualPedid || cleanPedid}, but the Gen 8 Info column is empty or could not be read. Check browser console for rowKeys.`);
+        throw new Error(
+          `Pedigree row found for PEDID ${cleanPedid}, but the Gen 8 Info column is empty or could not be read.\n` +
+          `Matched row PEDID: ${getRowPedid(row) || "[blank]"}. Row keys: ${Object.keys(row || {}).join(", ")}`
+        );
       }
 
       return parseInfoTextToNodeMap(info);
@@ -732,7 +724,10 @@
       const duplicatesHelp = document.getElementById("duplicates-help");
       const duplicateList = document.getElementById("duplicate-list");
 
-      function updateStatus(text){ statusBadge.textContent = text; }
+      function updateStatus(text, isError = false){
+        statusBadge.textContent = text;
+        statusBadge.classList.toggle("error", !!isError);
+      }
 
       function getRabbitData(path){
         const rabbit = state.infoNodeMap.get(path) || {};
@@ -1159,7 +1154,8 @@
         renderPedigree();
       } catch (err){
         console.error(err);
-        updateStatus(`Failed to load pedigree info: ${err.message}`);
+        updateStatus(`Failed to load pedigree info:
+${err.message}`, true);
       }
     })();
   </script>
